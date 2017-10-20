@@ -1,0 +1,7 @@
+{
+    "python.linting.flake8Enabled": true,
+    "python.linting.pylintEnabled": false,
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 500,
+    "python.pythonPath": "python3"
+}
