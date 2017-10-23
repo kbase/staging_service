@@ -4,10 +4,14 @@ from aiohttp import web
 # import asyncio
 from os import path
 from time import time
+from auth2Client import KBaseAuth2
 # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
-async def test_service(request):
+auth_client = KBaseAuth2()
+
+
+async def test_service(request: web.Request):
     """
     @apiName test-service
     @apiSampleRequest /test-server/
@@ -17,11 +21,11 @@ async def test_service(request):
     return web.Response(text='This is just a test. This is only a test.')
 
 
-async def test_auth(request):
+async def test_auth(request: web.Request):
     pass
 
 
-async def list_files(request):
+async def list_files(request: web.Request):
     """
     {get} /list/:path list files/folders in path
     @apiParam {string} path path to directory
@@ -46,8 +50,9 @@ async def list_files(request):
     pass
 
 
-async def search(request):
+async def search(request: web.Request):
     pass
+
 
 def validate_path(username: str, path: str):
     """
@@ -58,6 +63,7 @@ def validate_path(username: str, path: str):
     if start == -1:
         raise ValueError()
     return path[start:]
+
 
 async def upload_files_chunked(request: web.Request):
     """
@@ -118,5 +124,5 @@ app.router.add_get('/list/*', list_files)
 app.router.add_get('/search/*', search)
 # Post routes
 app.router.add_post('/upload', upload_files_chunked)
-#run server
+# Run server
 web.run_app(app)
