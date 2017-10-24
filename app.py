@@ -3,7 +3,6 @@ from aiohttp import web
 # import uvloop
 # import asyncio
 import os
-from time import time
 from auth2Client import KBaseAuth2
 # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -103,14 +102,46 @@ async def list_files(request: web.Request):
                 'isFolder': True
             }
         )
-    # transform list of dicts into json
-    
-    return web.json_response(response)
+    return web.json_response(response)  # transform list of dicts into json
 
 
-@routes.get('/search/{query}')
+@routes.get('/search/{query:.*}')
 async def search(request: web.Request):
-    pass
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    query = request.match_info['query']
+    user_dir = os.path.join('./data/bulk', username)
+    response = []
+    for root, dirs, files in os.walk(user_dir):
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                file_stats = os.stat(full_path)
+                response.append(
+                    {
+                        'name': filename,
+                        'path': full_path,
+                        'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
+                        'size': file_stats.st_size,
+                        'isFolder': False
+                    }
+                )
+        for dirname in dirs:
+            full_path = os.path.join(root, dirname)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                dir_stats = os.stat(full_path)
+                response.append(
+                    {
+                        'name': filename,
+                        'path': full_path,
+                        'mtime': int(dir_stats.st_mtime*1000),  # given in seconds, want ms
+                        'size': dir_stats.st_size,
+                        'isFolder': False
+                    }
+                )
+    return web.json_response(response)
 
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
@@ -133,16 +164,18 @@ async def upload_files_chunked(request: web.Request):
     "name": "Sandbox_Experiments-1.tsv"
     }]
     """
-    start = time()
-
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
     # TODO validate path inputs and filename inputs so it goes where it should go
     while True:
         part = await reader.next()
         if part.name == 'username':
-            username = 'nixonpjoshua'
+            _ = await part.text()
         elif part.name == 'destPath':
-            destPath = '/nixonpjoshua'
+            destPath = await part.text()
         elif part.name == 'uploads':
             user_file = part
             break
@@ -154,14 +187,22 @@ async def upload_files_chunked(request: web.Request):
         destPath = validate_path(username, destPath)
     except ValueError as error:
         return "ivalid  username"
-    with open(os.path.join('./data/bulk', destPath, filename), 'wb') as f:
+    new_file_path = os.path.join('./data/bulk', destPath, filename)
+    with open(new_file_path, 'wb') as f:
         while True:
             chunk = await user_file.read_chunk()
             if not chunk:
                 break
             size += len(chunk)
             f.write(chunk)
-    return web.Response(text='stuff got stored' + str(start-time()))
+    stats = os.stat(new_file_path)
+    response = [{
+        'path': new_file_path,
+        'name': filename,
+        'size': stats.st_size,
+        'mtime': int(stats.st_mtime*1000)
+    }]
+    return web.json_response(response)
 
 
 app = web.Application()
