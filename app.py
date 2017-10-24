@@ -2,15 +2,15 @@ from aiohttp import web
 #TODO see if uvloop helps at all
 # import uvloop
 # import asyncio
-from os import path
+import os
 from time import time
 from auth2Client import KBaseAuth2
 # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-
 auth_client = KBaseAuth2()
+routes = web.RouteTableDef()
 
-
+@routes.get('/test-service')
 async def test_service(request: web.Request):
     """
     @apiName test-service
@@ -21,10 +21,28 @@ async def test_service(request: web.Request):
     return web.Response(text='This is just a test. This is only a test.')
 
 
+@routes.get('/test-auth')
 async def test_auth(request: web.Request):
-    pass
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    return web.Response(text="I'm authenticated as {}".format(username))
 
 
+def validate_path(username: str, path: str) -> str:
+    """
+    @returns a path based on path that must start with username
+    throws an exeception for an invalid path or username
+    starts path at first occurance of username"""
+    path = os.path.normpath(path)
+    start = path.find(username)
+    if start == -1:
+        raise ValueError('username not in path')
+    return path[start:]
+
+
+@routes.get('/list/{path:.+}')
 async def list_files(request: web.Request):
     """
     {get} /list/:path list files/folders in path
@@ -47,24 +65,54 @@ async def list_files(request: web.Request):
       }
     ]
     """
-    pass
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    try:
+        validated_path = validate_path(username, request.match_info['path'])
+    except ValueError as bad_path:
+        return web.json_response({'error': 'badly formed path'})
+    full_path = os.path.join('./data/bulk', validated_path)
+    if not os.path.exists(full_path):
+        return web.json_response({'error': 'path {path} does not exist'.format(path=validated_path)})
+    _, dirnames, filenames = next(os.walk(full_path))
+    # make json for each dirnames and filenames
+    response = []
+    for filename in filenames:
+        filepath = os.path.join(validated_path, filename)
+        file_stats = os.stat(os.path.join(full_path, filename))
+        response.append(
+            {
+                'name': filename,
+                'path': filepath,
+                'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
+                'size': file_stats.st_size,
+                'isFolder': False
+            }
+        )
+    for dirname in dirnames:
+        dirpath = os.path.join(validate_path, dirname)
+        dir_stats = os.stat(os.path.join(full_path, dirname))
+        response.append(
+            {
+                'name': dirname,
+                'path': dirpath,
+                'mtime': int(dir_stats.st_mtime*1000),  # given in seconds, want ms
+                'size': dir_stats.st_size,
+                'isFolder': True
+            }
+        )
+    # transform list of dicts into json
+    
+    return web.json_response(response)
 
 
+@routes.get('/search/{query}')
 async def search(request: web.Request):
     pass
 
-
-def validate_path(username: str, path: str):
-    """
-    @returns a path based on path that must start with username
-    throws an exeception for an invalid path or username"""
-    # TODO check that the username supplied is the one for authenticated user
-    start = path.find(username)
-    if start == -1:
-        raise ValueError()
-    return path[start:]
-
-
+@routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
     """
     @api {post} /upload post endpoint to upload data
@@ -100,13 +148,13 @@ async def upload_files_chunked(request: web.Request):
             break
         else:
             return "error you didnt follow the API spec"
-    filename = user_file.filename
+    filename: str = user_file.filename
     size = 0
     try:
         destPath = validate_path(username, destPath)
     except ValueError as error:
         return "ivalid  username"
-    with open(path.join('./data/bulk', destPath, filename), 'wb') as f:
+    with open(os.path.join('./data/bulk', destPath, filename), 'wb') as f:
         while True:
             chunk = await user_file.read_chunk()
             if not chunk:
@@ -117,12 +165,5 @@ async def upload_files_chunked(request: web.Request):
 
 
 app = web.Application()
-# Get routes
-app.router.add_get('/test-service', test_service)
-app.router.add_get('/test-auth', test_auth)
-app.router.add_get('/list/*', list_files)
-app.router.add_get('/search/*', search)
-# Post routes
-app.router.add_post('/upload', upload_files_chunked)
-# Run server
-web.run_app(app)
+app.router.add_routes(routes)
+web.run_app(app, port=3000)

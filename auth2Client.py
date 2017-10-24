@@ -2,6 +2,7 @@
 Created on Aug 1, 2016
 A very basic KBase auth client for the Python server.
 @author: gaprice@lbl.gov
+modified for python3 and authV2
 '''
 import time as _time
 import requests as _requests
