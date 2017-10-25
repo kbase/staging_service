@@ -74,9 +74,8 @@ class KBaseAuth2(object):
         user = self._cache.get_user(token)
         if user:
             return user
-
+        # TODO this part should not be blocking and should await the auth server
         ret = _requests.get(self._authurl, headers={'Authorization': token})
-        # ret = _requests.getpost(self._authurl, data=d)
         if not ret.ok:
             try:
                 err = ret.json()

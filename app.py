@@ -1,11 +1,11 @@
 from aiohttp import web
 import aiohttp_cors
 #  TODO see if uvloop helps at all
-# import uvloop
-# import asyncio
+import uvloop
+import asyncio
 import os
 from auth2Client import KBaseAuth2
-# asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
@@ -171,7 +171,6 @@ async def upload_files_chunked(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
-    # TODO validate path inputs and filename inputs so it goes where it should go
     while True:
         part = await reader.next()
         if part.name == 'username':  # TODO depricate this field, move destPath to header if clean on frontend
@@ -188,7 +187,7 @@ async def upload_files_chunked(request: web.Request):
     try:
         destPath = validate_path(username, destPath)
     except ValueError as error:
-        return "ivalid  username"
+        return "invalid  username"
     new_file_path = os.path.join('./data/bulk', destPath, filename)
     with open(new_file_path, 'wb') as f:
         while True:
