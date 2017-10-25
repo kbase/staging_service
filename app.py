@@ -43,35 +43,28 @@ def validate_path(username: str, path: str) -> str:
     return path[start:]
 
 
+def metadata(filename: str, full_path: str, isFolder=False) -> dict:
+    file_stats = os.stat(full_path)
+    return {
+        'name': filename,
+        'path': full_path,
+        'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
+        'size': file_stats.st_size,
+        'isFolder': False
+    }
+
+
 def dir_info(user_dir: str, query: str = '', recurse=True):
     response = []
     for root, dirs, files in os.walk(user_dir):
         for filename in files:
             full_path = os.path.join(root, filename)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                file_stats = os.stat(full_path)
-                response.append(
-                    {
-                        'name': filename,
-                        'path': full_path,
-                        'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
-                        'size': file_stats.st_size,
-                        'isFolder': False
-                    }
-                )
+                response.append(metadata(filename, full_path))
         for dirname in dirs:
             full_path = os.path.join(root, dirname)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                dir_stats = os.stat(full_path)
-                response.append(
-                    {
-                        'name': filename,
-                        'path': full_path,
-                        'mtime': int(dir_stats.st_mtime*1000),  # given in seconds, want ms
-                        'size': dir_stats.st_size,
-                        'isFolder': True
-                    }
-                )
+                response.append(metadata(filename, full_path, isFolder=True))
         if recurse is False:
             break
     return response
@@ -167,14 +160,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    stats = os.stat(new_file_path)
-    response = [{
-        'path': new_file_path,
-        'name': filename,
-        'size': stats.st_size,
-        'mtime': int(stats.st_mtime*1000)
-    }]
-    return web.json_response(response)
+    return web.json_response([metadata(filename, new_file_path)])
 
 app = web.Application()
 app.router.add_routes(routes)
