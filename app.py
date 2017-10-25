@@ -175,7 +175,7 @@ async def upload_files_chunked(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
     counter = 0
-    while counter < 100:  # TODO this is arbitrary to prevent infinite loop
+    while counter < 100: # TODO this is arbitrary to keep an attacker from creating an infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
         if part.name == 'destPath':
