@@ -50,7 +50,7 @@ def metadata(filename: str, full_path: str, isFolder=False) -> dict:
         'path': full_path,
         'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
         'size': file_stats.st_size,
-        'isFolder': False
+        'isFolder': isFolder
     }
 
 
@@ -64,7 +64,7 @@ def dir_info(user_dir: str, query: str = '', recurse=True):
         for dirname in dirs:
             full_path = os.path.join(root, dirname)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(metadata(filename, full_path, isFolder=True))
+                response.append(metadata(dirname, full_path, isFolder=True))
         if recurse is False:
             break
     return response
