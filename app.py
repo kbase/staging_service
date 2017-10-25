@@ -76,7 +76,9 @@ async def list_files(request: web.Request):
         return web.json_response({'error': 'badly formed path'})
     full_path = os.path.join('./data/bulk', validated_path)
     if not os.path.exists(full_path):
-        return web.json_response({'error': 'path {path} does not exist'.format(path=validated_path)})
+        return web.json_response({
+            'error': 'path {path} does not exist'.format(path=validated_path)
+            })
     _, dirnames, filenames = next(os.walk(full_path))
     # make json for each dirnames and filenames
     response = []
@@ -145,6 +147,7 @@ async def search(request: web.Request):
                 )
     return web.json_response(response)
 
+
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
     """
@@ -171,17 +174,17 @@ async def upload_files_chunked(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
-    while True:
+    counter = 0
+    while counter < 100:  # TODO this is arbitrary to prevent infinite loop
+        # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
-        if part.name == 'username':  # TODO depricate this field, move destPath to header if clean on frontend
-            _ = await part.text()
         if part.name == 'destPath':
             destPath = await part.text()
         elif part.name == 'uploads':
             user_file = part
             break
         else:
-            return web.json_response({'error': 'unexpected field in body of request'})
+            counter += 1
     filename: str = user_file.filename
     size = 0
     try:
