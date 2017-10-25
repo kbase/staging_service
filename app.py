@@ -144,7 +144,6 @@ async def upload_files_chunked(request: web.Request):
         username = auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
-    destPath = request.headers['destPath']
     reader = await request.multipart()
     counter = 0
     while counter < 100: # TODO this is arbitrary to keep an attacker from creating an infinite loop
