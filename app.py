@@ -150,18 +150,9 @@ async def upload_files_chunked(request: web.Request):
         username = auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
+    destPath = request.headers['destPath']
     reader = await request.multipart()
-    while True:
-        part = await reader.next()
-        if part.name == 'username':  # TODO depricate this field, move destPath to header if clean on frontend
-            _ = await part.text()
-        if part.name == 'destPath':
-            destPath = await part.text()
-        elif part.name == 'uploads':
-            user_file = part
-            break
-        else:
-            return web.json_response({'error': 'unexpected field in body of request'})
+    user_file = await reader.next()
     filename: str = user_file.filename
     size = 0
     try:
