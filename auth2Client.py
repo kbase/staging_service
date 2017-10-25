@@ -56,7 +56,8 @@ class KBaseAuth2(object):
     A very basic KBase auth client for the Python server.
     '''
 
-    _AUTH_URL = 'https://kbase.us/services/auth/api/V2/token'
+    _AUTH_URL = 'https://ci.kbase.us/services/auth/api/V2/token'
+    # TODO config this up
 
     def __init__(self, auth_url=None):
         '''

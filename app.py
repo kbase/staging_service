@@ -1,5 +1,6 @@
 from aiohttp import web
-#TODO see if uvloop helps at all
+import aiohttp_cors
+#  TODO see if uvloop helps at all
 # import uvloop
 # import asyncio
 import os
@@ -8,6 +9,7 @@ from auth2Client import KBaseAuth2
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
+
 
 @routes.get('/test-service')
 async def test_service(request: web.Request):
@@ -91,7 +93,7 @@ async def list_files(request: web.Request):
             }
         )
     for dirname in dirnames:
-        dirpath = os.path.join(validate_path, dirname)
+        dirpath = os.path.join(validated_path, dirname)
         dir_stats = os.stat(os.path.join(full_path, dirname))
         response.append(
             {
@@ -172,15 +174,15 @@ async def upload_files_chunked(request: web.Request):
     # TODO validate path inputs and filename inputs so it goes where it should go
     while True:
         part = await reader.next()
-        if part.name == 'username':
+        if part.name == 'username':  # TODO depricate this field, move destPath to header if clean on frontend
             _ = await part.text()
-        elif part.name == 'destPath':
+        if part.name == 'destPath':
             destPath = await part.text()
         elif part.name == 'uploads':
             user_file = part
             break
         else:
-            return "error you didnt follow the API spec"
+            return web.json_response({'error': 'unexpected field in body of request'})
     filename: str = user_file.filename
     size = 0
     try:
@@ -204,7 +206,17 @@ async def upload_files_chunked(request: web.Request):
     }]
     return web.json_response(response)
 
-
 app = web.Application()
 app.router.add_routes(routes)
+cors = aiohttp_cors.setup(app, defaults={
+    "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+})
+
+# Configure CORS on all routes.
+for route in list(app.router.routes()):
+    cors.add(route)
 web.run_app(app, port=3000)
