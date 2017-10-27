@@ -54,7 +54,7 @@ async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
     }
 
 
-def dir_info(user_dir: str, query: str = '', recurse=True):
+def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
     response = []
     for root, dirs, files in os.walk(user_dir):
         for filename in files:
@@ -117,7 +117,9 @@ async def search(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
     user_dir = os.path.join('./data/bulk', username)
-    return web.json_response(dir_info(user_dir, query))
+    results = dir_info(user_dir, query)
+    results.sort(key=lambda x: x['mtime'], reverse=True)
+    return web.json_response(results)
 
 
 @routes.post('/upload')
