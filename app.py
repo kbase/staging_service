@@ -43,7 +43,7 @@ def validate_path(username: str, path: str) -> str:
     return path[start:]
 
 
-def metadata(filename: str, full_path: str, isFolder=False) -> dict:
+async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
     file_stats = os.stat(full_path)
     return {
         'name': filename,
@@ -60,11 +60,11 @@ def dir_info(user_dir: str, query: str = '', recurse=True):
         for filename in files:
             full_path = os.path.join(root, filename)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(metadata(filename, full_path))
+                response.append(stat_data(filename, full_path))
         for dirname in dirs:
             full_path = os.path.join(root, dirname)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(metadata(dirname, full_path, isFolder=True))
+                response.append(stat_data(dirname, full_path, isFolder=True))
         if recurse is False:
             break
     return response
@@ -103,7 +103,9 @@ async def list_files(request: web.Request):
         return web.json_response({'error': 'badly formed path'})
     full_path = os.path.join('./data/bulk', validated_path)
     if not os.path.exists(full_path):
-        return web.json_response({'error': 'path {path} does not exist'.format(path=validated_path)})
+        return web.json_response({
+            'error': 'path {path} does not exist'.format(path=validated_path)
+        })
     return web.json_response(dir_info(full_path, recurse=False))
 
 
@@ -116,7 +118,6 @@ async def search(request: web.Request):
     query = request.match_info['query']
     user_dir = os.path.join('./data/bulk', username)
     return web.json_response(dir_info(user_dir, query))
-
 
 
 @routes.post('/upload')
@@ -146,7 +147,7 @@ async def upload_files_chunked(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
     counter = 0
-    while counter < 100: # TODO this is arbitrary to keep an attacker from creating an infinite loop
+    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
         if part.name == 'destPath':
@@ -170,7 +171,8 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    return web.json_response([metadata(filename, new_file_path)])
+    response = await stat_data(filename, new_file_path, destPath)
+    return web.json_response([response])
 
 app = web.Application()
 app.router.add_routes(routes)
