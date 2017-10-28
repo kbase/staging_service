@@ -4,11 +4,24 @@ import aiohttp_cors
 import uvloop
 import asyncio
 import os
+from metadata import stat_data
 from auth2Client import KBaseAuth2
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
+
+
+def validate_path(username: str, path: str) -> str:
+    """
+    @returns a path based on path that must start with username
+    throws an exeception for an invalid path or username
+    starts path at first occurance of username"""
+    path = os.path.normpath(path)
+    start = path.find(username)
+    if start == -1:
+        raise ValueError('username not in path')
+    return path[start:]
 
 
 @routes.get('/test-service')
@@ -29,29 +42,6 @@ async def test_auth(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     return web.Response(text="I'm authenticated as {}".format(username))
-
-
-def validate_path(username: str, path: str) -> str:
-    """
-    @returns a path based on path that must start with username
-    throws an exeception for an invalid path or username
-    starts path at first occurance of username"""
-    path = os.path.normpath(path)
-    start = path.find(username)
-    if start == -1:
-        raise ValueError('username not in path')
-    return path[start:]
-
-
-async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
-    file_stats = os.stat(full_path)
-    return {
-        'name': filename,
-        'path': full_path,
-        'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
-        'size': file_stats.st_size,
-        'isFolder': isFolder
-    }
 
 
 def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
