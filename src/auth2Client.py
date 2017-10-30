@@ -40,7 +40,7 @@ class TokenCache(object):
         self._cache[token] = [user, _time.time(), expire_time]
         if len(self._cache) > self._maxsize:
             for i, (t, _) in enumerate(sorted(self._cache.items(),
-                                                key=lambda v: v[1][1])):
+                                              key=lambda v: v[1][1])):
                 if i <= self._halfmax:
                     del self._cache[t]
                 else:

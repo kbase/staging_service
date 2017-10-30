@@ -1,7 +1,6 @@
 from json import JSONDecoder, JSONEncoder
 import aiofiles
-import asyncio
-
+from utils import run_command
 import os
 
 META_DIR = './data/metadata/'  # TODO configify
@@ -22,31 +21,7 @@ async def stat_data(full_path: str, isFolder=False) -> dict:
     }
 
 
-async def run_command(*args):
-    """Run command in subprocess
-    Example from:
-        http://asyncio.readthedocs.io/en/latest/subprocess.html
-    """
-    # Create subprocess
-    process = await asyncio.create_subprocess_exec(
-        *args,
-        # stdout must a pipe to be accessible as process.stdout
-        stdout=asyncio.subprocess.PIPE)
-
-    # Status
-    # print('Started:', args, '(pid = ' + str(process.pid) + ')')
-
-    # Wait for the subprocess to finish
-    stdout, stderr = await process.communicate()
-
-    # Progress
-    if process.returncode == 0:
-        return stdout.decode().strip()
-    else:
-        raise ChildProcessError()
-
-
-async def generate_metadata(filepath: str, metadata_path: str):
+async def _generate_metadata(filepath: str, metadata_path: str):
     os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
     data = {}
     # first ouptut of md5sum is the checksum
@@ -75,9 +50,9 @@ async def some_metadata(full_path: str, desired_fields=False):
     file_stats = await stat_data(full_path)
     metadata_path = os.path.join(META_DIR, user_path+'.json')  # TODO this is a shitty way to store all the metadata
     if not os.path.exists(metadata_path):
-        data = await generate_metadata(full_path, metadata_path)
+        data = await _generate_metadata(full_path, metadata_path)
     elif os.stat(metadata_path).st_mtime < file_stats['mtime']/1000:  # metadata is older than file
-        data = await generate_metadata(full_path, metadata_path)
+        data = await _generate_metadata(full_path, metadata_path)
     else:  # metadata already exists and is up to date  
         async with aiofiles.open(metadata_path, mode='r') as f:
             # make metadata fields local variables
