@@ -11,6 +11,7 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
 
+
 def validate_path(username: str, path: str) -> str:
     """
     @returns a path based on path that must start with username
@@ -21,6 +22,22 @@ def validate_path(username: str, path: str) -> str:
     if start == -1:
         raise ValueError('username not in path')
     return path[start:]
+
+
+async def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
+    response = []
+    for root, dirs, files in os.walk(user_dir):
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                response.append(await stat_data(full_path))
+        for dirname in dirs:
+            full_path = os.path.join(root, dirname)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                response.append(await stat_data(full_path, isFolder=True))
+        if recurse is False:
+            break
+    return response
 
 
 @routes.get('/test-service')
@@ -41,22 +58,6 @@ async def test_auth(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     return web.Response(text="I'm authenticated as {}".format(username))
-
-
-async def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
-    response = []
-    for root, dirs, files in os.walk(user_dir):
-        for filename in files:
-            full_path = os.path.join(root, filename)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(await stat_data(full_path))
-        for dirname in dirs:
-            full_path = os.path.join(root, dirname)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(await stat_data(full_path, isFolder=True))
-        if recurse is False:
-            break
-    return response
 
 
 @routes.get('/list/{path:.+}')
