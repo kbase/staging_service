@@ -4,13 +4,12 @@ import aiohttp_cors
 import uvloop
 import asyncio
 import os
-from metadata import stat_data
+from metadata import stat_data, some_metadata
 from auth2Client import KBaseAuth2
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
-
 
 def validate_path(username: str, path: str) -> str:
     """
@@ -163,7 +162,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await stat_data(filename, new_file_path, destPath)
+    response = await some_metadata(filename, new_file_path, ['name', 'path', 'mtime', 'size'])
     return web.json_response([response])
 
 app = web.Application()

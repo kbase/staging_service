@@ -1,8 +1,13 @@
 from json import JSONDecoder, JSONEncoder
+import aiofiles
+import asyncio
+
 import os
 
-META_DIR = './data/metadata'  # TODO configify
-DATA_DIR = './data/bulk'
+META_DIR = './data/metadata/'  # TODO configify
+DATA_DIR = './data/bulk/'
+decoder = JSONDecoder()
+encoder = JSONEncoder()
 
 
 async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
@@ -46,33 +51,43 @@ async def generate_metadata(filepath: str, metadata_path: str):
     os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
     data = {}
     # first ouptut of md5sum is the checksum
-    data['md5'] = await run_command('md5sum', filepath).split()[0]
+    md5 = await run_command('md5sum', filepath)
+    data['md5'] = md5.split()[0]
     # first output of wc is the count
-    data['linecount'] = await run_command('wc', '-l', filepath).split()[0]
+    lineCount = await run_command('wc', '-l', filepath)
+    data['lineCount'] = lineCount.split()[0]
     data['head'] = await run_command('head', '-10', filepath)
     data['tail'] = await run_command('tail', '-10', filepath)
     async with aiofiles.open(metadata_path, mode='w') as f:
         await f.writelines(encoder.encode(data))
+    return data
 
 
-async def some_metadata(filename: str, user_path: str, desired_fields: list):
-    full_path = os.path.join(DATA_DIR, user_path)
+async def some_metadata(filename: str, full_path: str, desired_fields: list):
+    """
+    assumes full_path is valid path to a file
+    valid fields for desired_fields are:
+    md5, lineCount, head, tail, name, path, mtime, size, isFolder
+    """
+    user_path = full_path[len(DATA_DIR):]
+    if os.path.isdir(full_path):
+        return {'error': 'cannot determine metadata for directory'}
+    file_stats = await stat_data(filename, full_path)
     metadata_path = os.path.join(META_DIR, user_path+'.json')  # TODO this is a shitty way to store all the metadata
     if not os.path.exists(metadata_path):
-        await generate_metadata(full_path, metadata_path)
-    elif os.stat(metadata_path).st_mtime < file_stats.st_mtime:  # metadata is older than file
-        await generate_metadata(full_path, metadata_path)
-    async with aiofiles.open(metadata_path, mode='r') as f:
-        # make metadata fields local variables
-        data = await f.read()
-        data = decoder.decode(data)
-    result
+        data = await generate_metadata(full_path, metadata_path)
+    elif os.stat(metadata_path).st_mtime < file_stats['mtime']/1000:  # metadata is older than file
+        data = await generate_metadata(full_path, metadata_path)
+    else:  # metadata already exists and is up to date  
+        async with aiofiles.open(metadata_path, mode='r') as f:
+            # make metadata fields local variables
+            data = await f.read()
+            data = decoder.decode(data)
+    data = {**data, **file_stats}
+    result = {}
     for key in desired_fields:
         try:
-            
-        except expression as identifier:
-            pass
-    try:
-        return {key: data[key] for key in desired_fields}
-    except KeyError as no_data:
-        # could automatically dispatch the right function to generate if needed (would want to turn comprehension into loop for this)
+            result[key] = data[key]  
+        except KeyError as no_data:
+            result[key] = 'error: data not found'  # TODO is this a good way to handle this?
+    return result
