@@ -4,6 +4,7 @@ import aiohttp_cors
 import uvloop
 import asyncio
 import os
+import shutil
 from auth2Client import KBaseAuth2
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -176,6 +177,53 @@ async def upload_files_chunked(request: web.Request):
     response = await stat_data(filename, new_file_path, destPath)
     return web.json_response([response])
 
+
+@routes.post('/delete{path:.+}')
+def delete(request: web.Request):
+    """
+    allows deletion of both directories and 
+    """
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    try:
+        validated_path = validate_path(username, request.match_info['path'])
+    except ValueError as bad_path:
+        return web.json_response({'error': 'badly formed path'})
+    # make sure directory isn't home
+    if not len(validated_path[len(username)+1:]) > 0:
+        return web.json_response({'error': 'cannot delete home directory'})
+    full_path = os.path.join('./data/bulk', validated_path)
+    if os.path.isfile():
+        os.remove(full_path)
+    elif os.path.isdir(full_path):
+        shutil.rmtree(full_path)
+    else:
+        return web.json_response({'error': 'could not delete {path}'.format(path=validated_path)})
+    return web.Response(text='successfully deleted {path}'.format(path=validated_path))
+
+
+@routes.post('/rename{path:.+}')
+async def rename(request: web.Request):
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    try:
+        validated_path = validate_path(username, request.match_info['path'])
+    except ValueError as bad_path:
+        return web.json_response({'error': 'badly formed path'})
+    # make sure directory isn't home
+    if not len(validated_path[len(username)+1:]) > 0:
+        return web.json_response({'error': 'cannot rename home directory'})
+    body = await request.post()
+    new_name = body['newName']
+    full_path = os.path.join('./data/bulk', validated_path)
+    os.rename(full_path, new_name)
+    return web.Response(text='successfully renamed {path}'.format(path=validated_path))
+
+
 app = web.Application()
 app.router.add_routes(routes)
 cors = aiohttp_cors.setup(app, defaults={
@@ -185,7 +233,6 @@ cors = aiohttp_cors.setup(app, defaults={
             allow_headers="*",
         )
 })
-
 # Configure CORS on all routes.
 for route in list(app.router.routes()):
     cors.add(route)
