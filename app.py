@@ -4,12 +4,41 @@ import aiohttp_cors
 import uvloop
 import asyncio
 import os
+from metadata import stat_data, some_metadata
 import shutil
 from auth2Client import KBaseAuth2
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
+
+
+def validate_path(username: str, path: str) -> str:
+    """
+    @returns a path based on path that must start with username
+    throws an exeception for an invalid path or username
+    starts path at first occurance of username"""
+    path = os.path.normpath(path)
+    start = path.find(username)
+    if start == -1:
+        raise ValueError('username not in path')
+    return path[start:]
+
+
+async def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
+    response = []
+    for root, dirs, files in os.walk(user_dir):
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                response.append(await stat_data(full_path))
+        for dirname in dirs:
+            full_path = os.path.join(root, dirname)
+            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
+                response.append(await stat_data(full_path, isFolder=True))
+        if recurse is False:
+            break
+    return response
 
 
 @routes.get('/test-service')
@@ -30,45 +59,6 @@ async def test_auth(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     return web.Response(text="I'm authenticated as {}".format(username))
-
-
-def validate_path(username: str, path: str) -> str:
-    """
-    @returns a path based on path that must start with username
-    throws an exeception for an invalid path or username
-    starts path at first occurance of username"""
-    path = os.path.normpath(path)
-    start = path.find(username)
-    if start == -1:
-        raise ValueError('username not in path')
-    return path[start:]
-
-
-async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
-    file_stats = os.stat(full_path)
-    return {
-        'name': filename,
-        'path': full_path,
-        'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
-        'size': file_stats.st_size,
-        'isFolder': isFolder
-    }
-
-
-def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
-    response = []
-    for root, dirs, files in os.walk(user_dir):
-        for filename in files:
-            full_path = os.path.join(root, filename)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(filename, full_path))
-        for dirname in dirs:
-            full_path = os.path.join(root, dirname)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(dirname, full_path, isFolder=True))
-        if recurse is False:
-            break
-    return response
 
 
 @routes.get('/list/{path:.+}')
@@ -102,12 +92,12 @@ async def list_files(request: web.Request):
         validated_path = validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
-    full_path = os.path.join('./data/bulk', validated_path)
+    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
     if not os.path.exists(full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=validated_path)
         })
-    return web.json_response(dir_info(full_path, recurse=False))
+    return web.json_response(await dir_info(full_path, recurse=False))
 
 
 @routes.get('/search/{query:.*}')
@@ -118,10 +108,30 @@ async def search(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
     user_dir = os.path.join('./data/bulk', username)
-    results = dir_info(user_dir, query)
+    results = await dir_info(user_dir, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
+
+@routes.get('/metadata/{path:.*}')
+async def get_metadata(request: web.Request):
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    try:
+        validated_path = validate_path(username, request.match_info['path'])
+    except ValueError as bad_path:
+        return web.json_response({'error': 'badly formed path'})
+    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
+    if not os.path.exists(full_path):
+        return web.json_response({
+            'error': 'path {path} does not exist'.format(path=validated_path)
+        })
+    if os.path.isdir(full_path):
+        return web.json_response({'error': 'path {path} is a directory'}.format(path=validated_path()))
+    return web.json_response(await some_metadata(full_path))
+  
 
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
@@ -174,7 +184,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await stat_data(filename, new_file_path, destPath)
+    response = await stat_data(new_file_path)
     return web.json_response([response])
 
 
