@@ -182,7 +182,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await some_metadata(new_file_path, ['name', 'path', 'mtime', 'size'])
+    response = await stat_data(new_file_path)
     return web.json_response([response])
 
 app = web.Application()
