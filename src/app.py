@@ -55,7 +55,7 @@ async def test_service(request: web.Request):
 @routes.get('/test-auth')
 async def test_auth(request: web.Request):
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     return web.Response(text="I'm authenticated as {}".format(username))
@@ -85,7 +85,7 @@ async def list_files(request: web.Request):
     ]
     """
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
@@ -103,7 +103,7 @@ async def list_files(request: web.Request):
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
@@ -116,7 +116,7 @@ async def search(request: web.Request):
 @routes.get('/metadata/{path:.*}')
 async def get_metadata(request: web.Request):
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
@@ -155,7 +155,7 @@ async def upload_files_chunked(request: web.Request):
     }]
     """
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
@@ -188,13 +188,13 @@ async def upload_files_chunked(request: web.Request):
     return web.json_response([response])
 
 
-@routes.post('/delete{path:.+}')
-def delete(request: web.Request):
+@routes.post('/delete/{path:.+}')
+async def delete(request: web.Request):
     """
     allows deletion of both directories and 
     """
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
@@ -204,20 +204,25 @@ def delete(request: web.Request):
     # make sure directory isn't home
     if not len(validated_path[len(username)+1:]) > 0:
         return web.json_response({'error': 'cannot delete home directory'})
-    full_path = os.path.join('./data/bulk', validated_path)
-    if os.path.isfile():
+    full_path = os.path.join('./data/bulk', validated_path) #TODO configify
+    metadata_path = os.path.join('./data/metadata', validated_path)
+    if os.path.isfile(full_path):
         os.remove(full_path)
+        if os.path.exists(metadata_path):
+            os.remove(metadata_path)
     elif os.path.isdir(full_path):
         shutil.rmtree(full_path)
+        if os.path.exists(metadata_path):
+            shutil.rmtree(metadata_path)
     else:
         return web.json_response({'error': 'could not delete {path}'.format(path=validated_path)})
     return web.Response(text='successfully deleted {path}'.format(path=validated_path))
 
 
-@routes.post('/rename{path:.+}')
+@routes.post('/rename/{path:.+}')
 async def rename(request: web.Request):
     try:
-        username = auth_client.get_user(request.headers['Authorization'])
+        username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
@@ -226,11 +231,17 @@ async def rename(request: web.Request):
         return web.json_response({'error': 'badly formed path'})
     # make sure directory isn't home
     if not len(validated_path[len(username)+1:]) > 0:
-        return web.json_response({'error': 'cannot rename home directory'})
+        return web.json_response({'error': 'cannot rename home directory'})    
     body = await request.post()
     new_name = body['newName']
-    full_path = os.path.join('./data/bulk', validated_path)
-    os.rename(full_path, new_name)
+    full_path = os.path.join('./data/bulk', validated_path) # TODO configify
+    metadata_path = os.path.join('./data/metadata', validated_path)
+    shutil.move(full_path, new_name)
+    if os.path.exists(metadata_path):
+        if os.path.isfile(metadata_path):
+            shutil.move(metadata_path, new_name + '.json')
+        else:
+            shutil.move(metadata_path, new_name)
     return web.Response(text='successfully renamed {path}'.format(path=validated_path))
 
 

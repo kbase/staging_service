@@ -24,7 +24,6 @@ async def stat_data(full_path: str, isFolder=False) -> dict:
 
 async def run_command(*args):
     """Run command in subprocess
-    
     Example from:
         http://asyncio.readthedocs.io/en/latest/subprocess.html
     """
@@ -44,8 +43,7 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        # TODO
-        pass
+        raise ChildProcessError()
 
 
 async def generate_metadata(filepath: str, metadata_path: str):
