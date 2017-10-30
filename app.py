@@ -49,11 +49,11 @@ def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
         for filename in files:
             full_path = os.path.join(root, filename)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(filename, full_path))
+                response.append(stat_data(full_path))
         for dirname in dirs:
             full_path = os.path.join(root, dirname)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(dirname, full_path, isFolder=True))
+                response.append(stat_data(full_path, isFolder=True))
         if recurse is False:
             break
     return response
@@ -90,7 +90,7 @@ async def list_files(request: web.Request):
         validated_path = validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
-    full_path = os.path.join('./data/bulk', validated_path)
+    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
     if not os.path.exists(full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=validated_path)
@@ -110,6 +110,26 @@ async def search(request: web.Request):
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
+
+@routes.get('/metadata/{path:.*}')
+async def get_metadata(request: web.Request):
+    try:
+        username = auth_client.get_user(request.headers['Authorization'])
+    except ValueError as bad_auth:
+        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    try:
+        validated_path = validate_path(username, request.match_info['path'])
+    except ValueError as bad_path:
+        return web.json_response({'error': 'badly formed path'})
+    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
+    if not os.path.exists(full_path):
+        return web.json_response({
+            'error': 'path {path} does not exist'.format(path=validated_path)
+        })
+    if os.path.isdir(full_path):
+        return web.json_response({'error': 'path {path} is a directory'}.format(path=validated_path()))
+    return web.json_response(some_metadata(full_path))
+  
 
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
@@ -162,7 +182,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await some_metadata(filename, new_file_path, ['name', 'path', 'mtime', 'size'])
+    response = await some_metadata(new_file_path, ['name', 'path', 'mtime', 'size'])
     return web.json_response([response])
 
 app = web.Application()

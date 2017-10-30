@@ -10,8 +10,9 @@ decoder = JSONDecoder()
 encoder = JSONEncoder()
 
 
-async def stat_data(filename: str, full_path: str, isFolder=False) -> dict:
+async def stat_data(full_path: str, isFolder=False) -> dict:
     file_stats = os.stat(full_path)
+    filename = os.path.basename(full_path)
     return {
         'name': filename,
         'path': full_path,
@@ -63,8 +64,9 @@ async def generate_metadata(filepath: str, metadata_path: str):
     return data
 
 
-async def some_metadata(filename: str, full_path: str, desired_fields: list):
+async def some_metadata(full_path: str, desired_fields=False):
     """
+    if desired fields isn't given as a list all fields will be returned
     assumes full_path is valid path to a file
     valid fields for desired_fields are:
     md5, lineCount, head, tail, name, path, mtime, size, isFolder
@@ -72,7 +74,7 @@ async def some_metadata(filename: str, full_path: str, desired_fields: list):
     user_path = full_path[len(DATA_DIR):]
     if os.path.isdir(full_path):
         return {'error': 'cannot determine metadata for directory'}
-    file_stats = await stat_data(filename, full_path)
+    file_stats = await stat_data(full_path)
     metadata_path = os.path.join(META_DIR, user_path+'.json')  # TODO this is a shitty way to store all the metadata
     if not os.path.exists(metadata_path):
         data = await generate_metadata(full_path, metadata_path)
@@ -84,6 +86,8 @@ async def some_metadata(filename: str, full_path: str, desired_fields: list):
             data = await f.read()
             data = decoder.decode(data)
     data = {**data, **file_stats}
+    if not desired_fields:
+        return data
     result = {}
     for key in desired_fields:
         try:
