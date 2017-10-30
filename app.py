@@ -43,17 +43,17 @@ async def test_auth(request: web.Request):
     return web.Response(text="I'm authenticated as {}".format(username))
 
 
-def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
+async def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
     response = []
     for root, dirs, files in os.walk(user_dir):
         for filename in files:
             full_path = os.path.join(root, filename)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(full_path))
+                response.append(await stat_data(full_path))
         for dirname in dirs:
             full_path = os.path.join(root, dirname)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(stat_data(full_path, isFolder=True))
+                response.append(await stat_data(full_path, isFolder=True))
         if recurse is False:
             break
     return response
@@ -95,7 +95,7 @@ async def list_files(request: web.Request):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=validated_path)
         })
-    return web.json_response(dir_info(full_path, recurse=False))
+    return web.json_response(await dir_info(full_path, recurse=False))
 
 
 @routes.get('/search/{query:.*}')
@@ -106,7 +106,7 @@ async def search(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
     user_dir = os.path.join('./data/bulk', username)
-    results = dir_info(user_dir, query)
+    results = await dir_info(user_dir, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
@@ -128,7 +128,7 @@ async def get_metadata(request: web.Request):
         })
     if os.path.isdir(full_path):
         return web.json_response({'error': 'path {path} is a directory'}.format(path=validated_path()))
-    return web.json_response(some_metadata(full_path))
+    return web.json_response(await some_metadata(full_path))
   
 
 @routes.post('/upload')
