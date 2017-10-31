@@ -85,4 +85,4 @@ class KBaseAuth2(object):
         # whichever one comes first
         self._cache._MAX_TIME_SEC = ret['cachefor']
         self._cache.add_valid_token(token, ret['user'], ret['expires'])
-        return user
+        return ret['user']
