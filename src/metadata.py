@@ -9,7 +9,7 @@ encoder = JSONEncoder()
 
 async def stat_data(full_path: str, isFolder=False) -> dict:
     """
-    only call this on a validated path
+    only call this on a validated full path
     """
     file_stats = os.stat(full_path)
     filename = os.path.basename(full_path)
@@ -20,6 +20,24 @@ async def stat_data(full_path: str, isFolder=False) -> dict:
         'size': file_stats.st_size,
         'isFolder': isFolder
     }
+
+
+async def dir_info(full_path, query: str = '', recurse=True) -> list:
+    """
+    only call this on a validated full path
+    """
+    response = []
+    for entry in os.scandir(full_path):
+        path = entry.path
+        if entry.is_dir():
+            if query == '' or path.find(query) != -1:
+                response.append(await stat_data(path, isFolder=True))
+            if recurse:
+                response.extend(await dir_info(path, query, recurse))
+        elif entry.is_file():
+            if query == '' or path.find(query) != -1:
+                response.append(await stat_data(path))
+    return response
 
 
 async def _generate_metadata(path: Path):

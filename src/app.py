@@ -4,7 +4,7 @@ import aiohttp_cors
 import uvloop
 import asyncio
 import os
-from metadata import stat_data, some_metadata
+from metadata import stat_data, some_metadata, dir_info
 import shutil
 from utils import Path
 from auth2Client import KBaseAuth2
@@ -12,23 +12,6 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
-
-
-# TODO use pep 471 ??
-async def dir_info(path: Path, query: str = '', recurse=True) -> list:
-    response = []
-    for root, dirs, files in os.walk(path.full_path):
-        for filename in files:
-            full_path = os.path.join(root, filename)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(await stat_data(full_path))
-        for dirname in dirs:
-            full_path = os.path.join(root, dirname)
-            if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
-                response.append(await stat_data(full_path, isFolder=True))
-        if recurse is False:
-            break
-    return response
 
 
 @routes.get('/test-service')
@@ -81,14 +64,15 @@ async def list_files(request: web.Request):
     try:
         path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'})
+        return web.json_response({'error': 'badly formed path'}) # TODO use format here for better error message
     if not os.path.exists(path.full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
         })
-    return web.json_response(await dir_info(path, recurse=False))
+    return web.json_response(await dir_info(path.full_path, recurse=False))
 
 
+#TODO should search be able to return folders or just files??
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
     try:
@@ -97,7 +81,7 @@ async def search(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
     user_dir = Path.validate_path(username, username)
-    results = await dir_info(user_dir, query)
+    results = await dir_info(user_dir.full_path, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
@@ -111,7 +95,7 @@ async def get_metadata(request: web.Request):
     try:
         path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'})
+        return web.json_response({'error': 'badly formed path'}) # TODO use format here for better error message
     if not os.path.exists(path.full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
@@ -162,7 +146,7 @@ async def upload_files_chunked(request: web.Request):
     try:
         path = Path.validate_path(username, destPath)
     except ValueError as error:
-        return web.json_response({'error': 'invalid destination for file for user'})
+        return web.json_response({'error': 'invalid destination for file for user'}) # TODO use format here for better error message
     with open(path.full_path, 'wb') as f:
         while True:
             chunk = await user_file.read_chunk()
