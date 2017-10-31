@@ -6,6 +6,7 @@ import asyncio
 import os
 from metadata import stat_data, some_metadata
 import shutil
+from utils import Path
 from auth2Client import KBaseAuth2
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -13,21 +14,10 @@ auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
 
 
-def validate_path(username: str, path: str) -> str:
-    """
-    @returns a path based on path that must start with username
-    throws an exeception for an invalid path or username
-    starts path at first occurance of username"""
-    path = os.path.normpath(path)
-    start = path.find(username)
-    if start == -1:
-        raise ValueError('username not in path')
-    return path[start:]
-
-
-async def dir_info(user_dir: str, query: str = '', recurse=True) -> list:
+# TODO use pep 471 ??
+async def dir_info(path: Path, query: str = '', recurse=True) -> list:
     response = []
-    for root, dirs, files in os.walk(user_dir):
+    for root, dirs, files in os.walk(path.full_path):
         for filename in files:
             full_path = os.path.join(root, filename)
             if full_path.find(query) != -1:  # TODO fuzzy wuzzy matching??
@@ -89,15 +79,14 @@ async def list_files(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
-        validated_path = validate_path(username, request.match_info['path'])
+        path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
-    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
-    if not os.path.exists(full_path):
+    if not os.path.exists(path.full_path):
         return web.json_response({
-            'error': 'path {path} does not exist'.format(path=validated_path)
+            'error': 'path {path} does not exist'.format(path=path.user_path)
         })
-    return web.json_response(await dir_info(full_path, recurse=False))
+    return web.json_response(await dir_info(path, recurse=False))
 
 
 @routes.get('/search/{query:.*}')
@@ -107,7 +96,7 @@ async def search(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
-    user_dir = os.path.join('./data/bulk', username)
+    user_dir = Path.validate_path(username, username)
     results = await dir_info(user_dir, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
@@ -120,18 +109,15 @@ async def get_metadata(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
-        validated_path = validate_path(username, request.match_info['path'])
+        path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
-    full_path = os.path.join('./data/bulk', validated_path) # TODO config file
-    if not os.path.exists(full_path):
+    if not os.path.exists(path.full_path):
         return web.json_response({
-            'error': 'path {path} does not exist'.format(path=validated_path)
+            'error': 'path {path} does not exist'.format(path=path.user_path)
         })
-    if os.path.isdir(full_path):
-        return web.json_response({'error': 'path {path} is a directory'}.format(path=validated_path()))
-    return web.json_response(await some_metadata(full_path))
-  
+    return web.json_response(await some_metadata(path))
+
 
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
@@ -172,19 +158,19 @@ async def upload_files_chunked(request: web.Request):
             counter += 1
     filename: str = user_file.filename
     size = 0
+    destPath = os.path.join(destPath, filename)
     try:
-        destPath = validate_path(username, destPath)
+        path = Path.validate_path(username, destPath)
     except ValueError as error:
-        return "invalid  username"
-    new_file_path = os.path.join('./data/bulk', destPath, filename)
-    with open(new_file_path, 'wb') as f:
+        return web.json_response({'error': 'invalid destination for file for user'})
+    with open(path.full_path, 'wb') as f:
         while True:
             chunk = await user_file.read_chunk()
             if not chunk:
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await stat_data(new_file_path)
+    response = await stat_data(path.full_path)
     return web.json_response([response])
 
 
@@ -198,25 +184,23 @@ async def delete(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
-        validated_path = validate_path(username, request.match_info['path'])
+        path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
     # make sure directory isn't home
-    if not len(validated_path[len(username)+1:]) > 0:
+    if path.user_path == username:
         return web.json_response({'error': 'cannot delete home directory'})
-    full_path = os.path.join('./data/bulk', validated_path) #TODO configify
-    metadata_path = os.path.join('./data/metadata', validated_path)
-    if os.path.isfile(full_path):
-        os.remove(full_path)
-        if os.path.exists(metadata_path):
-            os.remove(metadata_path)
-    elif os.path.isdir(full_path):
-        shutil.rmtree(full_path)
-        if os.path.exists(metadata_path):
-            shutil.rmtree(metadata_path)
+    if os.path.isfile(path.full_path):
+        os.remove(path.full_path)
+        if os.path.exists(path.metadata_path):
+            os.remove(path.metadata_path)
+    elif os.path.isdir(path.full_path):
+        shutil.rmtree(path.full_path)
+        if os.path.exists(path.metadata_path):
+            shutil.rmtree(path.metadata_path)
     else:
-        return web.json_response({'error': 'could not delete {path}'.format(path=validated_path)})
-    return web.Response(text='successfully deleted {path}'.format(path=validated_path))
+        return web.json_response({'error': 'could not delete {path}'.format(path=path.user_path)})
+    return web.Response(text='successfully deleted {path}'.format(path=path.user_path))
 
 
 @routes.post('/rename/{path:.+}')
@@ -226,23 +210,22 @@ async def rename(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
-        validated_path = validate_path(username, request.match_info['path'])
+        path = Path.validate_path(username, request.match_info['path'])
     except ValueError as bad_path:
         return web.json_response({'error': 'badly formed path'})
     # make sure directory isn't home
-    if not len(validated_path[len(username)+1:]) > 0:
+    if path.user_path == username:
         return web.json_response({'error': 'cannot rename home directory'})    
     body = await request.post()
     new_name = body['newName']
-    full_path = os.path.join('./data/bulk', validated_path) # TODO configify
-    metadata_path = os.path.join('./data/metadata', validated_path)
-    shutil.move(full_path, new_name)
-    if os.path.exists(metadata_path):
-        if os.path.isfile(metadata_path):
-            shutil.move(metadata_path, new_name + '.json')
+    # TODO new_name should be sanitized
+    shutil.move(path.full_path, new_name)
+    if os.path.exists(path.metadata_path):
+        if os.path.isfile(path.metadata_path):
+            shutil.move(path.metadata_path, new_name + '.json')
         else:
-            shutil.move(metadata_path, new_name)
-    return web.Response(text='successfully renamed {path}'.format(path=validated_path))
+            shutil.move(path.metadata_path, new_name)
+    return web.Response(text='successfully renamed {path}'.format(path=path.user_path))
 
 
 app = web.Application()
