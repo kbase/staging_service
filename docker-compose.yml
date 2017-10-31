@@ -1,0 +1,10 @@
+version: "3.1"
+services:
+  staging_service:
+    image: kbase/staging_service:develop
+    ports:
+      - "3000:3000"
+    # The following mount assumes the user dirs are under /data/bulk/{username}
+    # it further assumes that there is a pre-existing /data/metadata directory
+    volumes: 
+      - "./data:/kb/deployment/lib/src/data"
