@@ -22,18 +22,20 @@ async def stat_data(full_path: str, isFolder=False) -> dict:
     }
 
 
-async def dir_info(full_path, query: str = '', recurse=True) -> list:
+async def dir_info(full_path, show_hidden: bool, query: str = '', recurse=True) -> list:
     """
     only call this on a validated full path
     """
     response = []
     for entry in os.scandir(full_path):
         path = entry.path
+        if not show_hidden and entry.name.startswith('.'):
+            continue
         if entry.is_dir():
             if query == '' or path.find(query) != -1:
                 response.append(await stat_data(path, isFolder=True))
             if recurse:
-                response.extend(await dir_info(path, query, recurse))
+                response.extend(await dir_info(path, show_hidden, query, recurse))
         elif entry.is_file():
             if query == '' or path.find(query) != -1:
                 response.append(await stat_data(path))

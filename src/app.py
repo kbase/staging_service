@@ -69,7 +69,15 @@ async def list_files(request: web.Request):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
         })
-    return web.json_response(await dir_info(path.full_path, recurse=False))
+    try:
+        show_hidden = request.query['showHidden']
+        if 'true' == show_hidden or 'True' == show_hidden:
+            show_hidden = True
+        else:
+            show_hidden = False
+    except KeyError as no_query:
+        show_hidden = False
+    return web.json_response(await dir_info(path.full_path, show_hidden, recurse=False))
 
 
 #TODO should search be able to return folders or just files??
@@ -81,7 +89,15 @@ async def search(request: web.Request):
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
     user_dir = Path.validate_path(username, username)
-    results = await dir_info(user_dir.full_path, query)
+    try:
+        show_hidden = request.query['showHidden']
+        if 'true' == show_hidden or 'True' == show_hidden:
+            show_hidden = True
+        else:
+            show_hidden = False
+    except KeyError as no_query:
+        show_hidden = False
+    results = await dir_info(user_dir.full_path, show_hidden, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
