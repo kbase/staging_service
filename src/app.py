@@ -8,6 +8,7 @@ from metadata import stat_data, some_metadata, dir_info
 import shutil
 from utils import Path
 from auth2Client import KBaseAuth2
+from globus import assert_globusid_exists, is_globusid
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 auth_client = KBaseAuth2()
@@ -58,7 +59,9 @@ async def list_files(request: web.Request):
     ]
     """
     try:
-        username = await auth_client.get_user(request.headers['Authorization'])
+        token = request.headers['Authorization']
+        username = await auth_client.get_user(token)
+        await assert_globusid_exists(username, token)
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     try:
@@ -69,6 +72,7 @@ async def list_files(request: web.Request):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
         })
+    
     try:
         show_hidden = request.query['showHidden']
         if 'true' == show_hidden or 'True' == show_hidden:
@@ -141,7 +145,9 @@ async def upload_files_chunked(request: web.Request):
     }]
     """
     try:
-        username = await auth_client.get_user(request.headers['Authorization'])
+        token = request.headers['Authorization']
+        username = await auth_client.get_user(token)
+        await assert_globusid_exists(username, token)
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     reader = await request.multipart()
@@ -190,6 +196,8 @@ async def delete(request: web.Request):
     # make sure directory isn't home
     if path.user_path == username:
         return web.json_response({'error': 'cannot delete home directory'})
+    if is_globusid(path):
+        return web.json_response({'error': 'cannot delete protected file'})
     if os.path.isfile(path.full_path):
         os.remove(path.full_path)
         if os.path.exists(path.metadata_path):
@@ -215,7 +223,9 @@ async def rename(request: web.Request):
         return web.json_response({'error': 'badly formed path'})
     # make sure directory isn't home
     if path.user_path == username:
-        return web.json_response({'error': 'cannot rename home directory'})    
+        return web.json_response({'error': 'cannot rename home directory'})
+    if is_globusid(path):
+        return web.json_response({'error': 'cannot rename protected file'})
     body = await request.post()
     new_name = body['newName']
     # TODO new_name should be sanitized
