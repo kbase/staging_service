@@ -35,7 +35,7 @@ async def test_auth(request: web.Request):
     return web.Response(text="I'm authenticated as {}".format(username))
 
 
-@routes.get('/list/{path:.+}')
+@routes.get('/list/{path:.*}')
 async def list_files(request: web.Request):
     """
     {get} /list/:path list files/folders in path
@@ -64,10 +64,8 @@ async def list_files(request: web.Request):
         await assert_globusid_exists(username, token)
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
-    try:
-        path = Path.validate_path(username, request.match_info['path'])
-    except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'}) # TODO use format here for better error message
+    path = Path.validate_path(username, request.match_info['path'])
+
     if not os.path.exists(path.full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
@@ -92,7 +90,7 @@ async def search(request: web.Request):
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
     query = request.match_info['query']
-    user_dir = Path.validate_path(username, username)
+    user_dir = Path.validate_path(username)
     try:
         show_hidden = request.query['showHidden']
         if 'true' == show_hidden or 'True' == show_hidden:
@@ -112,10 +110,7 @@ async def get_metadata(request: web.Request):
         username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
-    try:
-        path = Path.validate_path(username, request.match_info['path'])
-    except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'}) # TODO use format here for better error message
+    path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
@@ -165,10 +160,7 @@ async def upload_files_chunked(request: web.Request):
     filename: str = user_file.filename
     size = 0
     destPath = os.path.join(destPath, filename)
-    try:
-        path = Path.validate_path(username, destPath)
-    except ValueError as error:
-        return web.json_response({'error': 'invalid destination for file for user'}) # TODO use format here for better error message
+    path = Path.validate_path(username, destPath)
     with open(path.full_path, 'wb') as f:
         while True:
             chunk = await user_file.read_chunk()
@@ -189,10 +181,7 @@ async def delete(request: web.Request):
         username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
-    try:
-        path = Path.validate_path(username, request.match_info['path'])
-    except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'})
+    path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
         return web.json_response({'error': 'cannot delete home directory'})
@@ -217,10 +206,7 @@ async def rename(request: web.Request):
         username = await auth_client.get_user(request.headers['Authorization'])
     except ValueError as bad_auth:
         return web.json_response({'error': 'Unable to validate authentication credentials'})
-    try:
-        path = Path.validate_path(username, request.match_info['path'])
-    except ValueError as bad_path:
-        return web.json_response({'error': 'badly formed path'})
+    path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
         return web.json_response({'error': 'cannot rename home directory'})

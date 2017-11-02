@@ -7,12 +7,13 @@ decoder = JSONDecoder()
 encoder = JSONEncoder()
 
 
-async def stat_data(full_path: str, isFolder=False) -> dict:
+async def stat_data(full_path: str) -> dict:
     """
     only call this on a validated full path
     """
     file_stats = os.stat(full_path)
     filename = os.path.basename(full_path)
+    isFolder = os.path.isdir(full_path)
     return {
         'name': filename,
         'path': full_path,
@@ -33,7 +34,7 @@ async def dir_info(full_path, show_hidden: bool, query: str = '', recurse=True) 
             continue
         if entry.is_dir():
             if query == '' or path.find(query) != -1:
-                response.append(await stat_data(path, isFolder=True))
+                response.append(await stat_data(path))
             if recurse:
                 response.extend(await dir_info(path, show_hidden, query, recurse))
         elif entry.is_file():
@@ -65,9 +66,9 @@ async def some_metadata(path: Path, desired_fields=False):
     valid fields for desired_fields are:
     md5, lineCount, head, tail, name, path, mtime, size, isFolder
     """
-    if os.path.isdir(path.full_path):
-        return {'error': 'cannot determine metadata for directory'}
     file_stats = await stat_data(path.full_path)
+    if file_stats['isFolder']:
+        return file_stats
     if not os.path.exists(path.metadata_path):
         data = await _generate_metadata(path)
     elif os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000:  # metadata is older than file

@@ -26,7 +26,7 @@ async def _get_globus_ids(token):
 
 
 def _globus_id_path(username: str):
-    return Path.validate_path(username, username+'/.globus_id')
+    return Path.validate_path(username, '.globus_id')
 
 
 def is_globusid(path: Path, username: str):

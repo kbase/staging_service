@@ -36,16 +36,16 @@ class Path(object):
         self.user_path = user_path
         
     @staticmethod
-    def validate_path(username: str, path: str):
+    def validate_path(username: str, path: str=''):
         """
         @returns a path object based on path that must start with username
         throws an exeception for an invalid path or username
         starts path at first occurance of username"""
-        path = os.path.normpath(path)
-        start = path.find(username)
-        if start == -1:
-            raise ValueError('username not in path')
-        user_path = path[start:]
+        if len(path) > 0:
+            path = os.path.normpath(path)
+            if path[0] == '/':
+                path = path[1:]
+        user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
         return Path(full_path, metadata_path, user_path)
