@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+
 async def run_command(*args):
     """Run command in subprocess
     Example from:
@@ -34,7 +35,7 @@ class Path(object):
         self.full_path = full_path
         self.metadata_path = metadata_path
         self.user_path = user_path
-        
+
     @staticmethod
     def validate_path(username: str, path: str=''):
         """

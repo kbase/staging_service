@@ -59,6 +59,10 @@ async def _generate_metadata(path: Path):
     return data
 
 
+# TODO when an importer tells you something has been imported, read in JSON and rewrite it
+# alternatively do JSON surgery but that seems like premature optimization
+
+
 async def some_metadata(path: Path, desired_fields=False):
     """
     if desired fields isn't given as a list all fields will be returned
@@ -71,9 +75,10 @@ async def some_metadata(path: Path, desired_fields=False):
         return file_stats
     if not os.path.exists(path.metadata_path):
         data = await _generate_metadata(path)
-    elif os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000:  # metadata is older than file
+    # if metadata older than file: regenerate
+    elif os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000:
         data = await _generate_metadata(path)
-    else:  # metadata already exists and is up to date  
+    else:  # metadata already exists and is up to date
         async with aiofiles.open(path.metadata_path, mode='r') as f:
             # make metadata fields local variables
             data = await f.read()
@@ -84,7 +89,7 @@ async def some_metadata(path: Path, desired_fields=False):
     result = {}
     for key in desired_fields:
         try:
-            result[key] = data[key]  
+            result[key] = data[key]
         except KeyError as no_data:
             result[key] = 'error: data not found'  # TODO is this a good way to handle this?
     return result

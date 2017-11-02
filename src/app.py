@@ -70,7 +70,7 @@ async def list_files(request: web.Request):
         return web.json_response({
             'error': 'path {path} does not exist'.format(path=path.user_path)
         })
-    
+
     try:
         show_hidden = request.query['showHidden']
         if 'true' == show_hidden or 'True' == show_hidden:
@@ -82,7 +82,6 @@ async def list_files(request: web.Request):
     return web.json_response(await dir_info(path.full_path, show_hidden, recurse=False))
 
 
-#TODO should search be able to return folders or just files??
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
     try:
@@ -175,7 +174,7 @@ async def upload_files_chunked(request: web.Request):
 @routes.post('/delete/{path:.+}')
 async def delete(request: web.Request):
     """
-    allows deletion of both directories and 
+    allows deletion of both directories and files
     """
     try:
         username = await auth_client.get_user(request.headers['Authorization'])

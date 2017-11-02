@@ -41,7 +41,8 @@ async def assert_globusid_exists(username, token):
         globus_ids = await _get_globus_ids(token)
         if len(globus_ids) == 0:
             return
-        # TODO in the future this should support writing multiple lines such as the commented out code below, for multiple linked accounts
+        # TODO in the future this should support writing multiple lines
+        # such as the commented code below, for multiple linked accounts
         # text = '\n'.join(globus_ids)
         text = globus_ids[0]
         async with aiofiles.open(path.full_path, mode='w') as globus_file:
