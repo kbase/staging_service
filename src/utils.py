@@ -1,4 +1,5 @@
 import asyncio
+from aiohttp.web import HTTPInternalServerError
 import os
 
 
@@ -23,7 +24,8 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        raise ChildProcessError()
+        raise HTTPInternalServerError(text='command {cmd} failed'.format(cmd=' '.join(args)))
+        # TODO this should give better information on what went wrong in the process
 
 
 class Path(object):

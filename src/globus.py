@@ -8,7 +8,7 @@ _AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
 
 async def _get_globus_ids(token):
     if not token:
-        raise ValueError('Must supply token')
+        raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
         async with session.get(_AUTH2_ME_URL, headers={'Authorization': token}) as resp:
             ret = await resp.json()
@@ -16,10 +16,11 @@ async def _get_globus_ids(token):
                 try:
                     err = ret.json()
                 except:
-                    ret.raise_for_status()
-                raise ValueError('Error connecting to auth service: {} {}\n{}'
-                                 .format(ret['error']['httpcode'], resp.reason,
-                                         err['error']['message']))
+                    ret.raise_for_status()  # TODO what does this accomplish
+                raise aiohttp.web.HTTPUnauthorized(
+                        text='Error connecting to auth service: {} {}\n{}'
+                        .format(ret['error']['httpcode'], resp.reason,
+                                err['error']['message']))
     return list(map(lambda x: x['provusername'],
                     filter(lambda x: x['provider'] == 'Globus',
                     ret['idents'])))

@@ -28,10 +28,7 @@ async def test_service(request: web.Request):
 
 @routes.get('/test-auth')
 async def test_auth(request: web.Request):
-    try:
-        username = await auth_client.get_user(request.headers['Authorization'])
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    username = await auth_client.get_user(request.headers['Authorization'])
     return web.Response(text="I'm authenticated as {}".format(username))
 
 
@@ -58,19 +55,13 @@ async def list_files(request: web.Request):
       }
     ]
     """
-    try:
-        token = request.headers['Authorization']
-        username = await auth_client.get_user(token)
-        await assert_globusid_exists(username, token)
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    token = request.headers['Authorization']
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info['path'])
 
     if not os.path.exists(path.full_path):
-        return web.json_response({
-            'error': 'path {path} does not exist'.format(path=path.user_path)
-        })
-
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     try:
         show_hidden = request.query['showHidden']
         if 'true' == show_hidden or 'True' == show_hidden:
@@ -84,10 +75,7 @@ async def list_files(request: web.Request):
 
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
-    try:
-        username = await auth_client.get_user(request.headers['Authorization'])
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    username = await auth_client.get_user(request.headers['Authorization'])
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
     try:
@@ -105,15 +93,10 @@ async def search(request: web.Request):
 
 @routes.get('/metadata/{path:.*}')
 async def get_metadata(request: web.Request):
-    try:
-        username = await auth_client.get_user(request.headers['Authorization'])
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
-        return web.json_response({
-            'error': 'path {path} does not exist'.format(path=path.user_path)
-        })
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     return web.json_response(await some_metadata(path))
 
 
@@ -138,12 +121,9 @@ async def upload_files_chunked(request: web.Request):
     "name": "Sandbox_Experiments-1.tsv"
     }]
     """
-    try:
-        token = request.headers['Authorization']
-        username = await auth_client.get_user(token)
-        await assert_globusid_exists(username, token)
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    token = request.headers['Authorization']
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     reader = await request.multipart()
     counter = 0
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
@@ -171,21 +151,18 @@ async def upload_files_chunked(request: web.Request):
     return web.json_response([response])
 
 
-@routes.post('/delete/{path:.+}')
+@routes.delete('/delete/{path:.+}')
 async def delete(request: web.Request):
     """
     allows deletion of both directories and files
     """
-    try:
-        username = await auth_client.get_user(request.headers['Authorization'])
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
-        return web.json_response({'error': 'cannot delete home directory'})
-    if is_globusid(path):
-        return web.json_response({'error': 'cannot delete protected file'})
+        raise web.HTTPForbidden(text='cannot delete home directory')
+    if is_globusid(path, username):
+        raise web.HTTPForbidden(text='cannot delete protected file')
     if os.path.isfile(path.full_path):
         os.remove(path.full_path)
         if os.path.exists(path.metadata_path):
@@ -195,32 +172,34 @@ async def delete(request: web.Request):
         if os.path.exists(path.metadata_path):
             shutil.rmtree(path.metadata_path)
     else:
-        return web.json_response({'error': 'could not delete {path}'.format(path=path.user_path)})
+        raise web.HTTPNotFound(text='could not delete{path}'.format(path=path.user_path))
     return web.Response(text='successfully deleted {path}'.format(path=path.user_path))
 
 
-@routes.post('/rename/{path:.+}')
+@routes.patch('/mv/{path:.+}')
 async def rename(request: web.Request):
-    try:
-        username = await auth_client.get_user(request.headers['Authorization'])
-    except ValueError as bad_auth:
-        return web.json_response({'error': 'Unable to validate authentication credentials'})
+    username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
-        return web.json_response({'error': 'cannot rename home directory'})
-    if is_globusid(path):
-        return web.json_response({'error': 'cannot rename protected file'})
+        raise web.HTTPForbidden(text='cannot rename home directory')
+    if is_globusid(path, username):
+        raise web.HTTPForbidden(text='cannot rename protected file')
     body = await request.post()
-    new_name = body['newName']
-    # TODO new_name should be sanitized
-    shutil.move(path.full_path, new_name)
-    if os.path.exists(path.metadata_path):
-        if os.path.isfile(path.metadata_path):
-            shutil.move(path.metadata_path, new_name + '.json')
+    new_path = body['newPath']
+    new_path = Path.validate_path(username, new_path)
+    if os.path.exists(path.full_path):
+        if not os.path.exists(new_path.full_path):
+            shutil.move(path.full_path, new_path.full_path)
+            if os.path.exists(path.metadata_path):
+                shutil.move(path.metadata_path, new_path.metadata_path)
         else:
-            shutil.move(path.metadata_path, new_name)
-    return web.Response(text='successfully renamed {path}'.format(path=path.user_path))
+            raise web.HTTPConflict(
+                text='{new_path} allready exists'.format(new_path=new_path.user_path))
+    else:
+        raise web.HTTPNotFound(text='{path} not found'.format(path=path.user_path))
+    return web.Response(text='successfully moved {path} to {new_path}'
+                        .format(path=path.user_path, new_path=new_path.user_path))
 
 
 app = web.Application()

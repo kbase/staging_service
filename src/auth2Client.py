@@ -33,9 +33,9 @@ class TokenCache(object):
 
     def add_valid_token(self, token, user, expire_time):
         if not token:
-            raise ValueError('Must supply token')
+            raise aiohttp.web.HTTPBadRequest(text='Must supply token')
         if not user:
-            raise ValueError('Must supply user')
+            raise aiohttp.web.HTTPBadRequest(text='Must supply user')
         token = hashlib.sha256(token.encode('utf8')).hexdigest()
         self._cache[token] = [user, _time.time(), expire_time]
         if len(self._cache) > self._maxsize:
@@ -66,7 +66,7 @@ class KBaseAuth2(object):
 
     async def get_user(self, token):
         if not token:
-            raise ValueError('Must supply token')
+            raise aiohttp.web.HTTPBadRequest(text='Must supply token')
         user = self._cache.get_user(token)
         if user:
             return user
@@ -78,10 +78,11 @@ class KBaseAuth2(object):
                     try:
                         err = ret.json()
                     except:
-                        ret.raise_for_status()
-                    raise ValueError('Error connecting to auth service: {} {}\n{}'
-                                     .format(ret['error']['httpcode'], resp.reason,
-                                             err['error']['message']))
+                        ret.raise_for_status()  # TODO check that this works
+                    raise aiohttp.web.HTTPUnauthorized(
+                        text='Error connecting to auth service: {} {}\n{}'
+                        .format(ret['error']['httpcode'], resp.reason,
+                                err['error']['message']))
         # whichever one comes first
         self._cache._MAX_TIME_SEC = ret['cachefor']
         self._cache.add_valid_token(token, ret['user'], ret['expires'])
