@@ -1,4 +1,4 @@
-from utils import Path
+from .utils import Path
 import aiohttp
 import aiofiles
 import os

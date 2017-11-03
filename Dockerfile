@@ -11,10 +11,10 @@ COPY ./ /kb/module
     # cp -vr ./ /kb/deployment/lib/staging_service
 RUN pip install -r /kb/module/requirements.txt
 
-RUN cp -r /kb/module/src /kb/deployment/lib
+RUN cp -r /kb/module/staging_service /kb/deployment/lib
 
 EXPOSE 3000
 
-WORKDIR /kb/deployment/lib/src
+WORKDIR /kb/deployment/lib
 
-ENTRYPOINT [ "python", "app.py" ]
+ENTRYPOINT [ "python", "-m", "staging_service" ]

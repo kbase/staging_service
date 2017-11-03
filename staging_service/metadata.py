@@ -1,6 +1,6 @@
 from json import JSONDecoder, JSONEncoder
 import aiofiles
-from utils import run_command, Path
+from .utils import run_command, Path
 import os
 
 decoder = JSONDecoder()

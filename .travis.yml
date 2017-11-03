@@ -4,6 +4,8 @@ services:
   - docker
 script:
   - make
+  - pip install -r requirements.txt
+  - pytest -v
 after_success:
   - IMAGE_NAME=kbase/staging_service ./build/push2dockerhub.sh
 env:

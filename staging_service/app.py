@@ -1,16 +1,11 @@
 from aiohttp import web
 import aiohttp_cors
-#  TODO see if uvloop helps at all
-import uvloop
-import asyncio
 import os
-from metadata import stat_data, some_metadata, dir_info
+from .metadata import stat_data, some_metadata, dir_info
 import shutil
-from utils import Path
-from auth2Client import KBaseAuth2
-from globus import assert_globusid_exists, is_globusid
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
+from .utils import Path
+from .auth2Client import KBaseAuth2
+from .globus import assert_globusid_exists, is_globusid
 auth_client = KBaseAuth2()
 routes = web.RouteTableDef()
 
@@ -202,16 +197,17 @@ async def rename(request: web.Request):
                         .format(path=path.user_path, new_path=new_path.user_path))
 
 
-app = web.Application()
-app.router.add_routes(routes)
-cors = aiohttp_cors.setup(app, defaults={
-    "*": aiohttp_cors.ResourceOptions(
-            allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
-        )
-})
-# Configure CORS on all routes.
-for route in list(app.router.routes()):
-    cors.add(route)
-web.run_app(app, port=3000)
+def app_factory():
+    app = web.Application()
+    app.router.add_routes(routes)
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+            )
+    })
+    # Configure CORS on all routes.
+    for route in list(app.router.routes()):
+        cors.add(route)
+    return app
