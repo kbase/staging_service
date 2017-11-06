@@ -29,8 +29,8 @@ async def run_command(*args):
 
 
 class Path(object):
-    _META_DIR = '/data/metadata/'  # TODO configify
-    _DATA_DIR = '/data/bulk/'
+    _META_DIR = '/kb/deployment/lib/src/data/metadata/'  # TODO configify
+    _DATA_DIR = '/kb/deployment/lib/src/data/bulk/'
     __slots__ = ['full_path', 'metadata_path', 'user_path']
 
     def __init__(self, full_path, metadata_path, user_path):
