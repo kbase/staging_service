@@ -135,7 +135,8 @@ async def upload_files_chunked(request: web.Request):
     size = 0
     destPath = os.path.join(destPath, filename)
     path = Path.validate_path(username, destPath)
-    with open(path.full_path, 'wb') as f:
+    os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
+    with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
         while True:
             chunk = await user_file.read_chunk()
             if not chunk:

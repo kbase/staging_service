@@ -6,5 +6,5 @@ services:
       - "3000:3000"
     # The following mount assumes the user dirs are under /data/bulk/{username}
     # it further assumes that there is a pre-existing /data/metadata directory
-    volumes: 
+    volumes:
       - "./data:/kb/deployment/lib/src/data"
