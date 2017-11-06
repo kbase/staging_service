@@ -52,6 +52,7 @@ async def _generate_metadata(path: Path):
     # first output of wc is the count
     lineCount = await run_command('wc', '-l', path.full_path)
     data['lineCount'] = lineCount.split()[0]
+    # TODO this doesn't handle binary files
     data['head'] = await run_command('head', '-10', path.full_path)
     data['tail'] = await run_command('tail', '-10', path.full_path)
     async with aiofiles.open(path.metadata_path, mode='w') as f:
