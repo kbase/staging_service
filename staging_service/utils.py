@@ -48,6 +48,8 @@ class Path(object):
             path = os.path.normpath(path)
             if path[0] == '/':
                 path = path[1:]
+            if path[:2] == '..':
+                path = path[2:]
         user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)

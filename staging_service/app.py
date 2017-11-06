@@ -167,7 +167,7 @@ async def delete(request: web.Request):
         if os.path.exists(path.metadata_path):
             shutil.rmtree(path.metadata_path)
     else:
-        raise web.HTTPNotFound(text='could not delete{path}'.format(path=path.user_path))
+        raise web.HTTPNotFound(text='could not delete {path}'.format(path=path.user_path))
     return web.Response(text='successfully deleted {path}'.format(path=path.user_path))
 
 
