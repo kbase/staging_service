@@ -52,8 +52,12 @@ async def _generate_metadata(path: Path):
     # first output of wc is the count
     lineCount = await run_command('wc', '-l', path.full_path)
     data['lineCount'] = lineCount.split()[0]
-    data['head'] = await run_command('head', '-10', path.full_path)
-    data['tail'] = await run_command('tail', '-10', path.full_path)
+    try: # all things that expect a text file to decode output should be in this block
+        data['head'] = await run_command('head', '-10', path.full_path)
+        data['tail'] = await run_command('tail', '-10', path.full_path)
+    except UnicodeDecodeError as not_text_file:
+        data['head'] = 'not text file'
+        data['tail'] = 'not text file'
     async with aiofiles.open(path.metadata_path, mode='w') as f:
         await f.writelines(encoder.encode(data))
     return data
