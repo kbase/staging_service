@@ -7,4 +7,4 @@ services:
     # The following mount assumes the user dirs are under /data/bulk/{username}
     # it further assumes that there is a pre-existing /data/metadata directory
     volumes: 
-      - "./data:/data"
+      - "./data:/kb/deployment/lib/src/data"
