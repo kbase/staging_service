@@ -8,9 +8,8 @@ def cli(loop, test_client):
     return loop.run_until_complete(test_client(app))
 
 
-async def test_hello(cli):
+async def test_service(cli):
     resp = await cli.get('/test-service')
     assert resp.status == 200
     text = await resp.text()
     assert 'This is just a test. This is only a test.' in text
-
