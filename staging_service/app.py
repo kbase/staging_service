@@ -54,7 +54,6 @@ async def list_files(request: web.Request):
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info['path'])
-
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     try:
