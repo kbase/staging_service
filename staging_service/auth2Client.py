@@ -52,16 +52,11 @@ class KBaseAuth2(object):
     A very basic KBase auth client for the Python server.
     '''
 
-    _AUTH_URL = 'https://ci.kbase.us/services/auth/api/V2/token'
-    # TODO config this up
-
-    def __init__(self, auth_url=None):
+    def __init__(self, auth_url):
         '''
         Constructor
         '''
         self._authurl = auth_url
-        if not self._authurl:
-            self._authurl = self._AUTH_URL
         self._cache = TokenCache()
 
     async def get_user(self, token):
@@ -70,7 +65,6 @@ class KBaseAuth2(object):
         user = self._cache.get_user(token)
         if user:
             return user
-        # TODO this part should not be blocking and should await the auth server
         async with aiohttp.ClientSession() as session:
             async with session.get(self._authurl, headers={'Authorization': token}) as resp:
                 ret = await resp.json()

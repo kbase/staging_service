@@ -6,7 +6,7 @@ import shutil
 from .utils import Path
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
-auth_client = KBaseAuth2()
+
 routes = web.RouteTableDef()
 
 
@@ -216,7 +216,7 @@ async def rename(request: web.Request):
                         .format(path=path.user_path, new_path=new_path.user_path))
 
 
-def app_factory():
+def app_factory(config):
     app = web.Application()
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(app, defaults={
@@ -229,4 +229,10 @@ def app_factory():
     # Configure CORS on all routes.
     for route in list(app.router.routes()):
         cors.add(route)
+    # TODO this is pretty hacky dependency injection
+    # potentially some type of code restructure would allow this without a bunch of globals
+    Path._DATA_DIR = config['staging_service']['DATA_DIR']
+    Path._META_DIR = config['staging_service']['META_DIR']
+    global auth_client
+    auth_client = KBaseAuth2(config['staging_service']['AUTH_URL'])
     return app

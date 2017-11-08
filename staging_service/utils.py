@@ -29,8 +29,8 @@ async def run_command(*args):
 
 
 class Path(object):
-    _META_DIR = '/kb/deployment/lib/src/data/metadata/'  # TODO configify
-    _DATA_DIR = '/kb/deployment/lib/src/data/bulk/'
+    _META_DIR = None  # expects to be set by config
+    _DATA_DIR = None  # expects to be set by config
     __slots__ = ['full_path', 'metadata_path', 'user_path']
 
     def __init__(self, full_path, metadata_path, user_path):
@@ -46,10 +46,10 @@ class Path(object):
         starts path at first occurance of username"""
         if len(path) > 0:
             path = os.path.normpath(path)
-            if path[0] == '/':
+            path = path.replace('.', '/')
+            path = os.path.normpath(path)
+            if path.startswith('/'):
                 path = path[1:]
-            if path[:2] == '..':
-                path = path[2:]
         user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)

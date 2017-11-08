@@ -13,7 +13,8 @@
             "module": "staging_service",
             "cwd": "${workspaceRoot}",
             "args": [],
-            "env": {},
+            //note the setting of env should be the same as entrypoint.sh
+            "env": {"KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/local.cfg"},
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -32,7 +33,8 @@
                 "-sv"
             ],
             "cwd": "${workspaceRoot}",
-            "env": {},
+            //note the setting of env should be the same as entrypoint.sh
+            "env": {"KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/testing.cfg"},
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
