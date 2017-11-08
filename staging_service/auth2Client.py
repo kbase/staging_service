@@ -52,7 +52,6 @@ class KBaseAuth2(object):
     A very basic KBase auth client for the Python server.
     '''
 
-
     def __init__(self, auth_url):
         '''
         Constructor

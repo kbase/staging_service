@@ -94,16 +94,6 @@ def test_path_sanitation(username, path):
     assert validated.metadata_path.find('../') == -1
 
 
-
-# TODO should I have constraints on text
-# @given(st.text(), st.text())
-# def test_path_sanitation(username, path):
-#     validated = utils.Path.validate_path(username, path)
-#     dumb
-
-# notes
-
-
 # @given(st.lists(st.integers()))
 # def test_sort(xs):
 #     sorted_xs = list(sorted(xs))
@@ -115,7 +105,6 @@ def test_path_sanitation(username, path):
 #     )
 
 
-
 # @hypothesis.given(#stuf)
 # def test_against_brute_force(input):
 #     assert (
@@ -123,4 +112,3 @@ def test_path_sanitation(username, path):
 #         ==
 #         # api calls
 #     )
-
