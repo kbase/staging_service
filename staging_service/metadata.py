@@ -66,7 +66,7 @@ async def _generate_metadata(path: Path):
 async def add_upa(path: Path, UPA: str):
     if os.path.exists(path.metadata_path):
         async with aiofiles.open(path.metadata_path, mode='r') as extant:
-            data = await extant.readall()
+            data = await extant.read()
             data = decoder.decode(data)
     else:
         data = await _generate_metadata(path)  # TODO performance optimization
