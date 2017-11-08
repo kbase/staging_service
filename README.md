@@ -29,4 +29,4 @@ to run tests TODO
 
 # debugging
 
-Included configurations for the Visual Studio Code debugger for python that mirror what is in the entrypoint.sh and testing configuration to run locally in the debugger, set breakpoints and if you open the project in VSCode the debugger should be good to go 
+Included configurations for the Visual Studio Code debugger for python that mirror what is in the entrypoint.sh and testing configuration to run locally in the debugger, set breakpoints and if you open the project in VSCode the debugger should be good to go. The provided configurations can run locally and run tests locally

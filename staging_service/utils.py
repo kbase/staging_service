@@ -46,6 +46,8 @@ class Path(object):
         starts path at first occurance of username"""
         if len(path) > 0:
             path = os.path.normpath(path)
+            while path[:3] == '/..' or path[:3] == '../':
+                path = path[3:]
             if path[0] == '/':
                 path = path[1:]
             if path[:2] == '..':
