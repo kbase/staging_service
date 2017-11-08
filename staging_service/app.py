@@ -162,7 +162,7 @@ async def define_UPA(request: web.Request):
         raise web.HTTPBadRequest(text='must provide UPA field in body')
     UPA = await part.text()
     await add_upa(path, UPA)
-    return web.Response(text='succesfully added UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path))
+    return web.Response(text='succesfully updated UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path))
 
 
 @routes.delete('/delete/{path:.+}')
