@@ -46,12 +46,10 @@ class Path(object):
         starts path at first occurance of username"""
         if len(path) > 0:
             path = os.path.normpath(path)
-            while path[:3] == '/..' or path[:3] == '../':
-                path = path[3:]
-            if path[0] == '/':
+            path = path.replace('.', '/')
+            path = os.path.normpath(path)
+            if path.startswith('/'):
                 path = path[1:]
-            if path[:2] == '..':
-                path = path[2:]
         user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
