@@ -63,8 +63,16 @@ async def _generate_metadata(path: Path):
     return data
 
 
-# TODO when an importer tells you something has been imported, read in JSON and rewrite it
-# alternatively do JSON surgery but that seems like premature optimization
+async def add_upa(path: Path, UPA: str):
+    if os.path.exists(path.metadata_path):
+        async with aiofiles.open(path.metadata_path, mode='r') as extant:
+            data = await extant.readall()
+            data = decoder.decode(data)
+    else:
+        data = await _generate_metadata(path)  # TODO performance optimization
+    data['UPA'] = UPA
+    async with aiofiles.open(path.metadata_path, mode='w') as update:
+        await update.writelines(encoder.encode(data))
 
 
 async def some_metadata(path: Path, desired_fields=False):

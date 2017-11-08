@@ -1,7 +1,7 @@
 from aiohttp import web
 import aiohttp_cors
 import os
-from .metadata import stat_data, some_metadata, dir_info
+from .metadata import stat_data, some_metadata, dir_info, add_upa
 import shutil
 from .utils import Path
 from .auth2Client import KBaseAuth2
@@ -144,6 +144,25 @@ async def upload_files_chunked(request: web.Request):
             f.write(chunk)
     response = await stat_data(path.full_path)
     return web.json_response([response])
+
+
+@routes.post('/define-upa/{path:.+}')
+async def define_UPA(request: web.Request):
+    """
+    creates an UPA as a field in the metadata file corresponding to the filepath given
+    """
+    username = await auth_client.get_user(request.headers['Authorization'])
+    path = Path.validate_path(username, request.match_info['path'])
+    if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
+        # TODO the security model here is to not care if someone wants to put in a false upa to metadata
+        raise web.HTTPNotFound(text='no file found found on path {}'.format(path.user_path))
+    reader = await request.multipart()
+    part = await reader.next()
+    if not part.name == 'UPA':
+        raise web.HTTPBadRequest(text='must provide UPA field in body')
+    UPA = await part.text()
+    await add_upa(path, UPA)
+    return web.Response(text='succesfully added UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path))
 
 
 @routes.delete('/delete/{path:.+}')
