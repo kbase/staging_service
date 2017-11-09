@@ -154,7 +154,7 @@ async def define_UPA(request: web.Request):
     username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
-        # TODO the security model here is to not care if someone wants to put in a false upa to metadata
+        # TODO the security model here is to not care if someone wants to put in a false upa
         raise web.HTTPNotFound(text='no file found found on path {}'.format(path.user_path))
     reader = await request.multipart()
     part = await reader.next()
@@ -162,7 +162,9 @@ async def define_UPA(request: web.Request):
         raise web.HTTPBadRequest(text='must provide UPA field in body')
     UPA = await part.text()
     await add_upa(path, UPA)
-    return web.Response(text='succesfully updated UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path))
+    return web.Response(
+        text='succesfully updated UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path)
+        )
 
 
 @routes.delete('/delete/{path:.+}')
