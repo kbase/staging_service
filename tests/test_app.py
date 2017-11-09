@@ -116,9 +116,9 @@ def test_path_sanitation(username_first, username_rest, path):
 #     loop.run_until_complete(future)
 
 
-def asyncgiven(*args, **kwargs):
+def asyncgiven(**kwargs):
     def real_decorator(fn):
-        @given(*args, **kwargs)
+        @given(**kwargs)
         def aio_wrapper(*args, **kwargs):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -130,19 +130,18 @@ def asyncgiven(*args, **kwargs):
 
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
-        fs = FileUtil()
-        d = fs.make_dir('test')
-        assert '' == await utils.run_command('ls', d)
-        f = fs.make_file(d + '/test2', txt)
-        md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
-        md52 = await utils.run_command('md5sum', f)
-        assert md5 == md52.split()[0]
-        fs.teardown()
-
+    fs = FileUtil()
+    d = fs.make_dir('test')
+    assert '' == await utils.run_command('ls', d)
+    f = fs.make_file(d + '/test2', txt)
+    md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
+    md52 = await utils.run_command('md5sum', f)
+    assert md5 == md52.split()[0]
+    fs.teardown()
 
 
 # async def test_cmd(parameter_list):
-    
+
 
 # @given(st.lists(st.integers()))
 # def test_sort(xs):
