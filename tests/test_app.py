@@ -7,6 +7,7 @@ import os
 import asyncio
 from hypothesis import given
 from hypothesis import strategies as st
+import hashlib
 
 config = configparser.ConfigParser()
 config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
@@ -97,24 +98,51 @@ def test_path_sanitation(username_first, username_rest, path):
     assert validated.user_path.find('../') == -1
     assert validated.metadata_path.find('../') == -1
 
-# @given(st.text())
-def test_wrapper():
-    def test_cmd():
-        txt = 'stuff'
+# @given(txt=st.text())
+# def test_wrapper(*args, **kwargs):
+#     async def test_cmd(txt):
+#         fs = FileUtil()
+#         d = fs.make_dir('test')
+#         one = await utils.run_command('ls', d)
+#         assert '' == one
+#         f = fs.make_file(d + '/test2', txt)
+#         # two = await utils.run_command('ls', d)
+#         # assert 'test2' == two
+#         three = await utils.run_command('cat', f)
+#         assert txt == three
+#     loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(loop)
+#     future = asyncio.wait_for(test_cmd(*args, **kwargs), timeout=5)
+#     loop.run_until_complete(future)
+
+
+def asyncgiven(*args, **kwargs):
+    def real_decorator(fn):
+        @given(*args, **kwargs)
+        def aio_wrapper(*args, **kwargs):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            future = asyncio.wait_for(fn(*args, **kwargs), timeout=5)
+            loop.run_until_complete(future)
+        return aio_wrapper
+    return real_decorator
+
+
+@asyncgiven(txt=st.text())
+async def test_cmd(txt):
         fs = FileUtil()
         d = fs.make_dir('test')
-        one = yield from utils.run_command('ls', d)
-        assert '' == one
+        assert '' == await utils.run_command('ls', d)
         f = fs.make_file(d + '/test2', txt)
-        two = yield from utils.run_command('ls', d)
-        assert 'test2' == two
-        three = yield from utils.run_command('cat', f)
-        assert txt == three
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    coro = asyncio.coroutine(test_cmd)
-    future = asyncio.wait_for(coro, timeout=5)
-    loop.run_until_complete(future)
+        md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
+        md52 = await utils.run_command('md5sum', f)
+        assert md5 == md52.split()[0]
+        fs.teardown()
+
+
+
+# async def test_cmd(parameter_list):
+    
 
 # @given(st.lists(st.integers()))
 # def test_sort(xs):
