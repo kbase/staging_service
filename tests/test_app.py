@@ -4,6 +4,7 @@ import pytest
 import configparser
 import string
 import os
+import asyncio
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -22,7 +23,7 @@ def cli(loop, test_client):
 
 
 class FileUtil(object):
-    def __init__(self, base_dir):
+    def __init__(self, base_dir=DATA_DIR):
         self.resources = []
         self.base_dir = base_dir
 
@@ -40,13 +41,12 @@ class FileUtil(object):
         with open(path, mode='w') as f:
             f.write(contents)
         self.resources.append(path)
+        return path
 
     def make_dir(self, path):
         path = os.path.join(self.base_dir, path)
         os.makedirs(path, exist_ok=True)
-
-    def binary_file(self, path):
-        self.make_file(os.urandom(2048))
+        return path
 
 
 async def test_service(cli):
@@ -93,6 +93,24 @@ def test_path_sanitation(username, path):
     assert validated.user_path.find('../') == -1
     assert validated.metadata_path.find('../') == -1
 
+# @given(st.text())
+def test_wrapper():
+    def test_cmd():
+        txt = 'stuff'
+        fs = FileUtil()
+        d = fs.make_dir('test')
+        one = yield from utils.run_command('ls', d)
+        assert '' == one
+        f = fs.make_file(d + '/test2', txt)
+        two = yield from utils.run_command('ls', d)
+        assert 'test2' == two
+        three = yield from utils.run_command('cat', f)
+        assert txt == three
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    coro = asyncio.coroutine(test_cmd)
+    future = asyncio.wait_for(coro, timeout=5)
+    loop.run_until_complete(future)
 
 # @given(st.lists(st.integers()))
 # def test_sort(xs):
