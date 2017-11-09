@@ -55,13 +55,15 @@ async def test_service(cli):
     text = await resp.text()
     assert 'This is just a test. This is only a test.' in text
 
-
+first_letter_alphabet = [c for c in string.ascii_lowercase+string.ascii_uppercase]
 username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase]
-username_strat = st.text(max_size=100, min_size=1, alphabet=username_alphabet)
+username_strat = st.text(max_size=99, min_size=1, alphabet=username_alphabet)
+username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alphabet)
 
 
-@given(username_strat)
-def test_path_cases(username):
+@given(username_first_strat, username_strat)
+def test_path_cases(username_first, username_rest):
+    username = username_first + username_rest
     assert username + '/foo/bar' == utils.Path.validate_path(username, 'foo/bar').user_path
     assert username + '/baz' == utils.Path.validate_path(username, 'foo/../bar/../baz').user_path
     assert username + '/bar' == utils.Path.validate_path(username, 'foo/../../../../bar').user_path
@@ -78,10 +80,12 @@ def test_path_cases(username):
     assert username + '/' == utils.Path.validate_path(username, '').user_path
     assert username + '/' == utils.Path.validate_path(username, 'foo/..').user_path
     assert username + '/' == utils.Path.validate_path(username, '/..../').user_path
+    assert username + '/stuff.ext' == utils.Path.validate_path(username, '/stuff.ext').user_path
 
 
-@given(username_strat, st.text())
-def test_path_sanitation(username, path):
+@given(username_first_strat, username_strat, st.text())
+def test_path_sanitation(username_first, username_rest, path):
+    username = username_first + username_rest
     validated = utils.Path.validate_path(username, path)
     assert validated.full_path.startswith(DATA_DIR)
     assert validated.user_path.startswith(username)
