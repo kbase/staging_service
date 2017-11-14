@@ -1,5 +1,6 @@
 import staging_service.app as app
 import staging_service.utils as utils
+import staging_service.metadata as metadata
 import pytest
 import configparser
 import string
@@ -8,6 +9,8 @@ import asyncio
 from hypothesis import given
 from hypothesis import strategies as st
 import hashlib
+import uvloop
+import shutil
 
 config = configparser.ConfigParser()
 config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
@@ -23,18 +26,36 @@ def cli(loop, test_client):
     return loop.run_until_complete(test_client(appplication))
 
 
+def asyncgiven(**kwargs):
+    """alterantive to hypothesis.given decorator for async"""
+    def real_decorator(fn):
+        @given(**kwargs)
+        def aio_wrapper(*args, **kwargs):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            future = asyncio.wait_for(fn(*args, **kwargs), timeout=5)
+            loop.run_until_complete(future)
+        return aio_wrapper
+    return real_decorator
+
+
+def asyncgiven_fixture(**kwargs):
+    """alterantive to hypothesis.given decorator for async and pytest fixture"""
+    def real_decorator(fn):
+        @given(**kwargs)
+        def aio_wrapper(**kwargs):
+            fn
+        return aio_wrapper
+    return real_decorator
+
+
 class FileUtil(object):
     def __init__(self, base_dir=DATA_DIR):
-        self.resources = []
         self.base_dir = base_dir
+        os.makedirs(base_dir, exist_ok=True)
 
     def teardown(self):
-        for created_file in self.resources:
-            try:  # trying to clean up cleanly
-                os.remove(created_file)
-                os.removedirs(os.path.dirname(created_file))
-            except OSError as still_files:
-                pass
+        shutil.rmtree(self.base_dir)
 
     def make_file(self, path, contents):
         path = os.path.join(self.base_dir, path)
@@ -57,7 +78,7 @@ async def test_service(cli):
     assert 'This is just a test. This is only a test.' in text
 
 first_letter_alphabet = [c for c in string.ascii_lowercase+string.ascii_uppercase]
-username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase]
+username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase+string.digits]
 username_strat = st.text(max_size=99, min_size=1, alphabet=username_alphabet)
 username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alphabet)
 
@@ -98,35 +119,6 @@ def test_path_sanitation(username_first, username_rest, path):
     assert validated.user_path.find('../') == -1
     assert validated.metadata_path.find('../') == -1
 
-# @given(txt=st.text())
-# def test_wrapper(*args, **kwargs):
-#     async def test_cmd(txt):
-#         fs = FileUtil()
-#         d = fs.make_dir('test')
-#         one = await utils.run_command('ls', d)
-#         assert '' == one
-#         f = fs.make_file(d + '/test2', txt)
-#         # two = await utils.run_command('ls', d)
-#         # assert 'test2' == two
-#         three = await utils.run_command('cat', f)
-#         assert txt == three
-#     loop = asyncio.new_event_loop()
-#     asyncio.set_event_loop(loop)
-#     future = asyncio.wait_for(test_cmd(*args, **kwargs), timeout=5)
-#     loop.run_until_complete(future)
-
-
-def asyncgiven(**kwargs):
-    def real_decorator(fn):
-        @given(**kwargs)
-        def aio_wrapper(*args, **kwargs):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            future = asyncio.wait_for(fn(*args, **kwargs), timeout=5)
-            loop.run_until_complete(future)
-        return aio_wrapper
-    return real_decorator
-
 
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
@@ -140,8 +132,31 @@ async def test_cmd(txt):
     fs.teardown()
 
 
-# async def test_cmd(parameter_list):
+@asyncgiven_fixture(txt=st.text())
+async def test_service2(cli, txt):
+    print(txt)
+    resp = await cli.get('/test-service')
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'This is just a test. This is only a test.' in text
 
+# @asyncgiven_fixture(txt=st.text())
+# async def test_zip(cli, txt):
+#     fs = FileUtil()
+#     d = fs.make_dir('test')
+#     f = fs.make_file(d + '/test1', txt)
+#     f2 = fs.make_file(d + '/test2', txt)
+#     f3 = fs.make_file(d + )
+
+
+
+# @asyncgiven(txt=st.text())
+# async def test_generate_metadata():
+#     fs = FileUtil
+# async def test_generate_metadata_binary(parameter_list):
+#     pass
+
+# async def test_cmd(parameter_list):
 
 # @given(st.lists(st.integers()))
 # def test_sort(xs):
@@ -161,3 +176,12 @@ async def test_cmd(txt):
 #         ==
 #         # api calls
 #     )
+
+
+# @given(st.text())
+# def test_data_feeder(text):
+#     async def test_service2(cli):
+#         resp = await cli.get('/test-service')
+#         assert resp.status == 200
+#         text = await resp.text()
+#         assert 'This is just a test. This is only a test.' in text
