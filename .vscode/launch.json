@@ -14,7 +14,10 @@
             "cwd": "${workspaceRoot}",
             "args": [],
             //note the setting of env should be the same as entrypoint.sh
-            "env": {"KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/local.cfg"},
+            "env": {
+                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/local.cfg",
+                "FILE_LIFETIME":90
+            },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -34,7 +37,10 @@
             ],
             "cwd": "${workspaceRoot}",
             //note the setting of env should be the same as entrypoint.sh
-            "env": {"KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/testing.cfg"},
+            "env": {
+                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/testing.cfg",
+                "FILE_LIFETIME":90
+            },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",

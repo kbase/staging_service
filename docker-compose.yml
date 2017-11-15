@@ -1,3 +1,4 @@
+# WARNING this file does not sync up with the deployment automatically
 version: "3.1"
 services:
   staging_service:

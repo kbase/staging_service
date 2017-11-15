@@ -3,7 +3,7 @@ import aiohttp_cors
 import os
 from .metadata import stat_data, some_metadata, dir_info, add_upa
 import shutil
-from .utils import Path
+from .utils import Path, run_command
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 
@@ -25,6 +25,11 @@ async def test_service(request: web.Request):
 async def test_auth(request: web.Request):
     username = await auth_client.get_user(request.headers['Authorization'])
     return web.Response(text="I'm authenticated as {}".format(username))
+
+
+@routes.get('/file-lifetime')
+async def file_lifetime(parameter_list):
+    return web.Response(text=os.environ['FILE_LIFETIME'])
 
 
 @routes.get('/list/{path:.*}')
@@ -216,6 +221,35 @@ async def rename(request: web.Request):
         raise web.HTTPNotFound(text='{path} not found'.format(path=path.user_path))
     return web.Response(text='successfully moved {path} to {new_path}'
                         .format(path=path.user_path, new_path=new_path.user_path))
+
+
+@routes.patch('/decompress/{path:.+}')
+async def decompress(request: web.Request):
+    username = await auth_client.get_user(request.headers['Authorization'])
+    path = Path.validate_path(username, request.match_info['path'])
+    # make sure the file can be decompressed
+    filename, file_extension = os.path.splitext(path.full_path)
+    filename, upper_file_extension = os.path.splitext(filename)
+    # TODO behavior when the unzip would overwrite something, what does it do, what should it do
+    # 1 if we just don't let it do this its important to provide the rename feature,
+    # 2 could try again after doign an automatic rename scheme (add nubmers to end)
+    # 3 just overwrite and force
+    if (upper_file_extension == '.tar' and file_extension == '.gz') or file_extension == '.tgz':
+        await run_command('tar', 'xzf', path.full_path)
+    elif upper_file_extension == '.tar' and (file_extension == '.bz' or file_extension == '.bz2'):
+        await run_command('tar', 'xjf', path.full_path)
+    elif file_extension == '.zip' or file_extension == '.ZIP':
+        await run_command('unzip', path.full_path)
+    elif file_extension == '.tar':
+        await run_command('tar',  'xf', path.full_path)
+    elif file_extension == '.gz':
+        await run_command('gzip', '-d', path.full_path)
+    elif file_extension == '.bz2' or file_extension == 'bzip2':
+        await run_command('bzip2', '-d', path.full_path)
+    else:
+        raise web.HTTPMethodNotAllowed(
+            text='cannot decompress a {ext} file'.format(ext=file_extension))
+    return web.Response(text='succesfully decompressed ' + path.user_path)
 
 
 def app_factory(config):

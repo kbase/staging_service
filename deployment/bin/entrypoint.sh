@@ -8,6 +8,7 @@ DIR="$( cd "$( dirname "$0" )" && pwd )"
 if [ -d "$DIR/../../staging_service" ]; then
     PYTHONPATH="$DIR/../../staging_service"
     export KB_DEPLOYMENT_CONFIG="$DIR/../conf/local.cfg"
+    export FILE_LIFETIME="90"
 fi
 
 #bottom section for running inside docker
