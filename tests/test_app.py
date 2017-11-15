@@ -25,6 +25,10 @@ utils.Path._META_DIR = META_DIR
 @pytest.fixture
 def cli(loop, test_client):
     appplication = app.app_factory(config)
+
+    async def mock_auth(*args, **kwargs):
+        return 'testuser'
+    app.auth_client.get_user = mock_auth
     return loop.run_until_complete(test_client(appplication))
 
 
@@ -53,7 +57,7 @@ def asyncgiven_fixture(**kwargs):
 
 class FileUtil(object):
     def __init__(self, base_dir=DATA_DIR):
-        self.base_dir = base_dir
+        self.base_dir = os.path.join(base_dir, 'testuser')
         os.makedirs(base_dir, exist_ok=True)
         shutil.rmtree(base_dir)
         os.makedirs(base_dir, exist_ok=False)
@@ -139,21 +143,13 @@ async def test_service(cli):
     assert 'This is just a test. This is only a test.' in text
 
 
-@asyncgiven_fixture(txt=st.text())
-async def test_service2(cli, txt):
-    print(txt)
-    resp = await cli.get('/test-service')
-    assert resp.status == 200
-    text = await resp.text()
-    assert 'This is just a test. This is only a test.' in text
-
 # @asyncgiven_fixture(txt=st.text())
 # async def test_list(cli, txt):
 #     fs = FileUtil()
 #     d = fs.make_dir('test')
-#     f = fs.make_file(d + '/test1', txt)
-#     d2 = fs.make_dir(d + '/test2')
-#     f3 = fs.make_file(d2 + '/test3', txt)
+#     f = fs.make_file('test/test1', txt)
+#     d2 = fs.make_dir('test/test2')
+#     f3 = fs.make_file('test/test2/test3', txt)
 #     cli.get('list/..') # should error
 #     cli.get('list/test1') # should tell me its a file not a dir
 #     # for both below check info of size compared to txt
@@ -164,33 +160,163 @@ async def test_service2(cli, txt):
 #     cli.get('list/test2')
 #     fs.teardown()
 
-
-# @asyncgiven_fixture(txt=st.text())
-async def test_zip(cli):
-    txt = 'sdstsdtsdt'
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_zip(cli, contents, dirname, fname):
     fs = FileUtil()
-    d = fs.make_dir('test')
-    f1 = fs.make_file('test/test1', txt)
-    d2 = fs.make_dir('test/test2')
-    f3 = fs.make_file('test/test2/test3', txt)
-    zipped = shutil._make_zipfile(d, d)
-    shutil.rmtree(fs.base_dir+'/test')
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    d2 = fs.make_dir(dirname+'/'+dirname)
+    f3 = fs.make_file(dirname+'/'+dirname+'/'+fname, contents)
+    compressed = shutil.make_archive(d, 'zip', base_dir=d)
+    name = fname + '.zip'
     # check to see that the originals are gone
     assert not os.path.exists(d)
     assert not os.path.exists(f1)
     assert not os.path.exists(d2)
     assert not os.path.exists(f3)
-    assert os.path.exists(zipped)
-    cli.patch('decompress/'+zipped)
+    assert os.path.exists(compressed)
+    resp = await cli.patch('/decompress/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
     # check to see if we got back what we started with for all files and directories
     assert os.path.exists(d)
-
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    assert os.path.exists(d2)
+    assert os.path.exists(f3)
     fs.teardown()
-    
 
 
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_targz(cli, contents, dirname, fname):
+    fs = FileUtil()
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    d2 = fs.make_dir(dirname+'/'+dirname)
+    f3 = fs.make_file(dirname+'/'+dirname+'/'+fname, contents)
+    compressed = shutil.make_archive(d, 'gztar', base_dir=d)
+    name = fname + '.tar.gz'
+    # check to see that the originals are gone
+    assert not os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert not os.path.exists(d2)
+    assert not os.path.exists(f3)
+    assert os.path.exists(compressed)
+    resp = await cli.patch('/decompress/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    assert os.path.exists(d2)
+    assert os.path.exists(f3)
+    fs.teardown()
 
 
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_tarbz(cli, contents, dirname, fname):
+    fs = FileUtil()
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    d2 = fs.make_dir(dirname+'/'+dirname)
+    f3 = fs.make_file(dirname+'/'+dirname+'/'+fname, contents)
+    compressed = shutil.make_archive(d, 'bztar', base_dir=d)
+    name = fname + '.tar.bz2'
+    # check to see that the originals are gone
+    assert not os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert not os.path.exists(d2)
+    assert not os.path.exists(f3)
+    assert os.path.exists(compressed)
+    resp = await cli.patch('/decompress/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    assert os.path.exists(d2)
+    assert os.path.exists(f3)
+    fs.teardown()
+
+
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_tar(cli, contents, dirname, fname):
+    fs = FileUtil()
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    d2 = fs.make_dir(dirname+'/'+dirname)
+    f3 = fs.make_file(dirname+'/'+dirname+'/'+fname, contents)
+    compressed = shutil.make_archive(d, 'tar', base_dir=d)
+    name = fname + '.tar'
+    # check to see that the originals are gone
+    assert not os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert not os.path.exists(d2)
+    assert not os.path.exists(f3)
+    assert os.path.exists(compressed)
+    resp = await cli.patch('/decompress/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    assert os.path.exists(d2)
+    assert os.path.exists(f3)
+    fs.teardown()
+
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_gzip(cli, contents, dirname, fname):
+    fs = FileUtil()
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    name = fname+'.gz'
+    await utils.run_command('gzip', f1)
+    # check to see that the original is gone
+    assert os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert os.path.exists(os.path.join(d, name))
+    resp = await cli.patch('/decompress/test/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    fs.teardown()
+
+
+@asyncgiven_fixture(contents=st.text(), dirname=st.text(), fname=st.text())
+async def test_bzip(cli, contents, dirname, fname):
+    fs = FileUtil()
+    d = fs.make_dir(dirname)
+    f1 = fs.make_file(dirname+'/'+fname, contents)
+    name = fname+'.bz2'
+    await utils.run_command('bzip2', f1)
+    # check to see that the original is gone
+    assert os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert os.path.exists(os.path.join(d, name))
+    resp = await cli.patch('/decompress/test/'+name, headers={'Authorization': ''})
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'succesfully decompressed' in text
+    assert name in text
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+    assert os.path.exists(f1)
+    fs.teardown()
 
 # @asyncgiven(txt=st.text())
 # async def test_generate_metadata():
