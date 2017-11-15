@@ -223,7 +223,7 @@ async def rename(request: web.Request):
                         .format(path=path.user_path, new_path=new_path.user_path))
 
 
-@routes.patch('/decompress/{path:+}')
+@routes.patch('/decompress/{path:.+}')
 async def decompress(request: web.Request):
     username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
@@ -234,19 +234,19 @@ async def decompress(request: web.Request):
     # 2 could try again after doign an automatic rename scheme (add nubmers to end)
     # 3 just overwrite and force
     if file_extension == '.zip' or file_extension == '.ZIP':
-        await run_command('unzip' + path.full_path)
+        await run_command('unzip', path.full_path)
     elif file_extension == '.tar':
-        await run_command('tar xf ' + path.full_path)
+        await run_command('tar',  'xf', path.full_path)
     elif file_extension == '.gz':
-        await run_command('gunzip' + path.full_path)
+        await run_command('gzip', '-d', path.full_path)
     elif file_extension == '.bz2' or file_extension == 'bzip2':
-        await run_command('bzip2 -d ' + path.full_path)
+        await run_command('bzip2', '-d', path.full_path)
     elif file_extension == '.tar.gz' or file_extension == '.tgz':
         # TODO do these ever get reached
-        await run_command('tar xzf ' + path.full_path)
+        await run_command('tar', 'xzf', path.full_path)
     elif file_extension == '.tar.bz' or file_extension == '.tar.bz2':
         # TODO do these ever get reached
-        await run_command('tar sjf ' + path.full_path)
+        await run_command('tar', 'sjf', path.full_path)
     else:
         raise web.HTTPMethodNotAllowed(
             text='cannot decompress a {ext} file'.format(ext=file_extension))

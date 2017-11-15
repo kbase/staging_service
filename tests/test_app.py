@@ -18,6 +18,8 @@ config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
 DATA_DIR = config['staging_service']['DATA_DIR']
 META_DIR = config['staging_service']['META_DIR']
 AUTH_URL = config['staging_service']['AUTH_URL']
+utils.Path._DATA_DIR = DATA_DIR
+utils.Path._META_DIR = META_DIR
 
 
 @pytest.fixture
@@ -53,16 +55,16 @@ class FileUtil(object):
     def __init__(self, base_dir=DATA_DIR):
         self.base_dir = base_dir
         os.makedirs(base_dir, exist_ok=True)
+        shutil.rmtree(base_dir)
+        os.makedirs(base_dir, exist_ok=False)
 
     def teardown(self):
         shutil.rmtree(self.base_dir)
 
     def make_file(self, path, contents):
         path = os.path.join(self.base_dir, path)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, mode='w') as f:
+        with open(path, encoding='utf-8', mode='w') as f:
             f.write(contents)
-        self.resources.append(path)
         return path
 
     def make_dir(self, path):
@@ -71,11 +73,9 @@ class FileUtil(object):
         return path
 
 
-async def test_service(cli):
-    resp = await cli.get('/test-service')
-    assert resp.status == 200
-    text = await resp.text()
-    assert 'This is just a test. This is only a test.' in text
+#
+# BEGIN TESTS
+#
 
 first_letter_alphabet = [c for c in string.ascii_lowercase+string.ascii_uppercase]
 username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase+string.digits]
@@ -125,11 +125,18 @@ async def test_cmd(txt):
     fs = FileUtil()
     d = fs.make_dir('test')
     assert '' == await utils.run_command('ls', d)
-    f = fs.make_file(d + '/test2', txt)
+    f = fs.make_file('test/test2', txt)
     md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
     md52 = await utils.run_command('md5sum', f)
     assert md5 == md52.split()[0]
     fs.teardown()
+
+
+async def test_service(cli):
+    resp = await cli.get('/test-service')
+    assert resp.status == 200
+    text = await resp.text()
+    assert 'This is just a test. This is only a test.' in text
 
 
 @asyncgiven_fixture(txt=st.text())
@@ -141,12 +148,47 @@ async def test_service2(cli, txt):
     assert 'This is just a test. This is only a test.' in text
 
 # @asyncgiven_fixture(txt=st.text())
-# async def test_zip(cli, txt):
+# async def test_list(cli, txt):
 #     fs = FileUtil()
 #     d = fs.make_dir('test')
 #     f = fs.make_file(d + '/test1', txt)
-#     f2 = fs.make_file(d + '/test2', txt)
-#     f3 = fs.make_file(d + )
+#     d2 = fs.make_dir(d + '/test2')
+#     f3 = fs.make_file(d2 + '/test3', txt)
+#     cli.get('list/..') # should error
+#     cli.get('list/test1') # should tell me its a file not a dir
+#     # for both below check info of size compared to txt
+#     # check the size of folders is equal to adding up thier contents
+#     # check that mtime is older than now
+#     # verify isfolder field
+#     cli.get('list/')
+#     cli.get('list/test2')
+#     fs.teardown()
+
+
+# @asyncgiven_fixture(txt=st.text())
+async def test_zip(cli):
+    txt = 'sdstsdtsdt'
+    fs = FileUtil()
+    d = fs.make_dir('test')
+    f1 = fs.make_file('test/test1', txt)
+    d2 = fs.make_dir('test/test2')
+    f3 = fs.make_file('test/test2/test3', txt)
+    zipped = shutil._make_zipfile(d, d)
+    shutil.rmtree(fs.base_dir+'/test')
+    # check to see that the originals are gone
+    assert not os.path.exists(d)
+    assert not os.path.exists(f1)
+    assert not os.path.exists(d2)
+    assert not os.path.exists(f3)
+    assert os.path.exists(zipped)
+    cli.patch('decompress/'+zipped)
+    # check to see if we got back what we started with for all files and directories
+    assert os.path.exists(d)
+
+    fs.teardown()
+    
+
+
 
 
 
