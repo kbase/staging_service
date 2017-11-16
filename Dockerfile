@@ -2,6 +2,10 @@ FROM python:3.6-slim-stretch
 # -----------------------------------------
 RUN mkdir -p /kb/deployment/lib
 COPY ./ /kb/module
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+RUN apt-get install zip && \
+    apt-get install unzip && \
+    apt-get install bzip2
 
 RUN pip install -r /kb/module/requirements.txt
 

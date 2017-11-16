@@ -10,4 +10,5 @@ services:
     volumes:
       - "./data:/kb/deployment/lib/src/data"
     environment:
-      - "KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg"
+      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
+      - FILE_LIFETIME="90"
