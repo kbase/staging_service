@@ -69,7 +69,7 @@ async def list_files(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
-    return web.json_response(await dir_info(path.full_path, show_hidden, recurse=False))
+    return web.json_response(await dir_info(path, show_hidden, recurse=False))
 
 
 @routes.get('/search/{query:.*}')
@@ -85,7 +85,7 @@ async def search(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
-    results = await dir_info(user_dir.full_path, show_hidden, query)
+    results = await dir_info(user_dir, show_hidden, query)
     results.sort(key=lambda x: x['mtime'], reverse=True)
     return web.json_response(results)
 
@@ -147,7 +147,7 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await stat_data(path.full_path)
+    response = await stat_data(path)
     return web.json_response([response])
 
 

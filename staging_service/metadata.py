@@ -7,39 +7,39 @@ decoder = JSONDecoder()
 encoder = JSONEncoder()
 
 
-async def stat_data(full_path: str) -> dict:
+async def stat_data(path: Path) -> dict:
     """
     only call this on a validated full path
     """
-    file_stats = os.stat(full_path)
-    filename = os.path.basename(full_path)
-    isFolder = os.path.isdir(full_path)
+    file_stats = os.stat(path.full_path)
+    filename = os.path.basename(path.full_path)
+    isFolder = os.path.isdir(path.full_path)
     return {
         'name': filename,
-        'path': full_path,
+        'path': path.user_path,
         'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
         'size': file_stats.st_size,
         'isFolder': isFolder
     }
 
 
-async def dir_info(full_path, show_hidden: bool, query: str = '', recurse=True) -> list:
+async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True) -> list:
     """
     only call this on a validated full path
     """
     response = []
-    for entry in os.scandir(full_path):
-        path = entry.path
+    for entry in os.scandir(path.full_path):
+        specific_path = Path.from_full_path(entry.path)
         if not show_hidden and entry.name.startswith('.'):
             continue
         if entry.is_dir():
-            if query == '' or path.find(query) != -1:
-                response.append(await stat_data(path))
+            if query == '' or specific_path.user_path.find(query) != -1:
+                response.append(await stat_data(specific_path))
             if recurse:
-                response.extend(await dir_info(path, show_hidden, query, recurse))
+                response.extend(await dir_info(specific_path, show_hidden, query, recurse))
         elif entry.is_file():
-            if query == '' or path.find(query) != -1:
-                response.append(await stat_data(path))
+            if query == '' or specific_path.user_path.find(query) != -1:
+                response.append(await stat_data(specific_path))
     return response
 
 
@@ -82,7 +82,7 @@ async def some_metadata(path: Path, desired_fields=False):
     valid fields for desired_fields are:
     md5, lineCount, head, tail, name, path, mtime, size, isFolder
     """
-    file_stats = await stat_data(path.full_path)
+    file_stats = await stat_data(path)
     if file_stats['isFolder']:
         return file_stats
     if not os.path.exists(path.metadata_path):

@@ -56,3 +56,9 @@ class Path(object):
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
         return Path(full_path, metadata_path, user_path)
+
+    @staticmethod
+    def from_full_path(full_path: str):
+        user_path = full_path[len(Path._DATA_DIR):]
+        metadata_path = os.path.join(Path._META_DIR, user_path)
+        return Path(full_path, metadata_path, user_path)
