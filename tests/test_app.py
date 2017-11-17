@@ -19,6 +19,10 @@ config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
 DATA_DIR = config['staging_service']['DATA_DIR']
 META_DIR = config['staging_service']['META_DIR']
 AUTH_URL = config['staging_service']['AUTH_URL']
+if DATA_DIR.startswith('.'):
+    DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
+if META_DIR.startswith('.'):
+    META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
 utils.Path._DATA_DIR = DATA_DIR
 utils.Path._META_DIR = META_DIR
 
@@ -199,7 +203,7 @@ async def test_directory_decompression(contents):
                 d2 = fs.make_dir(os.path.join(username, dirname, dirname))
                 f3 = fs.make_file(path2.user_path, contents)
                 # end common test code
-                compressed = shutil.make_archive(d, method, base_dir=d)
+                compressed = shutil.make_archive(d, method, d[:-len(dirname)], dirname)
                 name = dirname + extension
                 if not compressed.endswith(extension):
                     basename, _ = os.path.splitext(compressed)

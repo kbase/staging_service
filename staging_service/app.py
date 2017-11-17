@@ -268,8 +268,14 @@ def app_factory(config):
         cors.add(route)
     # TODO this is pretty hacky dependency injection
     # potentially some type of code restructure would allow this without a bunch of globals
-    Path._DATA_DIR = config['staging_service']['DATA_DIR']
-    Path._META_DIR = config['staging_service']['META_DIR']
+    DATA_DIR = config['staging_service']['DATA_DIR']
+    META_DIR = config['staging_service']['META_DIR']
+    if DATA_DIR.startswith('.'):
+        DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
+    if META_DIR.startswith('.'):
+        META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
+    Path._DATA_DIR = DATA_DIR
+    Path._META_DIR = META_DIR
     global auth_client
     auth_client = KBaseAuth2(config['staging_service']['AUTH_URL'])
     return app
