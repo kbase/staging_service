@@ -12,12 +12,6 @@ routes = web.RouteTableDef()
 
 @routes.get('/test-service')
 async def test_service(request: web.Request):
-    """
-    @apiName test-service
-    @apiSampleRequest /test-server/
-    @apiSuccess {json} string Should return code 200 with string
-    "This is just a test. This is only a test.
-    """
     return web.Response(text='This is just a test. This is only a test.')
 
 
@@ -35,25 +29,7 @@ async def file_lifetime(parameter_list):
 @routes.get('/list/{path:.*}')
 async def list_files(request: web.Request):
     """
-    {get} /list/:path list files/folders in path
-    @apiParam {string} path path to directory
-    @apiParam {string} ?type=(folder|file) only fetch folders or files
-
-    @apiSuccess {json} meta metadata for listed objects
-    @apiSuccessExample {json} Success-Response:
-    HTTP/1.1 200 OK
-     [
-      {
-          name: "blue-panda",
-          mtime: 1459822597000,
-          size: 476
-      }, {
-          name: "blue-zebra",
-         mtime: 1458347601000,
-          size: 170,
-          isFolder: true
-      }
-    ]
+    lists the contents of a directory and some details about them
     """
     token = request.headers['Authorization']
     username = await auth_client.get_user(token)
@@ -74,6 +50,9 @@ async def list_files(request: web.Request):
 
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
+    """
+    returns all files and folders matching the search query ordered by modified date
+    """
     username = await auth_client.get_user(request.headers['Authorization'])
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
@@ -92,6 +71,10 @@ async def search(request: web.Request):
 
 @routes.get('/metadata/{path:.*}')
 async def get_metadata(request: web.Request):
+    """
+    creates a metadate file for the file requested and returns its json contents
+    if it's a folder it returns stat data about the folder
+    """
     username = await auth_client.get_user(request.headers['Authorization'])
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
@@ -102,23 +85,7 @@ async def get_metadata(request: web.Request):
 @routes.post('/upload')
 async def upload_files_chunked(request: web.Request):
     """
-    @api {post} /upload post endpoint to upload data
-    @apiName upload
-    @apiSampleRequest /upload/
-    @apiSuccess {json} meta meta on data uploaded
-    @apiSuccessExample {json} Success-Response:
-        HTTP/1.1 200 OK
-        [{
-    "path": "/nconrad/Athaliana.TAIR10_GeneAtlas_Experiments.tsv",
-    "size": 3190639,
-    "encoding": "7bit",
-    "name": "Athaliana.TAIR10_GeneAtlas_Experiments.tsv"
-    }, {
-    "path": "/nconrad/Sandbox_Experiments-1.tsv",
-    "size": 4309,
-    "encoding": "7bit",
-    "name": "Sandbox_Experiments-1.tsv"
-    }]
+    uploads a file into the staging area
     """
     token = request.headers['Authorization']
     username = await auth_client.get_user(token)
@@ -203,11 +170,14 @@ async def rename(request: web.Request):
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
-        raise web.HTTPForbidden(text='cannot rename home directory')
+        raise web.HTTPForbidden(text='cannot rename or move home directory')
     if is_globusid(path, username):
-        raise web.HTTPForbidden(text='cannot rename protected file')
-    body = await request.post()
-    new_path = body['newPath']
+        raise web.HTTPForbidden(text='cannot rename or move protected file')
+    reader = await request.multipart()
+    part = await reader.next()
+    if not part.name == 'newPath':
+        raise web.HTTPBadRequest(text='must provide newPath field in body')
+    new_path = await part.text()
     new_path = Path.validate_path(username, new_path)
     if os.path.exists(path.full_path):
         if not os.path.exists(new_path.full_path):
@@ -248,7 +218,7 @@ async def decompress(request: web.Request):
     elif file_extension == '.bz2' or file_extension == 'bzip2':
         await run_command('bzip2', '-d', path.full_path)
     else:
-        raise web.HTTPMethodNotAllowed(
+        raise web.HTTPBadRequest(
             text='cannot decompress a {ext} file'.format(ext=file_extension))
     return web.Response(text='succesfully decompressed ' + path.user_path)
 
