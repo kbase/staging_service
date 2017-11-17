@@ -234,14 +234,15 @@ async def decompress(request: web.Request):
     # 1 if we just don't let it do this its important to provide the rename feature,
     # 2 could try again after doign an automatic rename scheme (add nubmers to end)
     # 3 just overwrite and force
+    destination = os.path.dirname(path.full_path)
     if (upper_file_extension == '.tar' and file_extension == '.gz') or file_extension == '.tgz':
-        await run_command('tar', 'xzf', path.full_path)
+        await run_command('tar', 'xzf', path.full_path, '-C', destination)
     elif upper_file_extension == '.tar' and (file_extension == '.bz' or file_extension == '.bz2'):
-        await run_command('tar', 'xjf', path.full_path)
+        await run_command('tar', 'xjf', path.full_path, '-C', destination)
     elif file_extension == '.zip' or file_extension == '.ZIP':
-        await run_command('unzip', path.full_path)
+        await run_command('unzip', path.full_path, '-d', destination)
     elif file_extension == '.tar':
-        await run_command('tar',  'xf', path.full_path)
+        await run_command('tar',  'xf', path.full_path, '-C', destination)
     elif file_extension == '.gz':
         await run_command('gzip', '-d', path.full_path)
     elif file_extension == '.bz2' or file_extension == 'bzip2':
