@@ -92,6 +92,8 @@ async def upload_files_chunked(request: web.Request):
     await assert_globusid_exists(username, token)
     reader = await request.multipart()
     counter = 0
+    if not request.has_body:
+        raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
@@ -128,6 +130,8 @@ async def define_UPA(request: web.Request):
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
         raise web.HTTPNotFound(text='no file found found on path {}'.format(path.user_path))
+    if not request.has_body:
+        raise web.HTTPBadRequest(text='must provide UPA field in body')
     reader = await request.multipart()
     part = await reader.next()
     if not part.name == 'UPA':
@@ -173,6 +177,8 @@ async def rename(request: web.Request):
         raise web.HTTPForbidden(text='cannot rename or move home directory')
     if is_globusid(path, username):
         raise web.HTTPForbidden(text='cannot rename or move protected file')
+    if not request.has_body:
+        raise web.HTTPBadRequest(text='must provide newPath field in body')
     reader = await request.multipart()
     part = await reader.next()
     if not part.name == 'newPath':
