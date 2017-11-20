@@ -132,11 +132,11 @@ async def define_UPA(request: web.Request):
         raise web.HTTPNotFound(text='no file found found on path {}'.format(path.user_path))
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide UPA field in body')
-    reader = await request.multipart()
-    part = await reader.next()
-    if not part.name == 'UPA':
+    body = await request.post()
+    try:
+        UPA = body['UPA']
+    except KeyError as wrong_key:
         raise web.HTTPBadRequest(text='must provide UPA field in body')
-    UPA = await part.text()
     await add_upa(path, UPA)
     return web.Response(
         text='succesfully updated UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path)
@@ -179,11 +179,11 @@ async def rename(request: web.Request):
         raise web.HTTPForbidden(text='cannot rename or move protected file')
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide newPath field in body')
-    reader = await request.multipart()
-    part = await reader.next()
-    if not part.name == 'newPath':
+    body = await request.post()
+    try:
+        new_path = body['newPath']
+    except KeyError as wrong_key:
         raise web.HTTPBadRequest(text='must provide newPath field in body')
-    new_path = await part.text()
     new_path = Path.validate_path(username, new_path)
     if os.path.exists(path.full_path):
         if not os.path.exists(new_path.full_path):
