@@ -2,7 +2,7 @@ from .utils import Path
 import aiohttp
 import aiofiles
 import os
-
+# TODO make this a config
 _AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
 
 
