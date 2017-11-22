@@ -26,6 +26,16 @@ async def file_lifetime(parameter_list):
     return web.Response(text=os.environ['FILE_LIFETIME'])
 
 
+@routes.get('/existance/{path:.*}')
+async def file_exists(request: web.Request):
+    token = request.headers['Authorization']
+    username = await auth_client.get_user(token)
+    path = Path.validate_path(username, request.match_info['path'])
+    exists = os.path.exists(path.full_path)
+    isFile = os.path.isfile()
+    return web.json_response({'exists': exists, 'isFile': isFile})
+
+
 @routes.get('/list/{path:.*}')
 async def list_files(request: web.Request):
     """
@@ -37,6 +47,10 @@ async def list_files(request: web.Request):
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
+    elif os.path.isfile(path.full_path):
+        raise web.HTTPBadRequest(
+            text='{path} is a file not a directory'.format(path=path.full_path)
+        )
     try:
         show_hidden = request.query['showHidden']
         if 'true' == show_hidden or 'True' == show_hidden:
