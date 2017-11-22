@@ -1,7 +1,7 @@
 import staging_service.app as app
 import staging_service.utils as utils
 import staging_service.metadata as metadata
-import pytest
+import staging_service.globus as globus
 import configparser
 import string
 import os
@@ -12,6 +12,10 @@ import hashlib
 import uvloop
 import shutil
 from aiohttp import test_utils
+from json import JSONDecoder
+import time
+
+decoder = JSONDecoder()
 
 config = configparser.ConfigParser()
 config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
@@ -46,6 +50,10 @@ def mock_auth_app():
     async def mock_auth(*args, **kwargs):
         return 'testuser'
     app.auth_client.get_user = mock_auth
+
+    async def mock_globus_id(*args, **kwargs):
+        return ['testuser@globusid.org']
+    globus._get_globus_ids = mock_globus_id  # TODO this doesn't allow testing of this fn does it
     return application
 
 
@@ -152,27 +160,53 @@ async def test_service():
         assert resp.status == 200
         text = await resp.text()
         assert 'This is just a test. This is only a test.' in text
-    
 
 
-# @asyncgiven(txt=st.text())
-# async def test_list(txt):
-#     username = 'testuser'
-#     async with AppClient(config, username) as cli:
-#         with FileUtil() as fs:
-#             d = fs.make_dir('test')
-#             f = fs.make_file('test/test1', txt)
-#             d2 = fs.make_dir('test/test2')
-#             f3 = fs.make_file('test/test2/test3', txt)
-#             res1 = await cli.get('list/..') # should error
-#             assert 
-#             cli.get('list/test1') # should tell me its a file not a dir
-#             # for both below check info of size compared to txt
-#             # check the size of folders is equal to adding up thier contents
-#             # check that mtime is older than now
-#             # verify isfolder field
-#             cli.get('list/')
-#             cli.get('list/test2')
+async def test_list():
+    txt = 'testing text'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test1'), txt)
+            d2 = fs.make_dir(os.path.join(username, 'test', 'test2'))
+            f3 = fs.make_file(os.path.join(username, 'test', 'test2', 'test3'), txt)
+            res1 = await cli.get('list/..', headers={'Authorization': ''})
+            assert res1.status == 404
+            res2 = await cli.get(os.path.join('list', 'test', 'test1'), headers={'Authorization': ''})
+            assert res2.status == 400
+            res3 = await cli.get('list/', headers={'Authorization': ''})
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert json[0]['isFolder'] is True
+            assert json[0]['name'] == 'test'
+            assert json[0]['path'] == '/testuser/test'
+            assert json[0]['size'] == 128
+            assert json[0]['mtime'] <= time.time()*1000
+            # TODO could add more extensive tests down here
+
+
+async def test_search():
+    txt = 'testing text'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test1'), txt)
+            d2 = fs.make_dir(os.path.join(username, 'test', 'test2'))
+            f3 = fs.make_file(os.path.join(username, 'test', 'test2', 'test3'), txt)
+            res1 = await cli.get('search/', headers={'Authorization': ''})
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 4
+            res2 = await cli.get('search/test1', headers={'Authorization': ''})
+            json_text = await res2.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 1
+            res3 = await cli.get('search/test2', headers={'Authorization': ''})
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 2
 
 
 @asyncgiven(contents=st.text())
@@ -268,3 +302,4 @@ async def test_file_decompression(contents):
                 # check to see if we got back what we started with for all files and directories
                 assert os.path.exists(d)
                 assert os.path.exists(f1)
+
