@@ -130,7 +130,11 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
-    response = await stat_data(path)
+    response = await some_metadata(
+        path,
+        desired_fields=['name', 'path', 'mtime', 'size', 'isFolder'],
+        source='KBase upload'
+    )
     return web.json_response([response])
 
 

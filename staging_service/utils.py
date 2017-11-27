@@ -31,12 +31,13 @@ async def run_command(*args):
 class Path(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
-    __slots__ = ['full_path', 'metadata_path', 'user_path']
+    __slots__ = ['full_path', 'metadata_path', 'user_path', 'name']
 
-    def __init__(self, full_path, metadata_path, user_path):
+    def __init__(self, full_path, metadata_path, user_path, name):
         self.full_path = full_path
         self.metadata_path = metadata_path
         self.user_path = user_path
+        self.name = name
 
     @staticmethod
     def validate_path(username: str, path: str=''):
@@ -55,10 +56,12 @@ class Path(object):
         user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
-        return Path(full_path, metadata_path, user_path)
+        name = os.path.basename(path)
+        return Path(full_path, metadata_path, user_path, name)
 
     @staticmethod
     def from_full_path(full_path: str):
         user_path = full_path[len(Path._DATA_DIR):]
         metadata_path = os.path.join(Path._META_DIR, user_path)
-        return Path(full_path, metadata_path, user_path)
+        name = os.path.basename(full_path)
+        return Path(full_path, metadata_path, user_path, name)

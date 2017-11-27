@@ -2,6 +2,7 @@ from json import JSONDecoder, JSONEncoder
 import aiofiles
 from .utils import run_command, Path
 import os
+from aiohttp import web
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -12,10 +13,9 @@ async def stat_data(path: Path) -> dict:
     only call this on a validated full path
     """
     file_stats = os.stat(path.full_path)
-    filename = os.path.basename(path.full_path)
     isFolder = os.path.isdir(path.full_path)
     return {
-        'name': filename,
+        'name': path.name,
         'path': path.user_path,
         'mtime': int(file_stats.st_mtime*1000),  # given in seconds, want ms
         'size': file_stats.st_size,
@@ -43,10 +43,11 @@ async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True)
     return response
 
 
-async def _generate_metadata(path: Path):
+async def _generate_metadata(path: Path, source: str):
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     data = {}
     # first ouptut of md5sum is the checksum
+    data['source'] = source
     md5 = await run_command('md5sum', path.full_path)
     data['md5'] = md5.split()[0]
     # first output of wc is the count
@@ -75,18 +76,32 @@ async def add_upa(path: Path, UPA: str):
         await update.writelines(encoder.encode(data))
 
 
-async def some_metadata(path: Path, desired_fields=False):
+def _determine_source(path: Path):
+    """
+    tries to determine the source of a file for which the source is unknown
+    currently this works for JGI imported files only
+    """
+    jgi_path = os.path.join(os.path.dirname(path.full_path), '.' + path.name + '.jgi')
+    if os.path.exists(jgi_path) and os.path.isfile(jgi_path):
+        return 'JGI import'
+    else:
+        return 'Unknown'
+
+
+async def some_metadata(path: Path, desired_fields=False, source=None):
     """
     if desired fields isn't given as a list all fields will be returned
     assumes full_path is valid path to a file
     valid fields for desired_fields are:
-    md5, lineCount, head, tail, name, path, mtime, size, isFolder
+    md5, lineCount, head, tail, name, path, mtime, size, isFolder, UPA
     """
     file_stats = await stat_data(path)
     if file_stats['isFolder']:
         return file_stats
     if not os.path.exists(path.metadata_path):
-        data = await _generate_metadata(path)
+        if source is None:
+            source = _determine_source(path)
+        data = await _generate_metadata(path, source)
     # if metadata older than file: regenerate
     elif os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000:
         data = await _generate_metadata(path)
@@ -103,5 +118,5 @@ async def some_metadata(path: Path, desired_fields=False):
         try:
             result[key] = data[key]
         except KeyError as no_data:
-            result[key] = 'error: data not found'  # TODO is this a good way to handle this?
+            raise web.HTTPBadRequest(text='no data exists for key {key}'.format(key=no_data.args))  # TODO check this exception message
     return result
