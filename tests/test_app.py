@@ -6,7 +6,7 @@ import configparser
 import string
 import os
 import asyncio
-from hypothesis import given, seed
+from hypothesis import given, seed, settings
 from hypothesis import strategies as st
 import hashlib
 import uvloop
@@ -209,6 +209,7 @@ async def test_search():
             assert len(json) == 2
 
 
+@settings(deadline=None)
 @asyncgiven(contents=st.text())
 async def test_directory_decompression(contents):
     fname = 'test'
