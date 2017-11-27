@@ -181,7 +181,6 @@ async def test_list():
             assert json[0]['isFolder'] is True
             assert json[0]['name'] == 'test'
             assert json[0]['path'] == '/testuser/test'
-            assert json[0]['size'] == 128
             assert json[0]['mtime'] <= time.time()*1000
             # TODO could add more extensive tests down here
 
