@@ -22,30 +22,14 @@ async def stat_data(path: Path) -> dict:
         'isFolder': isFolder
     }
 
-
-async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True) -> list:
-    """
-    only call this on a validated full path
-    """
-    response = []
-    for entry in os.scandir(path.full_path):
-        specific_path = Path.from_full_path(entry.path)
-        if not show_hidden and entry.name.startswith('.'):
-            continue
-        if entry.is_dir():
-            if query == '' or specific_path.user_path.find(query) != -1:
-                response.append(await stat_data(specific_path))
-            if recurse:
-                response.extend(await dir_info(specific_path, show_hidden, query, recurse))
-        elif entry.is_file():
-            if query == '' or specific_path.user_path.find(query) != -1:
-                response.append(await stat_data(specific_path))
-    return response
-
-
 async def _generate_metadata(path: Path, source: str):
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
-    data = {}
+    if os.path.exists(path.metadata_path):
+        async with aiofiles.open(path.metadata_path, mode='r') as extant:
+            data = await extant.read()
+            data = decoder.decode(data)
+    else:
+        data = {}
     # first ouptut of md5sum is the checksum
     data['source'] = source
     md5 = await run_command('md5sum', path.full_path)
@@ -72,6 +56,7 @@ async def add_upa(path: Path, UPA: str):
     else:
         data = await _generate_metadata(path)  # TODO performance optimization
     data['UPA'] = UPA
+    os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     async with aiofiles.open(path.metadata_path, mode='w') as update:
         await update.writelines(encoder.encode(data))
 
@@ -81,11 +66,50 @@ def _determine_source(path: Path):
     tries to determine the source of a file for which the source is unknown
     currently this works for JGI imported files only
     """
-    jgi_path = os.path.join(os.path.dirname(path.full_path), '.' + path.name + '.jgi')
+    jgi_path = path.jgi_metadata
     if os.path.exists(jgi_path) and os.path.isfile(jgi_path):
         return 'JGI import'
     else:
         return 'Unknown'
+
+
+async def _only_source(path: Path):
+    if os.path.exists(path.metadata_path):
+        async with aiofiles.open(path.metadata_path, mode='r') as extant:
+            data = await extant.read()
+            data = decoder.decode(data)
+    else:
+        data = {}
+    if 'source' in data:
+        return data['source']
+    else:
+        data['source'] = _determine_source(path)
+    os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
+    async with aiofiles.open(path.metadata_path, mode='w') as update:
+        await update.writelines(encoder.encode(data))
+    return data['source']
+
+
+async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True) -> list:
+    """
+    only call this on a validated full path
+    """
+    response = []
+    for entry in os.scandir(path.full_path):
+        specific_path = Path.from_full_path(entry.path)
+        if not show_hidden and entry.name.startswith('.'):
+            continue
+        if entry.is_dir():
+            if query == '' or specific_path.user_path.find(query) != -1:
+                response.append(await stat_data(specific_path))
+            if recurse:
+                response.extend(await dir_info(specific_path, show_hidden, query, recurse))
+        if entry.is_file():
+            if query == '' or specific_path.user_path.find(query) != -1:
+                data = await stat_data(specific_path)
+                data['source'] = await _only_source(specific_path)
+                response.append(data)
+    return response
 
 
 async def some_metadata(path: Path, desired_fields=False, source=None):

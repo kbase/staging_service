@@ -6,6 +6,7 @@ import shutil
 from .utils import Path, run_command
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
+from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
 
@@ -59,7 +60,8 @@ async def list_files(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
-    return web.json_response(await dir_info(path, show_hidden, recurse=False))
+    data = await dir_info(path, show_hidden, recurse=False)
+    return web.json_response(data)
 
 
 @routes.get('/search/{query:.*}')
@@ -94,6 +96,27 @@ async def get_metadata(request: web.Request):
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     return web.json_response(await some_metadata(path))
+
+
+@routes.get('/jgi-metadata/{path:.*}')
+async def get_jgi_metadata(request: web.Request):
+    """
+    returns jgi metadata if associated with a file
+    """
+    username = await auth_client.get_user(request.headers['Authorization'])
+    path = Path.validate_path(username, request.match_info['path'])
+    return web.json_response(await read_metadata_for(path))
+
+
+@routes.get('/impoter-defaults/{path:.*}')
+async def get_impoter_defaults(request: web.Request):
+    """
+    tried to automatically populate an importer's fields with default data
+    """
+    username = await auth_client.get_user(request.headers['Authorization'])
+    path = Path.validate_path(username, request.match_info['path'])
+    importer_type = request.match_info['importerType']
+    return web.json_response(await translate_for_importer(importer_type, path))
 
 
 @routes.post('/upload')

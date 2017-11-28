@@ -31,13 +31,14 @@ async def run_command(*args):
 class Path(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
-    __slots__ = ['full_path', 'metadata_path', 'user_path', 'name']
+    __slots__ = ['full_path', 'metadata_path', 'user_path', 'name', 'jgi_metadata']
 
-    def __init__(self, full_path, metadata_path, user_path, name):
+    def __init__(self, full_path, metadata_path, user_path, name, jgi_metadata):
         self.full_path = full_path
         self.metadata_path = metadata_path
         self.user_path = user_path
         self.name = name
+        self.jgi_metadata = jgi_metadata
 
     @staticmethod
     def validate_path(username: str, path: str=''):
@@ -57,11 +58,15 @@ class Path(object):
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(path)
-        return Path(full_path, metadata_path, user_path, name)
+        jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
+        return Path(full_path, metadata_path, user_path, name, jgi_metadata)
 
     @staticmethod
     def from_full_path(full_path: str):
         user_path = full_path[len(Path._DATA_DIR):]
+        if user_path.startswith('/'):
+            user_path = user_path[1:]
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(full_path)
-        return Path(full_path, metadata_path, user_path, name)
+        jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
+        return Path(full_path, metadata_path, user_path, name, jgi_metadata)

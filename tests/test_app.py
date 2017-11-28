@@ -176,11 +176,12 @@ async def test_list():
             res2 = await cli.get(os.path.join('list', 'test', 'test1'), headers={'Authorization': ''})
             assert res2.status == 400
             res3 = await cli.get('list/', headers={'Authorization': ''})
+            assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
             assert json[0]['isFolder'] is True
             assert json[0]['name'] == 'test'
-            assert json[0]['path'] == '/testuser/test'
+            assert json[0]['path'] == 'testuser/test'
             assert json[0]['mtime'] <= time.time()*1000
             # TODO could add more extensive tests down here
 
@@ -195,14 +196,17 @@ async def test_search():
             d2 = fs.make_dir(os.path.join(username, 'test', 'test2'))
             f3 = fs.make_file(os.path.join(username, 'test', 'test2', 'test3'), txt)
             res1 = await cli.get('search/', headers={'Authorization': ''})
+            assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
             assert len(json) == 4
             res2 = await cli.get('search/test1', headers={'Authorization': ''})
+            assert res2.status == 200
             json_text = await res2.text()
             json = decoder.decode(json_text)
             assert len(json) == 1
             res3 = await cli.get('search/test2', headers={'Authorization': ''})
+            assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
             assert len(json) == 2
