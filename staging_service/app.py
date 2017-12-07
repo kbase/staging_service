@@ -29,13 +29,6 @@ async def file_lifetime(parameter_list):
 
 @routes.get('/existence/{query:.*}')
 async def file_exists(request: web.Request):
-    # token = request.headers['Authorization']
-    # username = await auth_client.get_user(token)
-    # path = Path.validate_path(username, request.match_info['path'])
-    # exists = os.path.exists(path.full_path)
-    # isFile = os.path.isfile(path.full_path)
-    # return web.json_response({'exists': exists, 'isFile': isFile})
-
     username = await auth_client.get_user(request.headers['Authorization'])
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
