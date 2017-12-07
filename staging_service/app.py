@@ -38,6 +38,7 @@ async def file_exists(request: web.Request):
 
 
 @routes.get('/list/{path:.*}')
+@routes.get('/list')
 async def list_files(request: web.Request):
     """
     lists the contents of a directory and some details about them
@@ -45,7 +46,7 @@ async def list_files(request: web.Request):
     token = request.headers['Authorization']
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
-    path = Path.validate_path(username, request.match_info['path'])
+    path = Path.validate_path(username, request.match_info.get('path', ''))
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     elif os.path.isfile(path.full_path):
@@ -60,7 +61,7 @@ async def list_files(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
-    data = await dir_info(path, show_hidden, recurse=False)
+    data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
 
 
