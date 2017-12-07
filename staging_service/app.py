@@ -27,13 +27,13 @@ async def file_lifetime(parameter_list):
     return web.Response(text=os.environ['FILE_LIFETIME'])
 
 
-@routes.get('/existance/{path:.*}')
+@routes.get('/existence/{path:.*}')
 async def file_exists(request: web.Request):
     token = request.headers['Authorization']
     username = await auth_client.get_user(token)
     path = Path.validate_path(username, request.match_info['path'])
     exists = os.path.exists(path.full_path)
-    isFile = os.path.isfile()
+    isFile = os.path.isfile(path.full_path)
     return web.json_response({'exists': exists, 'isFile': isFile})
 
 

@@ -215,6 +215,50 @@ async def test_list():
             assert sum(file_folder_count) == 1
 
 
+async def test_existence():
+    txt = 'testing text'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            d2 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
+            f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2'), txt)
+
+            # testing file existence
+            res1 = await cli.get('existence/test/test_file_1', headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['isFile'] is True
+
+            res2 = await cli.get('existence/test/test_sub_dir/test_file_2',
+                                 headers={'Authorization': ''})
+            assert res2.status == 200
+            json_text = await res2.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['isFile'] is True
+
+            # testing folder existence
+            res3 = await cli.get('existence/test/test_sub_dir',
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['isFile'] is False
+
+            # testing non-existence
+            res1 = await cli.get('existence/fake_file', headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is False
+            assert json['isFile'] is False
+
+
 async def test_search():
     txt = 'testing text'
     username = 'testuser'
