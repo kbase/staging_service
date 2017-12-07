@@ -224,39 +224,51 @@ async def test_existence():
             f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
             d2 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
             f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2'), txt)
+            d3 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir', 'test_file_1'))
+            d4 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir', 'test_sub_dir'))
+            f4 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir',
+                                           'test_sub_dir', 'test_file_1'), txt)
 
-            # testing file existence
-            res1 = await cli.get('existence/test/test_file_1', headers={'Authorization': ''})
+            # testing existence of both file and folder name
+            res1 = await cli.get('existence/test_file_1', headers={'Authorization': ''})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
             assert json['exists'] is True
-            assert json['isFile'] is True
+            assert json['format'] == 'Both File and Folder'
 
-            res2 = await cli.get('existence/test/test_sub_dir/test_file_2',
+            # testing existence of file
+            res2 = await cli.get('existence/test_file_2',
                                  headers={'Authorization': ''})
             assert res2.status == 200
             json_text = await res2.text()
             json = decoder.decode(json_text)
             assert json['exists'] is True
-            assert json['isFile'] is True
+            assert json['format'] == 'File'
 
-            # testing folder existence
-            res3 = await cli.get('existence/test/test_sub_dir',
+            # testing existence of folder
+            res3 = await cli.get('existence/test_sub_dir',
                                  headers={'Authorization': ''})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
             assert json['exists'] is True
-            assert json['isFile'] is False
+            assert json['format'] == 'Folder'
 
             # testing non-existence
-            res1 = await cli.get('existence/fake_file', headers={'Authorization': ''})
-            assert res1.status == 200
-            json_text = await res1.text()
+            res4 = await cli.get('existence/fake_file', headers={'Authorization': ''})
+            assert res4.status == 200
+            json_text = await res4.text()
             json = decoder.decode(json_text)
             assert json['exists'] is False
-            assert json['isFile'] is False
+            assert json['format'] == 'N/A'
+
+            res5 = await cli.get('existence/test_sub', headers={'Authorization': ''})
+            assert res5.status == 200
+            json_text = await res5.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is False
+            assert json['format'] == 'N/A'
 
 
 async def test_search():
