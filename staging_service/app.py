@@ -27,17 +27,38 @@ async def file_lifetime(parameter_list):
     return web.Response(text=os.environ['FILE_LIFETIME'])
 
 
-@routes.get('/existance/{path:.*}')
+@routes.get('/existence/{query:.*}')
 async def file_exists(request: web.Request):
-    token = request.headers['Authorization']
-    username = await auth_client.get_user(token)
-    path = Path.validate_path(username, request.match_info['path'])
-    exists = os.path.exists(path.full_path)
-    isFile = os.path.isfile()
-    return web.json_response({'exists': exists, 'isFile': isFile})
+    username = await auth_client.get_user(request.headers['Authorization'])
+    query = request.match_info['query']
+    user_dir = Path.validate_path(username)
+    try:
+        show_hidden = request.query['showHidden']
+        if 'true' == show_hidden or 'True' == show_hidden:
+            show_hidden = True
+        else:
+            show_hidden = False
+    except KeyError as no_query:
+        show_hidden = False
+    results = await dir_info(user_dir, show_hidden, query)
+    filtered_results = [result for result in results if result['name'] == query]
+    if filtered_results:
+        exists = True
+        is_folder = [file_json['isFolder'] for file_json in filtered_results]
+        if all(is_folder):
+            format = 'Folder'
+        elif not any(is_folder):
+            format = 'File'
+        else:
+            format = 'Both File and Folder'
+    else:
+        exists = False
+        format = 'N/A'
+    return web.json_response({'exists': exists, 'format': format})
 
 
 @routes.get('/list/{path:.*}')
+@routes.get('/list')
 async def list_files(request: web.Request):
     """
     lists the contents of a directory and some details about them
@@ -45,7 +66,7 @@ async def list_files(request: web.Request):
     token = request.headers['Authorization']
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
-    path = Path.validate_path(username, request.match_info['path'])
+    path = Path.validate_path(username, request.match_info.get('path', ''))
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     elif os.path.isfile(path.full_path):
@@ -60,7 +81,7 @@ async def list_files(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
-    data = await dir_info(path, show_hidden, recurse=False)
+    data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
 
 

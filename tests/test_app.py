@@ -168,22 +168,107 @@ async def test_list():
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
             d = fs.make_dir(os.path.join(username, 'test'))
-            f = fs.make_file(os.path.join(username, 'test', 'test1'), txt)
-            d2 = fs.make_dir(os.path.join(username, 'test', 'test2'))
-            f3 = fs.make_file(os.path.join(username, 'test', 'test2', 'test3'), txt)
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            d2 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
+            f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2'), txt)
             res1 = await cli.get('list/..', headers={'Authorization': ''})
             assert res1.status == 404
-            res2 = await cli.get(os.path.join('list', 'test', 'test1'), headers={'Authorization': ''})
+            res2 = await cli.get(os.path.join('list', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
             assert res2.status == 400
-            res3 = await cli.get('list/', headers={'Authorization': ''})
+
+            # testing root directory with 'list/' routes
+            res3 = await cli.get('/list/', headers={'Authorization': ''})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
+            file_folder_count = [file_json['isFolder'] for file_json in json]
             assert json[0]['isFolder'] is True
             assert json[0]['name'] == 'test'
             assert json[0]['path'] == 'testuser/test'
             assert json[0]['mtime'] <= time.time()*1000
-            # TODO could add more extensive tests down here
+            assert len(file_folder_count) == 4  # 2 folders and 2 files
+            assert sum(file_folder_count) == 2
+
+            # testing root directory with 'list' route
+            res4 = await cli.get('/list', headers={'Authorization': ''})
+            assert res4.status == 200
+            json_text = await res4.text()
+            json = decoder.decode(json_text)
+            file_folder_count = [file_json['isFolder'] for file_json in json]
+            assert json[0]['isFolder'] is True
+            assert json[0]['name'] == 'test'
+            assert json[0]['path'] == 'testuser/test'
+            assert json[0]['mtime'] <= time.time()*1000
+            assert len(file_folder_count) == 4  # 2 folders and 2 files
+            assert sum(file_folder_count) == 2
+
+            # testing sub-directory
+            res5 = await cli.get(os.path.join('list', 'test'),
+                                 headers={'Authorization': ''})
+            assert res5.status == 200
+            json_text = await res5.text()
+            json = decoder.decode(json_text)
+            file_folder_count = [file_json['isFolder'] for file_json in json]
+            # 1 sub-directory, 1 file in sub-directory and 1 file in root
+            assert len(file_folder_count) == 3
+            assert sum(file_folder_count) == 1
+
+
+async def test_existence():
+    txt = 'testing text'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            d2 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
+            f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2'), txt)
+            d3 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir', 'test_file_1'))
+            d4 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir', 'test_sub_dir'))
+            f4 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir',
+                                           'test_sub_dir', 'test_file_1'), txt)
+
+            # testing existence of both file and folder name
+            res1 = await cli.get('existence/test_file_1', headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['format'] == 'Both File and Folder'
+
+            # testing existence of file
+            res2 = await cli.get('existence/test_file_2',
+                                 headers={'Authorization': ''})
+            assert res2.status == 200
+            json_text = await res2.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['format'] == 'File'
+
+            # testing existence of folder
+            res3 = await cli.get('existence/test_sub_dir',
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is True
+            assert json['format'] == 'Folder'
+
+            # testing non-existence
+            res4 = await cli.get('existence/fake_file', headers={'Authorization': ''})
+            assert res4.status == 200
+            json_text = await res4.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is False
+            assert json['format'] == 'N/A'
+
+            res5 = await cli.get('existence/test_sub', headers={'Authorization': ''})
+            assert res5.status == 200
+            json_text = await res5.text()
+            json = decoder.decode(json_text)
+            assert json['exists'] is False
+            assert json['format'] == 'N/A'
 
 
 async def test_search():
@@ -306,4 +391,3 @@ async def test_file_decompression(contents):
                 # check to see if we got back what we started with for all files and directories
                 assert os.path.exists(d)
                 assert os.path.exists(f1)
-
