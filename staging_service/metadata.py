@@ -122,18 +122,23 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
     file_stats = await stat_data(path)
     if file_stats['isFolder']:
         return file_stats
-    if not os.path.exists(path.metadata_path):
+    if ((not os.path.exists(path.metadata_path)) or
+       (os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000)):
+        # if metadata  does not exist or older than file: regenerate
         if source is None:
             source = _determine_source(path)
         data = await _generate_metadata(path, source)
-    # if metadata older than file: regenerate
-    elif os.stat(path.metadata_path).st_mtime < file_stats['mtime']/1000:
-        data = await _generate_metadata(path)
     else:  # metadata already exists and is up to date
         async with aiofiles.open(path.metadata_path, mode='r') as f:
             # make metadata fields local variables
             data = await f.read()
             data = decoder.decode(data)
+        # due to legacy code, some file has corrupted metadata file
+        expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail']
+        if set(expected_keys) > set(data.keys()):
+            if source is None:
+                source = _determine_source(path)
+            data = await _generate_metadata(path, source)
     data = {**data, **file_stats}
     if not desired_fields:
         return data
