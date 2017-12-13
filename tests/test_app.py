@@ -95,6 +95,9 @@ class FileUtil():
         os.makedirs(path, exist_ok=True)
         return path
 
+    def remove_dir(self, path):
+        shutil.rmtree(path)
+
 
 first_letter_alphabet = [c for c in string.ascii_lowercase+string.ascii_uppercase]
 username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase+string.digits]
@@ -160,6 +163,69 @@ async def test_service():
         assert resp.status == 200
         text = await resp.text()
         assert 'This is just a test. This is only a test.' in text
+
+async def test_metadata():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            res1 = await cli.get(os.path.join('metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail', 'name',
+                             'path', 'mtime', 'size', 'isFolder']
+            assert set(json.keys()) >= set(expected_keys)
+            assert json.get('source') == 'Unknown'
+            assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
+            assert json.get('lineCount') == '1'
+            assert json.get('head') == 'testing text'
+            assert json.get('tail') == 'testing text'
+            assert json.get('name') == 'test_file_1'
+            assert json.get('size') == 13
+            assert not json.get('isFolder')
+
+            # testing existing metadata file
+            res2 = await cli.get(os.path.join('metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res2.status == 200
+            json_text = await res2.text()
+            json = decoder.decode(json_text)
+            expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail', 'name',
+                             'path', 'mtime', 'size', 'isFolder']
+            assert set(json.keys()) >= set(expected_keys)
+            assert json.get('source') == 'Unknown'
+            assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
+            assert json.get('lineCount') == '1'
+            assert json.get('head') == 'testing text'
+            assert json.get('tail') == 'testing text'
+            assert json.get('name') == 'test_file_1'
+            assert json.get('size') == 13
+            assert not json.get('isFolder')
+
+            # testing corrupted metadata file
+            path = os.path.join(META_DIR, username, 'test', 'test_file_1')
+            with open(path, encoding='utf-8', mode='w') as f:
+                f.write('{"source": "Unknown"}')
+            res3 = await cli.get(os.path.join('metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail', 'name',
+                             'path', 'mtime', 'size', 'isFolder']
+            assert set(json.keys()) >= set(expected_keys)
+            assert json.get('source') == 'Unknown'
+            assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
+            assert json.get('lineCount') == '1'
+            assert json.get('head') == 'testing text'
+            assert json.get('tail') == 'testing text'
+            assert json.get('name') == 'test_file_1'
+            assert json.get('size') == 13
+            assert not json.get('isFolder')
 
 
 async def test_list():
