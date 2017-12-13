@@ -1,7 +1,7 @@
 from aiohttp import web
 import aiohttp_cors
 import os
-from .metadata import stat_data, some_metadata, dir_info, add_upa
+from .metadata import stat_data, some_metadata, dir_info, add_upa, file_content
 import shutil
 from .utils import Path, run_command
 from .auth2Client import KBaseAuth2
@@ -117,6 +117,18 @@ async def get_metadata(request: web.Request):
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
     return web.json_response(await some_metadata(path))
+
+
+@routes.get('/display_metadata/{path:.*}')
+async def get_metadata(request: web.Request):
+    """
+    display metadata file content for a bulk file path
+    """
+    username = await auth_client.get_user(request.headers['Authorization'])
+    path = Path.validate_path(username, request.match_info['path'])
+    if not os.path.exists(path.full_path):
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
+    return web.json_response(await file_content(path.metadata_path))
 
 
 @routes.get('/jgi-metadata/{path:.*}')

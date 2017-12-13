@@ -112,6 +112,22 @@ async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True)
     return response
 
 
+async def file_content(file_path):
+    """
+    return JSON object {'file_content': file_content} if file_path has less than 20 lines
+           JSON obejct {'file_conent': 'N/A', 'error': 'file too large'} if file_path has more than 20 lines
+    """
+    lineCount = await run_command('wc', '-l', file_path)
+
+    if int(lineCount.split()[0]) > 20:
+        result = {'file_conent': 'N/A', 'error': 'file too large!'}
+    else:
+        async with aiofiles.open(file_path, mode='r') as f:
+            result = {'file_conent': await f.read()}
+
+    return result
+
+
 async def some_metadata(path: Path, desired_fields=False, source=None):
     """
     if desired fields isn't given as a list all fields will be returned

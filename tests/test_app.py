@@ -164,6 +164,31 @@ async def test_service():
         text = await resp.text()
         assert 'This is just a test. This is only a test.' in text
 
+
+async def test_display_metadata():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            res1 = await cli.get(os.path.join('display_metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert 'file_conent' in json.keys()
+            file_conent = json.get('file_conent')
+            file_conent_json = decoder.decode(file_conent)
+            expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail']
+            assert set(file_conent_json.keys()) >= set(expected_keys)
+            assert file_conent_json.get('source') == 'Unknown'
+            assert file_conent_json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
+            assert file_conent_json.get('lineCount') == '1'
+            assert file_conent_json.get('head') == 'testing text'
+            assert file_conent_json.get('tail') == 'testing text'
+
+
 async def test_metadata():
     txt = 'testing text\n'
     username = 'testuser'
