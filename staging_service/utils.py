@@ -58,7 +58,8 @@ class Path(object):
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(path)
-        jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
+        jbi_uuid = name.split('.')[0]
+        jgi_metadata = os.path.join(os.path.dirname(full_path), jbi_uuid + '.metadata')
         return Path(full_path, metadata_path, user_path, name, jgi_metadata)
 
     @staticmethod

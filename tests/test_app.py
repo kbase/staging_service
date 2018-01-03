@@ -164,6 +164,29 @@ async def test_service():
         text = await resp.text()
         assert 'This is just a test. This is only a test.' in text
 
+async def test_jbi_metadata():
+    txt = 'testing text\n'
+    username = 'testuser'
+    jbi_metadata = '{"file_owner": "sdm", "added_date": "2013-08-12T00:21:53.844000"}'
+
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test',
+                                          '51d45db7067c014cd6e88fcb.1617.2.1467.fastq'), txt)
+            f_jgi = fs.make_file(os.path.join(username, 'test',
+                                              '51d45db7067c014cd6e88fcb.metadata'), jbi_metadata)
+            res1 = await cli.get(os.path.join('jgi-metadata', 'test',
+                                              '51d45db7067c014cd6e88fcb.1617.2.1467.fastq'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            expected_keys = ['file_owner', 'added_date']
+            assert set(json.keys()) >= set(expected_keys)
+            assert json.get('file_owner') == 'sdm'
+            assert json.get('added_date') == '2013-08-12T00:21:53.844000'
+
 async def test_metadata():
     txt = 'testing text\n'
     username = 'testuser'
