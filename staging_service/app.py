@@ -46,12 +46,6 @@ async def file_exists(request: web.Request):
         exists = True
         is_folder = [file_json['isFolder'] for file_json in filtered_results]
         isFolder = all(is_folder)
-        # if all(is_folder):
-        #     format = 'Folder'
-        # elif not any(is_folder):
-        #     format = 'File'
-        # else:
-        #     format = 'Both File and Folder'
     else:
         exists = False
         isFolder = False
