@@ -187,6 +187,12 @@ async def test_jbi_metadata():
             assert json.get('file_owner') == 'sdm'
             assert json.get('added_date') == '2013-08-12T00:21:53.844000'
 
+            # testing non-existing jbi metadata file
+            res1 = await cli.get(os.path.join('jgi-metadata', 'test',
+                                              'non_existing.1617.2.1467.fastq'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 404
+
 async def test_metadata():
     txt = 'testing text\n'
     username = 'testuser'

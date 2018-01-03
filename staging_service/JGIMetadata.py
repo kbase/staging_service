@@ -14,7 +14,7 @@ async def read_metadata_for(path: Path):
             return decoder.decode(data)
     else:
         raise web.HTTPNotFound(
-            text='could not find associated JGI metadata file for {path}'.format(path.user_path))
+            text='could not find associated JGI metadata file for {path}'.format(path=path.user_path))
 
 
 async def translate_for_importer(importer: str, path: Path):
