@@ -159,6 +159,13 @@ async def test_cmd(txt):
 
 async def test_service():
     async with AppClient(config) as cli:
+        resp = await cli.get('/test-auth')
+        assert resp.status == 200
+        text = await resp.text()
+        assert "I'm authenticated as" in text
+
+async def test_service():
+    async with AppClient(config) as cli:
         resp = await cli.get('/test-service')
         assert resp.status == 200
         text = await resp.text()

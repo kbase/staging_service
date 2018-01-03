@@ -18,7 +18,7 @@ async def test_service(request: web.Request):
 
 @routes.get('/test-auth')
 async def test_auth(request: web.Request):
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     return web.Response(text="I'm authenticated as {}".format(username))
 
 
@@ -29,7 +29,7 @@ async def file_lifetime(parameter_list):
 
 @routes.get('/existence/{query:.*}')
 async def file_exists(request: web.Request):
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
     try:
@@ -58,7 +58,7 @@ async def list_files(request: web.Request):
     """
     lists the contents of a directory and some details about them
     """
-    token = request.headers['Authorization']
+    token = request.headers.get('Authorization')
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info.get('path', ''))
@@ -85,7 +85,7 @@ async def search(request: web.Request):
     """
     returns all files and folders matching the search query ordered by modified date
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
     try:
@@ -107,7 +107,7 @@ async def get_metadata(request: web.Request):
     creates a metadate file for the file requested and returns its json contents
     if it's a folder it returns stat data about the folder
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
@@ -119,7 +119,7 @@ async def get_jgi_metadata(request: web.Request):
     """
     returns jgi metadata if associated with a file
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     return web.json_response(await read_metadata_for(path))
 
@@ -129,7 +129,7 @@ async def get_impoter_defaults(request: web.Request):
     """
     tried to automatically populate an importer's fields with default data
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     importer_type = request.match_info['importerType']
     return web.json_response(await translate_for_importer(importer_type, path))
@@ -140,7 +140,7 @@ async def upload_files_chunked(request: web.Request):
     """
     uploads a file into the staging area
     """
-    token = request.headers['Authorization']
+    token = request.headers.get('Authorization')
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
     reader = await request.multipart()
@@ -182,7 +182,7 @@ async def define_UPA(request: web.Request):
     """
     creates an UPA as a field in the metadata file corresponding to the filepath given
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
@@ -205,7 +205,7 @@ async def delete(request: web.Request):
     """
     allows deletion of both directories and files
     """
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
@@ -227,7 +227,7 @@ async def delete(request: web.Request):
 
 @routes.patch('/mv/{path:.+}')
 async def rename(request: web.Request):
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
     if path.user_path == username:
@@ -258,7 +258,7 @@ async def rename(request: web.Request):
 
 @routes.patch('/decompress/{path:.+}')
 async def decompress(request: web.Request):
-    username = await auth_client.get_user(request.headers['Authorization'])
+    username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     # make sure the file can be decompressed
     filename, file_extension = os.path.splitext(path.full_path)
