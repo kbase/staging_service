@@ -3,6 +3,7 @@ import aiofiles
 from .utils import run_command, Path
 import os
 from aiohttp import web
+import hashlib
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -32,7 +33,11 @@ async def _generate_metadata(path: Path, source: str):
         data = {}
     # first ouptut of md5sum is the checksum
     data['source'] = source
-    md5 = await run_command('md5sum', path.full_path)
+    try:
+        md5 = hashlib.md5(open(path.full_path, 'rb').read()).hexdigest()
+    except:
+        md5 = 'n/a'
+
     data['md5'] = md5.split()[0]
     # first output of wc is the count
     lineCount = await run_command('wc', '-l', path.full_path)
