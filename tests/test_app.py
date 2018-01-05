@@ -157,7 +157,7 @@ async def test_cmd(txt):
         assert md5 == md52.split()[0]
 
 
-async def test_service():
+async def test_auth():
     async with AppClient(config) as cli:
         resp = await cli.get('/test-auth')
         assert resp.status == 200
