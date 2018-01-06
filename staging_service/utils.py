@@ -12,7 +12,8 @@ async def run_command(*args):
     process = await asyncio.create_subprocess_exec(
         *args,
         # stdout must a pipe to be accessible as process.stdout
-        stdout=asyncio.subprocess.PIPE)
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
 
     # Status
     # print('Started:', args, '(pid = ' + str(process.pid) + ')')
@@ -24,10 +25,10 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        error_msg = 'command {cmd} failed\nreturn code: {returncode}\nmsg: {error}\n'.format(
+        error_msg = 'command {cmd} failed\nreturn code: {returncode}\nerror: {error}'.format(
                     cmd=' '.join(args),
                     returncode=process.returncode,
-                    error=stdout.decode().strip())
+                    error=stderr.decode().strip())
         raise HTTPInternalServerError(text=error_msg)
 
 
