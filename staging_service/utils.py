@@ -24,7 +24,8 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        raise HTTPInternalServerError(text='command {cmd} failed'.format(cmd=' '.join(args)))
+        error_msg = 'command {cmd} failed\n error {error}'.format(cmd=' '.join(args), error=stderr)
+        raise HTTPInternalServerError(text=error_msg)
         # TODO this should give better information on what went wrong in the process
 
 
