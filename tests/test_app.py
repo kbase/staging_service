@@ -180,11 +180,11 @@ async def test_jbi_metadata():
         with FileUtil() as fs:
             d = fs.make_dir(os.path.join(username, 'test'))
             f = fs.make_file(os.path.join(username, 'test',
-                                          '51d45db7067c014cd6e88fcb.1617.2.1467.fastq'), txt)
+                                          'test_jgi.fastq'), txt)
             f_jgi = fs.make_file(os.path.join(username, 'test',
-                                              '51d45db7067c014cd6e88fcb.metadata'), jbi_metadata)
+                                              '.test_jgi.fastq.jgi'), jbi_metadata)
             res1 = await cli.get(os.path.join('jgi-metadata', 'test',
-                                              '51d45db7067c014cd6e88fcb.1617.2.1467.fastq'),
+                                              'test_jgi.fastq'),
                                  headers={'Authorization': ''})
             assert res1.status == 200
             json_text = await res1.text()
