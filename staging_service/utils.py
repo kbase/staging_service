@@ -24,7 +24,8 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        raise HTTPInternalServerError(text='command {cmd} failed'.format(cmd=' '.join(args)))
+        error_msg = 'command {cmd} failed\n error {error}'.format(cmd=' '.join(args), error=stderr)
+        raise HTTPInternalServerError(text=error_msg)
         # TODO this should give better information on what went wrong in the process
 
 
@@ -58,8 +59,7 @@ class Path(object):
         full_path = os.path.join(Path._DATA_DIR, user_path)
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(path)
-        jbi_uuid = name.split('.')[0]
-        jgi_metadata = os.path.join(os.path.dirname(full_path), jbi_uuid + '.metadata')
+        jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
         return Path(full_path, metadata_path, user_path, name, jgi_metadata)
 
     @staticmethod
