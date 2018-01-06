@@ -69,14 +69,10 @@ class KBaseAuth2(object):
             async with session.get(self._authurl, headers={'Authorization': token}) as resp:
                 ret = await resp.json()
                 if not resp.reason == 'OK':
-                    try:
-                        err = ret.json()
-                    except:
-                        ret.raise_for_status()  # TODO check that this works
                     raise aiohttp.web.HTTPUnauthorized(
                         text='Error connecting to auth service: {} {}\n{}'
                         .format(ret['error']['httpcode'], resp.reason,
-                                err['error']['message']))
+                                ret['error']['message']))
         # whichever one comes first
         self._cache._MAX_TIME_SEC = ret['cachefor']
         self._cache.add_valid_token(token, ret['user'], ret['expires'])
