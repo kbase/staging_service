@@ -208,7 +208,7 @@ async def delete(request: web.Request):
     username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
     # make sure directory isn't home
-    if path.user_path == username:
+    if os.path.dirname(path.user_path) == username:
         raise web.HTTPForbidden(text='cannot delete home directory')
     if is_globusid(path, username):
         raise web.HTTPForbidden(text='cannot delete protected file')
@@ -229,8 +229,9 @@ async def delete(request: web.Request):
 async def rename(request: web.Request):
     username = await auth_client.get_user(request.headers.get('Authorization'))
     path = Path.validate_path(username, request.match_info['path'])
+
     # make sure directory isn't home
-    if path.user_path == username:
+    if os.path.dirname(path.user_path) == username:
         raise web.HTTPForbidden(text='cannot rename or move home directory')
     if is_globusid(path, username):
         raise web.HTTPForbidden(text='cannot rename or move protected file')

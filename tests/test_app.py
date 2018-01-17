@@ -164,12 +164,14 @@ async def test_auth():
         text = await resp.text()
         assert "I'm authenticated as" in text
 
+
 async def test_service():
     async with AppClient(config) as cli:
         resp = await cli.get('/test-service')
         assert resp.status == 200
         text = await resp.text()
         assert 'This is just a test. This is only a test.' in text
+
 
 async def test_jbi_metadata():
     txt = 'testing text\n'
@@ -199,6 +201,7 @@ async def test_jbi_metadata():
                                               'non_existing.1617.2.1467.fastq'),
                                  headers={'Authorization': ''})
             assert res1.status == 404
+
 
 async def test_metadata():
     txt = 'testing text\n'
@@ -262,6 +265,169 @@ async def test_metadata():
             assert json.get('name') == 'test_file_1'
             assert json.get('size') == 13
             assert not json.get('isFolder')
+
+
+async def test_define_UPA():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            # generating metadata file
+            res1 = await cli.get(os.path.join('metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+
+            # posting UPA
+            res2 = await cli.post(os.path.join('define-upa', 'test', 'test_file_1'),
+                                  headers={'Authorization': ''},
+                                  data={'UPA': 'test_UPA'})
+            assert res2.status == 200
+            json_text = await res2.text()
+            assert 'succesfully updated UPA test_UPA' in json_text
+
+            # getting new metadata
+            res3 = await cli.get(os.path.join('metadata', 'test', 'test_file_1'),
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            expected_keys = ['source', 'md5', 'lineCount', 'head', 'tail', 'name',
+                             'path', 'mtime', 'size', 'isFolder', 'UPA']
+            assert set(json.keys()) >= set(expected_keys)
+            assert json.get('source') == 'Unknown'
+            assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
+            assert json.get('lineCount') == '1'
+            assert json.get('head') == 'testing text'
+            assert json.get('tail') == 'testing text'
+            assert json.get('name') == 'test_file_1'
+            assert json.get('size') == 13
+            assert not json.get('isFolder')
+            assert json.get('UPA') is not None
+            assert json.get('UPA') == 'test_UPA'
+
+            # testing non-existing jbi metadata file
+            res4 = await cli.post(os.path.join('define-upa', 'test', 'non_existing.test_file_1'),
+                                  headers={'Authorization': ''},
+                                  data={'UPA': 'test_UPA'})
+            assert res4.status == 404
+
+            # tesging missing body
+            res5 = await cli.post(os.path.join('define-upa', 'test', 'test_file_1'),
+                                  headers={'Authorization': ''})
+            assert res5.status == 400
+
+            # testing missing UPA in body
+            res6 = await cli.post(os.path.join('define-upa', 'test', 'test_file_1'),
+                                  headers={'Authorization': ''},
+                                  data={'missing_UPA': 'test_UPA'})
+            assert res6.status == 400
+
+
+async def test_mv():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+
+            # list current test directory
+            res1 = await cli.get(os.path.join('list', 'test'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 1
+            assert json[0]['name'] == 'test_file_1'
+
+            res2 = await cli.patch(os.path.join('mv', 'test', 'test_file_1'),
+                                   headers={'Authorization': ''},
+                                   data={'newPath': 'test/test_file_2'})
+            assert res2.status == 200
+            json_text = await res2.text()
+            assert 'successfully moved' in json_text
+
+            # relist test directory
+            res3 = await cli.get(os.path.join('list', 'test'),
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 1
+            assert json[0]['name'] == 'test_file_2'
+
+            # testing moving root
+            res4 = await cli.patch('/mv/ ',
+                                   headers={'Authorization': ''},
+                                   data={'newPath': 'test/test_file_2'})
+            assert res4.status == 403
+
+            # testing missing body
+            res5 = await cli.patch(os.path.join('mv', 'test', 'test_file_1'),
+                                   headers={'Authorization': ''})
+            assert res5.status == 400
+
+            # testing missing newPath in body
+            res6 = await cli.patch(os.path.join('mv', 'test', 'test_file_1'),
+                                   headers={'Authorization': ''},
+                                   data={'missing_newPath': 'test/test_file_2'})
+            assert res6.status == 400
+
+            # testing moving to existing file
+            res7 = await cli.patch(os.path.join('mv', 'test', 'test_file_2'),
+                                   headers={'Authorization': ''},
+                                   data={'newPath': 'test/test_file_2'})
+            assert res7.status == 409
+
+            # testing non-existing file
+            res7 = await cli.patch(os.path.join('mv', 'test', 'non_existing.test_file_2'),
+                                   headers={'Authorization': ''},
+                                   data={'newPath': 'test/test_file_2'})
+            assert res7.status == 404
+
+
+async def test_delete():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+
+            # list current test directory
+            res1 = await cli.get(os.path.join('list', 'test'),
+                                 headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 1
+            assert json[0]['name'] == 'test_file_1'
+
+            res2 = await cli.delete(os.path.join('delete', 'test', 'test_file_1'),
+                                    headers={'Authorization': ''})
+            assert res2.status == 200
+            json_text = await res2.text()
+            assert 'successfully deleted' in json_text
+
+            # relist test directory
+            res3 = await cli.get(os.path.join('list', 'test'),
+                                 headers={'Authorization': ''})
+            assert res3.status == 200
+            json_text = await res3.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 0
+
+            # testing moving root
+            res4 = await cli.delete('/delete/ ',
+                                    headers={'Authorization': ''})
+            assert res4.status == 403
+
+            # testing non-existing file
+            res5 = await cli.delete(os.path.join('delete', 'test', 'non_existing.test_file_2'),
+                                    headers={'Authorization': ''})
+            assert res5.status == 404
 
 
 async def test_list():
