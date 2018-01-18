@@ -1,3 +1,4 @@
+# WARNING this file does not sync up with the deployment automatically
 version: "3.1"
 services:
   staging_service:
@@ -6,5 +7,8 @@ services:
       - "3000:3000"
     # The following mount assumes the user dirs are under /data/bulk/{username}
     # it further assumes that there is a pre-existing /data/metadata directory
-    volumes: 
+    volumes:
       - "./data:/kb/deployment/lib/src/data"
+    environment:
+      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
+      - FILE_LIFETIME="90"

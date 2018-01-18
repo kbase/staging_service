@@ -1,8 +1,12 @@
-language: bash
 sudo: required
 services:
   - docker
+language: python
+python: "3.6"
+install:
+  - pip install -r requirements.txt
 script:
+  - ./run_tests.sh
   - make
 after_success:
   - IMAGE_NAME=kbase/staging_service ./build/push2dockerhub.sh
