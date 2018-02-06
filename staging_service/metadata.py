@@ -4,6 +4,7 @@ from .utils import run_command, Path
 import os
 from aiohttp import web
 import hashlib
+from difflib import SequenceMatcher
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -116,6 +117,14 @@ async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True)
                 response.append(data)
     return response
 
+async def similar(file_name, comparing_file_name, similarity_cut_off):
+    """
+    return true if file_name and comparing_file_name have higher similarity_cut_off
+    """
+
+    matcher = SequenceMatcher(None, file_name, comparing_file_name)
+
+    return matcher.ratio() >= similarity_cut_off
 
 async def some_metadata(path: Path, desired_fields=False, source=None):
     """

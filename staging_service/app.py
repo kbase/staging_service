@@ -1,7 +1,7 @@
 from aiohttp import web
 import aiohttp_cors
 import os
-from .metadata import stat_data, some_metadata, dir_info, add_upa
+from .metadata import stat_data, some_metadata, dir_info, add_upa, similar
 import shutil
 from .utils import Path, run_command
 from .auth2Client import KBaseAuth2
@@ -78,6 +78,37 @@ async def list_files(request: web.Request):
         show_hidden = False
     data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
+
+
+@routes.get('/similar/{path:.+}')
+async def similar_files(request: web.Request):
+    """
+    lists similar file path for given file
+    """
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
+    path = Path.validate_path(username, request.match_info['path'])
+    if not os.path.exists(path.full_path):
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
+    elif os.path.isdir(path.full_path):
+        raise web.HTTPBadRequest(
+            text='{path} is a directory not a file'.format(path=path.full_path)
+        )
+
+    root = Path.validate_path(username, '')
+    files = await dir_info(root, show_hidden=False, recurse=True)
+
+    similar_files = list()
+    similarity_cut_off = 0.75  # adjust this cut off if necessary
+    for file in files:
+        if (not file.get('isFolder')) and (path.user_path != file.get('path')):
+            similar_match = await similar(os.path.basename(path.user_path),
+                                          file.get('name'), similarity_cut_off)
+            if similar_match:
+                similar_files.append(file)
+
+    return web.json_response(similar_files)
 
 
 @routes.get('/search/{query:.*}')
