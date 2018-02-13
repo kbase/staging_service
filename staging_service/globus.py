@@ -2,28 +2,32 @@ from .utils import Path
 import aiohttp
 import aiofiles
 import os
+import configparser
 # TODO make this a config
-_AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
+# _AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
 
 
 async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
-        async with session.get(_AUTH2_ME_URL, headers={'Authorization': token}) as resp:
+        async with session.get(_get_auth2_url(), headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
-                try:
-                    err = ret.json()
-                except:
-                    ret.raise_for_status()  # TODO what does this accomplish
                 raise aiohttp.web.HTTPUnauthorized(
                         text='Error connecting to auth service: {} {}\n{}'
                         .format(ret['error']['httpcode'], resp.reason,
-                                err['error']['message']))
+                                ret['error']['message']))
     return list(map(lambda x: x['provusername'],
                     filter(lambda x: x['provider'] == 'Globus',
                     ret['idents'])))
+
+
+def _get_auth2_url():
+    config = configparser.ConfigParser()
+    config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
+
+    return config['staging_service']['AUTH_URL']
 
 
 def _globus_id_path(username: str):
