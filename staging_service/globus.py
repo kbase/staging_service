@@ -3,9 +3,13 @@ import aiohttp
 import aiofiles
 import os
 import configparser
-# TODO make this a config
-# _AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
 
+
+def _get_auth2_url():
+    config = configparser.ConfigParser()
+    config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
+
+    return config['staging_service']['AUTH_URL']
 
 async def _get_globus_ids(token):
     if not token:
@@ -23,13 +27,6 @@ async def _get_globus_ids(token):
                     ret['idents'])))
 
 
-def _get_auth2_url():
-    config = configparser.ConfigParser()
-    config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
-
-    return config['staging_service']['AUTH_URL']
-
-
 def _globus_id_path(username: str):
     return Path.validate_path(username, '.globus_id')
 
@@ -40,6 +37,12 @@ def is_globusid(path: Path, username: str):
 
 async def assert_globusid_exists(username, token):
     """ ensures that a globus id exists if there is a valid one for user"""
+
+    # make root dir
+    root = Path.validate_path(username, '')
+    if not os.path.exists(root.full_path):
+        os.makedirs(root.full_path)
+
     path = _globus_id_path(username)
     # check to see if file exists or is empty
     if not os.path.exists(path.full_path) or os.stat(path.full_path).st_size == 0:
