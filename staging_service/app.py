@@ -1,7 +1,7 @@
 from aiohttp import web
 import aiohttp_cors
 import os
-from .metadata import stat_data, some_metadata, dir_info, add_upa
+from .metadata import stat_data, some_metadata, dir_info, add_upa, similar
 import shutil
 from .utils import Path, run_command
 from .auth2Client import KBaseAuth2
@@ -29,7 +29,9 @@ async def file_lifetime(parameter_list):
 
 @routes.get('/existence/{query:.*}')
 async def file_exists(request: web.Request):
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
     try:
@@ -80,12 +82,45 @@ async def list_files(request: web.Request):
     return web.json_response(data)
 
 
+@routes.get('/similar/{path:.+}')
+async def similar_files(request: web.Request):
+    """
+    lists similar file path for given file
+    """
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
+    path = Path.validate_path(username, request.match_info['path'])
+    if not os.path.exists(path.full_path):
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
+    elif os.path.isdir(path.full_path):
+        raise web.HTTPBadRequest(
+            text='{path} is a directory not a file'.format(path=path.full_path)
+        )
+
+    root = Path.validate_path(username, '')
+    files = await dir_info(root, show_hidden=False, recurse=True)
+
+    similar_files = list()
+    similarity_cut_off = 0.75  # adjust this cut off if necessary
+    for file in files:
+        if (not file.get('isFolder')) and (path.user_path != file.get('path')):
+            similar_match = await similar(os.path.basename(path.user_path),
+                                          file.get('name'), similarity_cut_off)
+            if similar_match:
+                similar_files.append(file)
+
+    return web.json_response(similar_files)
+
+
 @routes.get('/search/{query:.*}')
 async def search(request: web.Request):
     """
     returns all files and folders matching the search query ordered by modified date
     """
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     query = request.match_info['query']
     user_dir = Path.validate_path(username)
     try:
@@ -107,7 +142,10 @@ async def get_metadata(request: web.Request):
     creates a metadate file for the file requested and returns its json contents
     if it's a folder it returns stat data about the folder
     """
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
+
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
@@ -119,7 +157,9 @@ async def get_jgi_metadata(request: web.Request):
     """
     returns jgi metadata if associated with a file
     """
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info['path'])
     return web.json_response(await read_metadata_for(path))
 
@@ -129,7 +169,9 @@ async def get_impoter_defaults(request: web.Request):
     """
     tried to automatically populate an importer's fields with default data
     """
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info['path'])
     importer_type = request.match_info['importerType']
     return web.json_response(await translate_for_importer(importer_type, path))
@@ -182,7 +224,9 @@ async def define_UPA(request: web.Request):
     """
     creates an UPA as a field in the metadata file corresponding to the filepath given
     """
-    username = await auth_client.get_user(request.headers.get('Authorization'))
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
     path = Path.validate_path(username, request.match_info['path'])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa

@@ -483,6 +483,36 @@ async def test_list():
             assert sum(file_folder_count) == 1
 
 
+async def test_similar():
+    txt = 'testing text'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1.fq'), txt)
+            d1 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
+            f1 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2.fq'), txt)
+            f2 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_right.fq'), txt)
+            f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'my_files'), txt)
+
+            # testing similar file name
+            res1 = await cli.get('similar/test/test_file_1.fq', headers={'Authorization': ''})
+            assert res1.status == 200
+            json_text = await res1.text()
+            json = decoder.decode(json_text)
+            assert len(json) == 2
+            assert json[0].get('name') in ['test_file_2.fq', 'test_file_right.fq']
+            assert json[1].get('name') in ['test_file_2.fq', 'test_file_right.fq']
+
+            # testing non-existing file
+            res2 = await cli.get('similar/test/non-existing', headers={'Authorization': ''})
+            assert res2.status == 404
+
+            # testing path is a directory
+            res3 = await cli.get('similar/test', headers={'Authorization': ''})
+            assert res3.status == 400
+
+
 async def test_existence():
     txt = 'testing text'
     username = 'testuser'
