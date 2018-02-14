@@ -4,8 +4,6 @@ import aiofiles
 import os
 import configparser
 
-_AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
-
 
 def _get_authme_url():
     config = configparser.ConfigParser()
@@ -26,7 +24,9 @@ async def _get_globus_ids(token):
             ret = await resp.json()
             if not resp.reason == 'OK':
                 raise aiohttp.web.HTTPUnauthorized(
-                        text='Error connecting to auth service: {}'.format(resp.reason))
+                    text='Error connecting to auth service: {} {}\n{}'.format(
+                        ret['error']['httpcode'], resp.reason,
+                        ret['error']['message']))
     return list(map(lambda x: x['provusername'],
                     filter(lambda x: x['provider'] == 'Globus',
                     ret['idents'])))
