@@ -70,8 +70,8 @@ class KBaseAuth2(object):
                 ret = await resp.json()
                 if not resp.reason == 'OK':
                     raise aiohttp.web.HTTPUnauthorized(
-                        text='Error connecting to auth service: {} {}\n{}'
-                        .format(ret['error']['httpcode'], resp.reason,
+                        text='Error connecting to auth service: {} {}\n{}'.format(
+                                ret['error']['httpcode'], resp.reason,
                                 ret['error']['message']))
         # whichever one comes first
         self._cache._MAX_TIME_SEC = ret['cachefor']
