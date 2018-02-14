@@ -5,17 +5,13 @@ import os
 import configparser
 
 
-def _get_auth2_url():
-    config = configparser.ConfigParser()
-    config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
-
-    return config['staging_service']['AUTH_URL']
-
 async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
-        auth2_url = _get_auth2_url()
+        config = configparser.ConfigParser()
+        config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
+        auth2_url = config['staging_service']['AUTH_URL']
         async with session.get(auth2_url, headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
