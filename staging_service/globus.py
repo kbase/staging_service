@@ -4,22 +4,29 @@ import aiofiles
 import os
 import configparser
 
+_AUTH2_ME_URL = 'https://ci.kbase.us/services/auth/api/V2/me'
+
+
+def _get_authme_url():
+    config = configparser.ConfigParser()
+    config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
+    auth2_url = config['staging_service']['AUTH_URL']
+
+    auth2_me_url = auth2_url.split('services')[0] + 'services/auth/api/V2/me'
+
+    return auth2_me_url
+
 
 async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
-        # config = configparser.ConfigParser()
-        # config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
-        # auth2_url = config['staging_service']['AUTH_URL']
-        auth2_url = 'https://ci.kbase.us/services/auth/api/V2/me'
-        async with session.get(auth2_url, headers={'Authorization': token}) as resp:
+        auth2_me_url = _get_authme_url()
+        async with session.get(auth2_me_url, headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
                 raise aiohttp.web.HTTPUnauthorized(
-                        text='Error connecting to auth service: {} {}\n{}'
-                        .format(ret['error']['httpcode'], resp.reason,
-                                ret['error']['message']))
+                        text='Error connecting to auth service: {}'.format(resp.reason))
     return list(map(lambda x: x['provusername'],
                     filter(lambda x: x['provider'] == 'Globus',
                     ret['idents'])))
@@ -37,9 +44,9 @@ async def assert_globusid_exists(username, token):
     """ ensures that a globus id exists if there is a valid one for user"""
 
     # make root dir
-    # root = Path.validate_path(username, '')
-    # if not os.path.exists(root.full_path):
-    #     os.makedirs(root.full_path)
+    root = Path.validate_path(username, '')
+    if not os.path.exists(root.full_path):
+        os.makedirs(root.full_path)
 
     path = _globus_id_path(username)
     # check to see if file exists or is empty
