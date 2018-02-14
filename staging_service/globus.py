@@ -15,7 +15,8 @@ async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
-        async with session.get(_get_auth2_url(), headers={'Authorization': token}) as resp:
+        auth2_url = _get_auth2_url()
+        async with session.get(auth2_url, headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
                 raise aiohttp.web.HTTPUnauthorized(
