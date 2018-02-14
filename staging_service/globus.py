@@ -12,7 +12,7 @@ async def _get_globus_ids(token):
         # config = configparser.ConfigParser()
         # config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
         # auth2_url = config['staging_service']['AUTH_URL']
-        auth2_url = 'https://ci.kbase.us/services/auth/api/V2/token'
+        auth2_url = 'https://ci.kbase.us/services/auth/api/V2/me'
         async with session.get(auth2_url, headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
