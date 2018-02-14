@@ -9,9 +9,10 @@ async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text='must supply token')
     async with aiohttp.ClientSession() as session:
-        config = configparser.ConfigParser()
-        config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
-        auth2_url = config['staging_service']['AUTH_URL']
+        # config = configparser.ConfigParser()
+        # config.read(os.environ['KB_DEPLOYMENT_CONFIG'])
+        # auth2_url = config['staging_service']['AUTH_URL']
+        auth2_url = 'https://ci.kbase.us/services/auth/api/V2/token'
         async with session.get(auth2_url, headers={'Authorization': token}) as resp:
             ret = await resp.json()
             if not resp.reason == 'OK':
@@ -36,9 +37,9 @@ async def assert_globusid_exists(username, token):
     """ ensures that a globus id exists if there is a valid one for user"""
 
     # make root dir
-    root = Path.validate_path(username, '')
-    if not os.path.exists(root.full_path):
-        os.makedirs(root.full_path)
+    # root = Path.validate_path(username, '')
+    # if not os.path.exists(root.full_path):
+    #     os.makedirs(root.full_path)
 
     path = _globus_id_path(username)
     # check to see if file exists or is empty
