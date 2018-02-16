@@ -83,7 +83,10 @@ async def _only_source(path: Path):
     if os.path.exists(path.metadata_path):
         async with aiofiles.open(path.metadata_path, mode='r') as extant:
             data = await extant.read()
-            data = decoder.decode(data)
+            try:
+                data = decoder.decode(data)
+            except:
+                data = {}
     else:
         data = {}
     if 'source' in data:
