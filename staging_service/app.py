@@ -211,6 +211,12 @@ async def upload_files_chunked(request: web.Request):
                 break
             size += len(chunk)
             f.write(chunk)
+
+    if not os.path.exists(path.full_path):
+        error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
+                                                                            path=path.full_path)
+        raise web.HTTPNotFound(text=error_msg)
+
     response = await some_metadata(
         path,
         desired_fields=['name', 'path', 'mtime', 'size', 'isFolder'],
