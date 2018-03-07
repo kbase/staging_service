@@ -221,8 +221,8 @@ async def test_metadata():
             assert json.get('source') == 'Unknown'
             assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
             assert json.get('lineCount') == '1'
-            assert json.get('head') == 'testing text'
-            assert json.get('tail') == 'testing text'
+            assert json.get('head') == 'testing text\n'
+            assert json.get('tail') == 'testing text\n'
             assert json.get('name') == 'test_file_1'
             assert json.get('size') == 13
             assert not json.get('isFolder')
@@ -239,8 +239,8 @@ async def test_metadata():
             assert json.get('source') == 'Unknown'
             assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
             assert json.get('lineCount') == '1'
-            assert json.get('head') == 'testing text'
-            assert json.get('tail') == 'testing text'
+            assert json.get('head') == 'testing text\n'
+            assert json.get('tail') == 'testing text\n'
             assert json.get('name') == 'test_file_1'
             assert json.get('size') == 13
             assert not json.get('isFolder')
@@ -260,8 +260,8 @@ async def test_metadata():
             assert json.get('source') == 'Unknown'
             assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
             assert json.get('lineCount') == '1'
-            assert json.get('head') == 'testing text'
-            assert json.get('tail') == 'testing text'
+            assert json.get('head') == 'testing text\n'
+            assert json.get('tail') == 'testing text\n'
             assert json.get('name') == 'test_file_1'
             assert json.get('size') == 13
             assert not json.get('isFolder')
@@ -299,8 +299,8 @@ async def test_define_UPA():
             assert json.get('source') == 'Unknown'
             assert json.get('md5') == 'e9018937ab54e6ce88b9e2dfe5053095'
             assert json.get('lineCount') == '1'
-            assert json.get('head') == 'testing text'
-            assert json.get('tail') == 'testing text'
+            assert json.get('head') == 'testing text\n'
+            assert json.get('tail') == 'testing text\n'
             assert json.get('name') == 'test_file_1'
             assert json.get('size') == 13
             assert not json.get('isFolder')
