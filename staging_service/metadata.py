@@ -26,9 +26,9 @@ async def stat_data(path: Path) -> dict:
     }
 
 
-def _file_read_from_tail(filename, nlines):
+def _file_read_from_tail(file_path, nlines):
     data = []
-    with open(filename) as qfile:
+    with open(file_path) as qfile:
         qfile.seek(0, os.SEEK_END)
         endf = position = qfile.tell()
         linecnt = 0
@@ -50,9 +50,9 @@ def _file_read_from_tail(filename, nlines):
     return ''.join(data)
 
 
-def _file_read_from_head(file_path, lines):
+def _file_read_from_head(file_path, nlines):
     with open(file_path, 'r') as source:
-        first_n_lines = [x for x in islice(source, lines)]
+        first_n_lines = [x for x in islice(source, nlines)]
 
     return ''.join(first_n_lines)
 
