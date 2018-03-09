@@ -5,6 +5,7 @@ import os
 from aiohttp import web
 import hashlib
 from difflib import SequenceMatcher
+from itertools import islice
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -24,6 +25,37 @@ async def stat_data(path: Path) -> dict:
         'isFolder': isFolder
     }
 
+
+def _file_read_from_tail(file_path, nlines):
+    data = []
+    with open(file_path) as qfile:
+        qfile.seek(0, os.SEEK_END)
+        endf = position = qfile.tell()
+        linecnt = 0
+        while position >= 0:
+            qfile.seek(position)
+            next_char = qfile.read(1)
+            if next_char == "\n" and position != endf-1:
+                linecnt += 1
+
+            if linecnt == nlines:
+                break
+            position -= 1
+
+        if position < 0:
+            qfile.seek(0)
+
+        data.append(qfile.read())
+
+    return ''.join(data)
+
+
+def _file_read_from_head(file_path, nlines):
+    with open(file_path, 'r') as source:
+        first_n_lines = [x for x in islice(source, nlines)]
+
+    return ''.join(first_n_lines)
+
 async def _generate_metadata(path: Path, source: str):
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     if os.path.exists(path.metadata_path):
@@ -41,12 +73,11 @@ async def _generate_metadata(path: Path, source: str):
 
     data['md5'] = md5.split()[0]
     # first output of wc is the count
-    lineCount = await run_command('wc', '-l', path.full_path)
-    data['lineCount'] = lineCount.split()[0]
+    data['lineCount'] = str(sum((1 for i in open(path.full_path, 'rb'))))
     try:  # all things that expect a text file to decode output should be in this block
-        data['head'] = await run_command('head', '-10', path.full_path)
-        data['tail'] = await run_command('tail', '-10', path.full_path)
-    except UnicodeDecodeError as not_text_file:
+        data['head'] = _file_read_from_head(path.full_path, 10)
+        data['tail'] = _file_read_from_tail(path.full_path, 10)
+    except:
         data['head'] = 'not text file'
         data['tail'] = 'not text file'
     async with aiofiles.open(path.metadata_path, mode='w') as f:
@@ -82,8 +113,8 @@ def _determine_source(path: Path):
 async def _only_source(path: Path):
     if os.path.exists(path.metadata_path):
         async with aiofiles.open(path.metadata_path, mode='r') as extant:
-            data = await extant.read()
             try:
+                data = await extant.read()
                 data = decoder.decode(data)
             except:
                 data = {}
