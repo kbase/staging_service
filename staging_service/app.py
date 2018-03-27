@@ -9,11 +9,12 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
+VERSION = '1.0.0'
 
 
 @routes.get('/test-service')
 async def test_service(request: web.Request):
-    return web.Response(text='This is just a test. This is only a test.')
+    return web.Response(text='staging service verison: {}'.format(VERSION))
 
 
 @routes.get('/test-auth')

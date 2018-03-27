@@ -170,7 +170,7 @@ async def test_service():
         resp = await cli.get('/test-service')
         assert resp.status == 200
         text = await resp.text()
-        assert 'This is just a test. This is only a test.' in text
+        assert 'staging service verison' in text
 
 
 async def test_jbi_metadata():
