@@ -594,6 +594,29 @@ async def test_search():
             json = decoder.decode(json_text)
             assert len(json) == 2
 
+async def test_upload():
+    txt = 'testing text\n'
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        # tesging missing body
+        res1 = await cli.post('upload',
+                              headers={'Authorization': ''})
+        assert res1.status == 400
+
+        # testing missing destPath in body
+        res2 = await cli.post('upload',
+                              headers={'Authorization': ''},
+                              data={'missing_destPath': 'test_destPath',
+                                    'uploads': 'test_uploads'})
+        assert res2.status == 400
+
+        # # testing missing uploads in body
+        res3 = await cli.post('upload',
+                              headers={'Authorization': ''},
+                              data={'destPath': 'test_destPath',
+                                    'missing_uploads': 'test_uploads'})
+        assert res3.status == 400
+
 
 @settings(deadline=None)
 @asyncgiven(contents=st.text())

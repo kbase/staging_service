@@ -186,10 +186,23 @@ async def upload_files_chunked(request: web.Request):
     token = request.headers.get('Authorization')
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
-    reader = await request.multipart()
-    counter = 0
+
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
+
+    body = await request.post()
+    try:
+        destPath = body['destPath']
+    except KeyError as wrong_key:
+        raise web.HTTPBadRequest(text='must provide destPath field in body')
+
+    try:
+        uploads = body['uploads']
+    except KeyError as wrong_key:
+        raise web.HTTPBadRequest(text='must provide uploads field in body')
+
+    reader = await request.multipart()
+    counter = 0
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
