@@ -201,6 +201,7 @@ async def upload_files_chunked(request: web.Request):
             destPath = await part.text()
         elif part.name == 'uploads':
             user_file = part
+            break
         else:
             counter += 1
 
