@@ -190,19 +190,10 @@ async def upload_files_chunked(request: web.Request):
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    body = await request.post()
-    try:
-        destPath = body['destPath']
-    except KeyError as wrong_key:
-        raise web.HTTPBadRequest(text='must provide destPath field in body')
-
-    try:
-        uploads = body['uploads']
-    except KeyError as wrong_key:
-        raise web.HTTPBadRequest(text='must provide uploads field in body')
-
     reader = await request.multipart()
     counter = 0
+    user_file = None
+    destPath = None
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
@@ -213,6 +204,10 @@ async def upload_files_chunked(request: web.Request):
             break
         else:
             counter += 1
+
+    if not (user_file and destPath):
+        raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
+
     filename: str = user_file.filename
     size = 0
     destPath = os.path.join(destPath, filename)
