@@ -175,6 +175,56 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
+### Download file
+
+**URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
+
+**URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
+
+**local URL** : `localhost:3000/download/{path to file}`
+
+**local URL** : `localhost:3000/download/{path to file}`
+
+**Method** : `GET`
+
+**Headers** : `Authorization: <Valid Auth token>`
+
+## Success Response
+
+**Code** : `200 OK`
+**Content** : `<file content>`
+
+## Error Response
+
+**Condition** : if authentication is incorrect
+
+**Code** : `401 Unauthorized`
+
+**Content** :
+```
+Error Connecting to auth service ...
+```
+**Code** : `400 Bad Request`
+
+**Content**
+```
+Must supply token
+```
+
+**Code** : `400 Bad Request`
+
+**Content** :
+```
+<username>/<incorrect path> is a directory not a file
+```
+
+**Code** : `404 Not Found`
+
+**Content** :
+```
+path <username>/<incorrect path> does not exist
+```
+
 ### Search files and folders
 defaults to not show hidden dotfiles
 

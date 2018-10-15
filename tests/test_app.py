@@ -1,19 +1,19 @@
-import staging_service.app as app
-import staging_service.utils as utils
-import staging_service.metadata as metadata
-import staging_service.globus as globus
-import configparser
-import string
-import os
 import asyncio
-from hypothesis import given, seed, settings
-from hypothesis import strategies as st
+import configparser
 import hashlib
-import uvloop
+import os
 import shutil
-from aiohttp import test_utils
-from json import JSONDecoder
+import string
 import time
+from json import JSONDecoder
+
+from aiohttp import test_utils
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
+import staging_service.app as app
+import staging_service.globus as globus
+import staging_service.utils as utils
 
 decoder = JSONDecoder()
 
@@ -481,6 +481,33 @@ async def test_list():
             # 1 sub-directory, 1 file in sub-directory and 1 file in root
             assert len(file_folder_count) == 3
             assert sum(file_folder_count) == 1
+
+
+@asyncgiven(txt=st.text())
+async def test_download(txt):
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+
+            res = await cli.get(os.path.join('download', 'test', 'test_file_1'),
+                                headers={'Authorization': ''})
+            assert res.status == 200
+            result_text = await res.read()
+            assert result_text == txt.encode()
+
+async def test_download_errors():
+    username = 'testuser'
+    async with AppClient(config, username) as cli:
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+
+            res1 = await cli.get('download', headers={'Authorization': ''})
+            assert res1.status == 404
+            res2 = await cli.get(os.path.join('download', 'test', ''),
+                                 headers={'Authorization': ''})
+            assert res2.status == 400
 
 
 async def test_similar():
