@@ -177,13 +177,13 @@ path <username>/<incorrect path> does not exist
 
 ### Download file
 
-**URL** : `ci.kbase.us/services/staging_service/list/{path to file}`
+**URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
 
-**URL** : `ci.kbase.us/services/staging_service/list/{path to file}`
+**URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
 
-**local URL** : `localhost:3000/list/{path to file}`
+**local URL** : `localhost:3000/download/{path to file}`
 
-**local URL** : `localhost:3000/list/{path to file}`
+**local URL** : `localhost:3000/download/{path to file}`
 
 **Method** : `GET`
 
@@ -192,6 +192,7 @@ path <username>/<incorrect path> does not exist
 ## Success Response
 
 **Code** : `200 OK`
+**Content** : `<file content>`
 
 ## Error Response
 
@@ -208,6 +209,13 @@ Error Connecting to auth service ...
 **Content**
 ```
 Must supply token
+```
+
+**Code** : `400 Bad Request`
+
+**Content** :
+```
+<username>/<incorrect path> is a directory not a file
 ```
 
 **Code** : `404 Not Found`
