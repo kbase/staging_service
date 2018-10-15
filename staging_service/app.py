@@ -82,6 +82,23 @@ async def list_files(request: web.Request):
     data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
 
+@routes.get('/download/{path:.*}')
+async def download_files(request: web.Request):
+    """
+    download a file
+    """
+    token = request.headers.get('Authorization')
+    username = await auth_client.get_user(token)
+    await assert_globusid_exists(username, token)
+    path = Path.validate_path(username, request.match_info.get('path', ''))
+    if not os.path.exists(path.full_path):
+        raise web.HTTPNotFound(text='path {path} does not exist'.format(path=path.user_path))
+    elif not os.path.isfile(path.full_path):
+        raise web.HTTPBadRequest(
+            text='{path} is a directory not a file'.format(path=path.full_path)
+        )
+    return web.FileResponse(path.full_path)
+
 
 @routes.get('/similar/{path:.+}')
 async def similar_files(request: web.Request):
