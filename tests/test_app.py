@@ -497,6 +497,7 @@ async def test_download(txt):
             result_text = await res.read()
             assert result_text == txt.encode()
 
+
 async def test_download_errors():
     username = 'testuser'
     async with AppClient(config, username) as cli:
