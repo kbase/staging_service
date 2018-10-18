@@ -91,7 +91,8 @@ async def download_files(request: web.Request):
         raise web.HTTPBadRequest(
             text='{path} is a directory not a file'.format(path=path.full_path)
         )
-    return web.FileResponse(path.full_path)
+    # hard coding the mime type to force download
+    return web.FileResponse(path.full_path, headers={'content-type': 'application/octet-stream'})
 
 
 @routes.get('/similar/{path:.+}')
