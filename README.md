@@ -616,3 +616,112 @@ Must supply token
 ```
 cannot decompress a <file extension> file
 ```
+
+
+### Add Globus ACL
+
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
+linking to globus.
+
+**URL** : `ci.kbase.us/services/staging_service/add-acl`
+
+**local URL** : `localhost:3000/add-acl`
+
+**Method** : `GET`
+
+**Headers** : `Authorization: <Valid Auth token>`
+
+## Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+{
+    "success": true,
+    "principal": "KBase-Example-59436z4-z0b6-z49f-zc5c-zbd455f97c39",
+    "path": "/username/",
+    "permissions": "rw"
+}
+```
+## Error Response
+
+**Condition** : if authentication is incorrect
+
+**Code** : `401 Unauthorized`
+
+**Content** :
+```
+Error Connecting to auth service ...
+```
+
+**Condition** : If issue with Globus API or ACL Already Exists
+
+**Code** : `500 Internal Server Error`
+
+**Content**
+```
+{
+    'success': False, 
+    'error_type': 'TransferAPIError',
+    'error': "Can't create ACL rule; it already exists",
+    'error_code': 'Exists', 'shared_directory_basename': '/username/'
+}
+```
+
+
+
+
+### Remove Globus ACL
+
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
+linking to globus.
+
+**URL** : `ci.kbase.us/services/staging_service/remove-acl`
+
+**local URL** : `localhost:3000/remove-acl`
+
+**Method** : `GET`
+
+**Headers** : `Authorization: <Valid Auth token>`
+
+## Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+{
+    "message": "{\n  \"DATA_TYPE\": \"result\",\n  \"code\": \"Deleted\",
+    "message\": \"Access rule 'KBASE-examplex766ada0-x8aa-x1e8-xc7b-xa1d4c5c824a' deleted successfully\", 
+    "request_id\": \"x2KFzfop05\",\n  \"resource\": \"/endpoint/KBaseExample2a-5e5b-11e6-8309-22000b97daec/access/KBaseExample-ada0-d8aa-11e8-8c7b-0a1d4c5c824a\"}",
+    "Success": true
+}
+```
+## Error Response
+
+**Condition** : if authentication is incorrect
+
+**Code** : `401 Unauthorized`
+
+**Content** :
+```
+Error Connecting to auth service ...
+```
+
+**Condition** : If issue with Globus API or ACL Already Exists
+
+**Code** : `500 Internal Server Error`
+
+**Content**
+```
+{
+    'success': False, 
+    'error_type': 'TransferAPIError',
+    'error': "Can't create ACL rule; it already exists",
+    'error_code': 'Exists', 'shared_directory_basename': '/username/'
+}
+```
+

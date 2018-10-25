@@ -1,6 +1,8 @@
 import asyncio
 from aiohttp.web import HTTPInternalServerError
-import os
+import os, sys
+import globus_sdk
+import logging
 
 
 async def run_command(*args):
@@ -26,9 +28,9 @@ async def run_command(*args):
         return stdout.decode().strip()
     else:
         error_msg = 'command {cmd} failed\nreturn code: {returncode}\nerror: {error}'.format(
-                    cmd=' '.join(args),
-                    returncode=process.returncode,
-                    error=stderr.decode().strip())
+            cmd=' '.join(args),
+            returncode=process.returncode,
+            error=stderr.decode().strip())
         raise HTTPInternalServerError(text=error_msg)
 
 
@@ -45,7 +47,7 @@ class Path(object):
         self.jgi_metadata = jgi_metadata
 
     @staticmethod
-    def validate_path(username: str, path: str=''):
+    def validate_path(username: str, path: str = ''):
         """
         @returns a path object based on path that must start with username
         throws an exeception for an invalid path or username
@@ -74,3 +76,117 @@ class Path(object):
         name = os.path.basename(full_path)
         jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
         return Path(full_path, metadata_path, user_path, name, jgi_metadata)
+
+
+
+
+
+import configparser
+
+
+class AclManager():
+
+    def __init__(self):
+        logging.basicConfig(filename="/var/log/globus.log", level=logging.DEBUG)
+        config = configparser.ConfigParser()
+        config.read("/etc/globus.cfg")
+        cf = config['globus']
+        self.endpoint_id = cf['endpoint_id']
+
+        client = globus_sdk.NativeAppAuthClient(cf['client_id'])
+        transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['transfer_token'], client)
+        self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+        auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['auth_token'], client)
+        self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
+
+    def _get_globus_identities(self, shared_directory):
+        """
+        Parse the .globus_id file for a filename and get the first item. Then use that account name
+        to call the globus service and get identities for that client.
+        """
+        globus_id_filename = '{}.globus_id'.format(shared_directory)
+        with open(globus_id_filename, 'r') as fp:
+            ident = fp.read()
+            return self.globus_auth_client.get_identities(usernames=ident.split('\n')[0])
+
+    def _get_globus_identity(self, globus_id_filename):
+        """
+        Get the first identity for the username in the .globus_id file
+        """
+        try:
+            return self._get_globus_identities(globus_id_filename)['identities'][0]['id']
+        except FileNotFoundError as error:
+            response = {'success': False, 'error_type': 'FileNotFoundError',
+                        'strerror': error.strerror,
+                        'filename': error.filename, 'error_code': error.errno}
+            logging.error(response)
+
+            raise HTTPInternalServerError(text=str(response))
+
+        except globus_sdk.GlobusAPIError as error:
+            response = {'success': False, 'error_type': 'GlobusAPIError', 'message': error.message,
+                        'code': error.code, 'http_status': error.http_status}
+            logging.error(response)
+
+            raise HTTPInternalServerError(text=str(response))
+
+    def _add_acl(self, user_identity_id, shared_directory_basename):
+        """
+        Attempt to add acl for the given user id and directory
+        """
+        try:
+            resp = self.globus_transfer_client.add_endpoint_acl_rule(
+                self.endpoint_id,
+                dict(DATA_TYPE="access", principal=user_identity_id,
+                     principal_type='identity', path=shared_directory_basename, permissions='rw'),
+            )
+
+            response = {'success': True, 'principal': user_identity_id, 'path': shared_directory_basename,
+                        'permissions': 'rw'}
+
+            logging.info(response)
+            logging.info('Shared %s with %s\n' % (shared_directory_basename, user_identity_id))
+
+
+            logging.info(response)
+            return response
+
+        except globus_sdk.TransferAPIError as error:
+            response = {'success': False, 'error_type': 'TransferAPIError', 'error': error.message,
+                        'error_code': error.code, 'shared_directory_basename' : shared_directory_basename}
+            logging.error(response)
+
+        raise HTTPInternalServerError(text=str(response))
+
+    def _remove_acl(self, user_identity_id):
+        try:
+            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)['DATA']
+
+
+            for acl in acls:
+                if user_identity_id == acl['principal']:
+                    resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,acl['id'])
+                    return {'message' : str(resp) ,'Success' : True }
+            raise HTTPInternalServerError(text=str("Couldn't delete or find" + user_identity_id))
+        except globus_sdk.GlobusAPIError as error:
+            raise HTTPInternalServerError(text=str(error))
+
+    def add_acl(self, shared_directory : str ):
+        """
+        Adds Shared_Directory Assumes globus id file has been created already
+        :param shared_directory: Directory to get globus identity for and to create shareœ
+        :return: Result of attempt to add acl
+        """
+        user_identity_id = self._get_globus_identity(shared_directory)
+        base_name = "/{}/".format(shared_directory.split("/")[-2])
+        return self._add_acl(user_identity_id, base_name)
+
+    def remove_acl(self, shared_directory : str):
+        """
+        TODO Remove ACL
+        :param shared_directory:
+        :return:
+        """
+
+        user_identity_id = self._get_globus_identity(shared_directory)
+        return self._remove_acl(user_identity_id)
