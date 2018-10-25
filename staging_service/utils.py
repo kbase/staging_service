@@ -1,8 +1,10 @@
 import asyncio
-from aiohttp.web import HTTPInternalServerError
-import os, sys
-import globus_sdk
+import configparser
 import logging
+import os
+
+import globus_sdk
+from aiohttp.web import HTTPInternalServerError
 
 
 async def run_command(*args):
@@ -78,15 +80,12 @@ class Path(object):
         return Path(full_path, metadata_path, user_path, name, jgi_metadata)
 
 
-
-
-
-import configparser
-
-
 class AclManager():
 
     def __init__(self):
+        """
+        The ACLManager is used to add and remove acl endpoints for KBase Users on our Globus Share
+        """
         logging.basicConfig(filename="/var/log/globus.log", level=logging.DEBUG)
         config = configparser.ConfigParser()
         config.read("/etc/globus.cfg")
@@ -99,7 +98,7 @@ class AclManager():
         auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['auth_token'], client)
         self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
 
-    def _get_globus_identities(self, shared_directory):
+    def _get_globus_identities(self, shared_directory: str):
         """
         Parse the .globus_id file for a filename and get the first item. Then use that account name
         to call the globus service and get identities for that client.
@@ -109,7 +108,7 @@ class AclManager():
             ident = fp.read()
             return self.globus_auth_client.get_identities(usernames=ident.split('\n')[0])
 
-    def _get_globus_identity(self, globus_id_filename):
+    def _get_globus_identity(self, globus_id_filename: str):
         """
         Get the first identity for the username in the .globus_id file
         """
@@ -130,7 +129,7 @@ class AclManager():
 
             raise HTTPInternalServerError(text=str(response))
 
-    def _add_acl(self, user_identity_id, shared_directory_basename):
+    def _add_acl(self, user_identity_id: str, shared_directory_basename: str):
         """
         Attempt to add acl for the given user id and directory
         """
@@ -141,52 +140,54 @@ class AclManager():
                      principal_type='identity', path=shared_directory_basename, permissions='rw'),
             )
 
-            response = {'success': True, 'principal': user_identity_id, 'path': shared_directory_basename,
+            response = {'success': True, 'principal': user_identity_id,
+                        'path': shared_directory_basename,
                         'permissions': 'rw'}
 
             logging.info(response)
             logging.info('Shared %s with %s\n' % (shared_directory_basename, user_identity_id))
-
 
             logging.info(response)
             return response
 
         except globus_sdk.TransferAPIError as error:
             response = {'success': False, 'error_type': 'TransferAPIError', 'error': error.message,
-                        'error_code': error.code, 'shared_directory_basename' : shared_directory_basename}
+                        'error_code': error.code,
+                        'shared_directory_basename': shared_directory_basename}
             logging.error(response)
 
         raise HTTPInternalServerError(text=str(response))
 
-    def _remove_acl(self, user_identity_id):
+    def _remove_acl(self, user_identity_id: str):
+        """
+        Get all ACLS and attempt to remove the correct ACL for the given user_identity
+        """
         try:
             acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)['DATA']
-
-
             for acl in acls:
                 if user_identity_id == acl['principal']:
-                    resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,acl['id'])
-                    return {'message' : str(resp) ,'Success' : True }
+                    resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,
+                                                                                acl['id'])
+                    return {'message': str(resp), 'Success': True}
             raise HTTPInternalServerError(text=str("Couldn't delete or find" + user_identity_id))
         except globus_sdk.GlobusAPIError as error:
             raise HTTPInternalServerError(text=str(error))
 
-    def add_acl(self, shared_directory : str ):
+    def add_acl(self, shared_directory: str):
         """
-        Adds Shared_Directory Assumes globus id file has been created already
-        :param shared_directory: Directory to get globus identity for and to create shareœ
+        Add ACL to the globus share via the globus API
+        :param shared_directory: Directory to get globus ID from and to generate id to create ACL for share
         :return: Result of attempt to add acl
         """
         user_identity_id = self._get_globus_identity(shared_directory)
         base_name = "/{}/".format(shared_directory.split("/")[-2])
         return self._add_acl(user_identity_id, base_name)
 
-    def remove_acl(self, shared_directory : str):
+    def remove_acl(self, shared_directory: str):
         """
-        TODO Remove ACL
-        :param shared_directory:
-        :return:
+        Remove ACL from the globus share via the globus API
+        :param shared_directory: Directory to get globus ID from and to generate id to remove ACL
+        :return:  Result of attempt to remove acl
         """
-
         user_identity_id = self._get_globus_identity(shared_directory)
         return self._remove_acl(user_identity_id)
