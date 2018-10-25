@@ -15,13 +15,8 @@ RUN pip install -r /requirements.txt
 COPY ./ /kb/module
 COPY ./globus.cfg /etc/globus.cfg
 
-#RUN mkdir -p /kb/deployment/lib/src/data/bulk/bsadkhin/
-#RUN echo bsadkhin@gmail.com > /kb/deployment/lib/src/data/bulk/bsadkhin/.globus_id
-
 RUN cp -r /kb/module/staging_service /kb/deployment/lib
 RUN cp -r /kb/module/deployment /kb
-RUN echo
-
 
 EXPOSE 3000
 
