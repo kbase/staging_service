@@ -3,13 +3,28 @@ import aiohttp_cors
 import os
 from .metadata import stat_data, some_metadata, dir_info, add_upa, similar
 import shutil
-from .utils import Path, run_command
+from .utils import Path, run_command, AclManager
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
 VERSION = '1.1.1'
+
+
+@routes.get('/add-acl')
+async def add_acl(request: web.Request):
+    username = await authorize_request(request)
+    user_dir = Path.validate_path(username).full_path
+    result = AclManager().add_acl(user_dir)
+    return web.json_response(result)
+
+@routes.get('/remove-acl')
+async def add_acl(request: web.Request):
+    username = await authorize_request(request)
+    user_dir = Path.validate_path(username).full_path
+    result = AclManager().remove_acl(user_dir)
+    return web.json_response(result)
 
 
 @routes.get('/test-service')
