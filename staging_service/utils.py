@@ -4,7 +4,8 @@ import logging
 import os
 
 import globus_sdk
-from aiohttp.web import HTTPInternalServerError
+from aiohttp.web import HTTPInternalServerError, HTTPOk
+import json
 
 
 async def run_command(*args):
@@ -93,10 +94,14 @@ class AclManager():
         self.endpoint_id = cf['endpoint_id']
 
         client = globus_sdk.NativeAppAuthClient(cf['client_id'])
-        transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['transfer_token'], client)
-        self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
-        auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['auth_token'], client)
-        self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
+        try:
+            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['transfer_token'], client)
+            self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf['auth_token'], client)
+            self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
+        except globus_sdk.GlobusAPIError as error:
+            logging.error(str(error.code) + error.raw_text)
+            raise HTTPInternalServerError(text=str("Invalid Token Specified in globus.cfg file"))
 
     def _get_globus_identities(self, shared_directory: str):
         """
@@ -120,14 +125,14 @@ class AclManager():
                         'filename': error.filename, 'error_code': error.errno}
             logging.error(response)
 
-            raise HTTPInternalServerError(text=str(response))
+            raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
 
         except globus_sdk.GlobusAPIError as error:
             response = {'success': False, 'error_type': 'GlobusAPIError', 'message': error.message,
                         'code': error.code, 'http_status': error.http_status}
             logging.error(response)
 
-            raise HTTPInternalServerError(text=str(response))
+            raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
 
     def _add_acl(self, user_identity_id: str, shared_directory_basename: str):
         """
@@ -155,8 +160,10 @@ class AclManager():
                         'error_code': error.code,
                         'shared_directory_basename': shared_directory_basename}
             logging.error(response)
+            if error.code == "Exists":
+                raise HTTPOk(text=json.dumps(response), content_type='application/json')
 
-        raise HTTPInternalServerError(text=str(response))
+        raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
 
     def _remove_acl(self, user_identity_id: str):
         """
@@ -166,12 +173,21 @@ class AclManager():
             acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)['DATA']
             for acl in acls:
                 if user_identity_id == acl['principal']:
+                    logging.info("About to delete" + acl['id'])
                     resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,
                                                                                 acl['id'])
                     return {'message': str(resp), 'Success': True}
-            raise HTTPInternalServerError(text=str("Couldn't delete or find" + user_identity_id))
+
+            response = {'success': False,
+                        'error_type': 'Could Not Find or Delete User Identity Id (ACL)',
+                        'user_identity_id': user_identity_id}
+            raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
+
         except globus_sdk.GlobusAPIError as error:
-            raise HTTPInternalServerError(text=str(error))
+            response = {'success': False,
+                        'error_type': 'GlobusAPIError',
+                        'user_identity_id': user_identity_id}
+            raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
 
     def add_acl(self, shared_directory: str):
         """
