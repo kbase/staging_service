@@ -20,7 +20,7 @@ async def add_acl(request: web.Request):
     return web.json_response(result)
 
 @routes.get('/remove-acl')
-async def add_acl(request: web.Request):
+async def remove_acl(request: web.Request):
     username = await authorize_request(request)
     user_dir = Path.validate_path(username).full_path
     result = AclManager().remove_acl(user_dir)
