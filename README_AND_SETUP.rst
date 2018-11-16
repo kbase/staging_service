@@ -6,7 +6,7 @@ The user directory and globus token file is created upon all authenticated calls
 More Details
 ============
 
-`authorize_request():` grabs the token from the kbase_session cookie or from the Authorization Header of the request and
+`authorize_request():` grabs the token from the `kbase_session` or `kbase_session_backup` cookie or from the Authorization Header of the request and
 then queries the KBase auth server to grab the username for the token. Then assert_globus_id is used to check to see if
 the dtn:/data/bulk/username/ directory exists, and if the globus token file exists. If they do not, it creates it.
 
