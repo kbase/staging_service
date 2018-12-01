@@ -88,7 +88,7 @@ class AclManager():
         """
         The ACLManager is used to add and remove acl endpoints for KBase Users on our Globus Share
         """
-        logging.basicConfig(filename=sys.stdout, level=logging.DEBUG)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         config = configparser.ConfigParser()
         config.read("/etc/globus.cfg")
         cf = config['globus']
