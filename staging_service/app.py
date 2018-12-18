@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.3'
+VERSION = '1.1.5'
 
 
 @routes.get('/add-acl')
@@ -18,6 +18,7 @@ async def add_acl(request: web.Request):
     user_dir = Path.validate_path(username).full_path
     result = AclManager().add_acl(user_dir)
     return web.json_response(result)
+
 
 @routes.get('/remove-acl')
 async def remove_acl(request: web.Request):
@@ -92,6 +93,7 @@ async def list_files(request: web.Request):
         show_hidden = False
     data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
+
 
 @routes.get('/download/{path:.*}')
 async def download_files(request: web.Request):
@@ -212,23 +214,29 @@ async def upload_files_chunked(request: web.Request):
     except KeyError as wrong_key:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    filename: str = os.path.basename(uploads)
+    if isinstance(uploads, str):
+        filename: str = os.path.basename(uploads)
+    else:
+        filename: str = os.path.basename(str(uploads.filename))
+        uploads = uploads.file
+
     size = 0
     destPath = os.path.join(destPath, filename)
     path = Path.validate_path(username, destPath)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
-        try:
-            upload_f = open(uploads, 'rb')
-        except Exception:
-            raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
+        if isinstance(uploads, str):
+            try:
+                uploads = open(uploads, 'rb')
+            except Exception:
+                raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
         while True:
-            chunk = upload_f.read(1024)
+            chunk = uploads.read(1024)
             if not chunk:
                 break
             size += len(chunk)
             f.write(chunk)
-    upload_f.close()
+    uploads.close()
 
     if not os.path.exists(path.full_path):
         error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
