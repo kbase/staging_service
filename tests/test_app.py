@@ -622,6 +622,7 @@ async def test_search():
             json = decoder.decode(json_text)
             assert len(json) == 2
 
+
 async def test_upload():
     txt = 'testing text\n'
     username = 'testuser'
@@ -638,6 +639,13 @@ async def test_upload():
                                   headers={'Authorization': ''},
                                   data={'destPath': '',
                                         'uploads': f})
+
+            assert res2.status == 200
+
+            res2 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data={'destPath': '',
+                                        'uploads': open(f)})
 
             assert res2.status == 200
 
