@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.5'
+VERSION = '1.1.3'
 
 
 @routes.get('/add-acl')
@@ -216,6 +216,10 @@ async def upload_files_chunked(request: web.Request):
 
     if isinstance(uploads, str):
         filename: str = os.path.basename(uploads)
+        try:
+            uploads = open(uploads, 'rb')
+        except Exception:
+            raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
     else:
         filename: str = os.path.basename(str(uploads.filename))
         uploads = uploads.file
@@ -225,11 +229,6 @@ async def upload_files_chunked(request: web.Request):
     path = Path.validate_path(username, destPath)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
-        if isinstance(uploads, str):
-            try:
-                uploads = open(uploads, 'rb')
-            except Exception:
-                raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
         while True:
             chunk = uploads.read(1024)
             if not chunk:
