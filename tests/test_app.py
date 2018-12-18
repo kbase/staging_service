@@ -622,6 +622,7 @@ async def test_search():
             json = decoder.decode(json_text)
             assert len(json) == 2
 
+
 async def test_upload():
     txt = 'testing text\n'
     username = 'testuser'
@@ -631,19 +632,36 @@ async def test_upload():
                               headers={'Authorization': ''})
         assert res1.status == 400
 
-#         # testing missing destPath in body
-#         res2 = await cli.post('upload',
-#                               headers={'Authorization': ''},
-#                               data={'missing_destPath': 'test_destPath',
-#                                     'uploads': 'test_uploads'})
-#         assert res2.status == 400
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
+            res2 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data={'destPath': '',
+                                        'uploads': f})
 
-#         # # testing missing uploads in body
-#         res3 = await cli.post('upload',
-#                               headers={'Authorization': ''},
-#                               data={'destPath': 'test_destPath',
-#                                     'missing_uploads': 'test_uploads'})
-#         assert res3.status == 400
+            assert res2.status == 200
+
+            res2 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data={'destPath': '',
+                                        'uploads': open(f)})
+
+            assert res2.status == 200
+
+        # testing missing destPath in body
+        res3 = await cli.post('upload',
+                              headers={'Authorization': ''},
+                              data={'missing_destPath': 'test_destPath',
+                                    'uploads': 'test_uploads'})
+        assert res3.status == 400
+
+        # testing missing uploads in body
+        res4 = await cli.post('upload',
+                              headers={'Authorization': ''},
+                              data={'destPath': 'test_destPath',
+                                    'missing_uploads': 'test_uploads'})
+        assert res4.status == 400
 
 
 @settings(deadline=None)
