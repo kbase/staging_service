@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 
 
 @routes.get('/add-acl')
@@ -204,36 +204,27 @@ async def upload_files_chunked(request: web.Request):
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    reader = await request.multipart()
-    counter = 0
-    user_file = None
-    destPath = None
-    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
-        # This loop handles the null parts that come in inbetween destpath and file
-        part = await reader.next()
-        if part.name == 'destPath':
-            destPath = await part.text()
-        elif part.name == 'uploads':
-            user_file = part
-            break
-        else:
-            counter += 1
+    body = await request.post()
 
-    if not (user_file and destPath):
+    try:
+        destPath = body['destPath']
+        uploads = body['uploads']
+    except KeyError as wrong_key:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    filename: str = user_file.filename
+    filename: str = os.path.basename(uploads)
     size = 0
     destPath = os.path.join(destPath, filename)
     path = Path.validate_path(username, destPath)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
-        while True:
-            chunk = await user_file.read_chunk()
-            if not chunk:
-                break
-            size += len(chunk)
-            f.write(chunk)
+        with open(uploads, 'rb') as upload_f:
+            while True:
+                chunk = upload_f.read(1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                f.write(chunk)
 
     if not os.path.exists(path.full_path):
         error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
