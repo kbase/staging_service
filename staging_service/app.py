@@ -218,13 +218,17 @@ async def upload_files_chunked(request: web.Request):
     path = Path.validate_path(username, destPath)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
-        with open(uploads, 'rb') as upload_f:
-            while True:
-                chunk = upload_f.read(1024)
-                if not chunk:
-                    break
-                size += len(chunk)
-                f.write(chunk)
+        try:
+            upload_f = open(uploads, 'rb')
+        except Exception:
+            raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
+        while True:
+            chunk = upload_f.read(1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            f.write(chunk)
+    upload_f.close()
 
     if not os.path.exists(path.full_path):
         error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
