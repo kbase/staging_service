@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.3'
+VERSION = '1.1.5'
 
 
 @routes.get('/add-acl')
@@ -214,15 +214,15 @@ async def upload_files_chunked(request: web.Request):
     except KeyError as wrong_key:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    if isinstance(uploads, str):
+    try:
         filename: str = os.path.basename(uploads)
+        uploads = open(uploads, 'rb')
+    except Exception:
         try:
-            uploads = open(uploads, 'rb')
+            filename: str = os.path.basename(str(uploads.filename))
+            uploads = uploads.file
         except Exception:
             raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
-    else:
-        filename: str = os.path.basename(str(uploads.filename))
-        uploads = uploads.file
 
     size = 0
     destPath = os.path.join(destPath, filename)
