@@ -10,6 +10,7 @@ from json import JSONDecoder
 from aiohttp import test_utils
 from hypothesis import given, settings
 from hypothesis import strategies as st
+import unittest
 
 import staging_service.app as app
 import staging_service.globus as globus
@@ -623,6 +624,7 @@ async def test_search():
             assert len(json) == 2
 
 
+@unittest.skip("temporarily skipped")
 async def test_upload():
     txt = 'testing text\n'
     username = 'testuser'
