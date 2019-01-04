@@ -206,36 +206,45 @@ async def upload_files_chunked(request: web.Request):
     if not request.has_body:
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    body = await request.post()
+    reader = await request.multipart()
+    counter = 0
+    user_file = None
+    destPath = None
+    found_destPath = False
+    found_uploads = False
+    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
+        # This loop handles the null parts that come in inbetween destpath and file
+        part = await reader.next()
 
-    try:
-        destPath = body['destPath']
-        uploads = body['uploads']
-    except KeyError as wrong_key:
+        if part is None:
+            break
+        elif found_destPath and found_uploads:
+            break
+
+        if part.name == 'destPath':
+            destPath = await part.text()
+            found_destPath = True
+        elif part.name == 'uploads':
+            user_file = part
+            found_uploads = True
+        else:
+            counter += 1
+
+    if not (user_file and destPath):
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
-    try:
-        filename: str = os.path.basename(uploads)
-        uploads = open(uploads, 'rb')
-    except Exception:
-        try:
-            filename: str = os.path.basename(str(uploads.filename))
-            uploads = uploads.file
-        except Exception:
-            raise web.HTTPBadRequest(text='cannot read file: {}'.format(uploads))
-
+    filename: str = user_file.filename
     size = 0
     destPath = os.path.join(destPath, filename)
     path = Path.validate_path(username, destPath)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, 'wb') as f:  # TODO should we handle partial file uploads?
         while True:
-            chunk = uploads.read(1024)
+            chunk = await user_file.read_chunk()
             if not chunk:
                 break
             size += len(chunk)
             f.write(chunk)
-    uploads.close()
 
     if not os.path.exists(path.full_path):
         error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
