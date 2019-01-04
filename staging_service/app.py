@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.5'
+VERSION = '1.1.6'
 
 
 @routes.get('/add-acl')
