@@ -210,23 +210,15 @@ async def upload_files_chunked(request: web.Request):
     counter = 0
     user_file = None
     destPath = None
-    found_destPath = False
-    found_uploads = False
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
 
-        if part is None:
-            break
-        elif found_destPath and found_uploads:
-            break
-
         if part.name == 'destPath':
             destPath = await part.text()
-            found_destPath = True
         elif part.name == 'uploads':
             user_file = part
-            found_uploads = True
+            break
         else:
             counter += 1
 
