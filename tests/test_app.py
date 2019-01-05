@@ -636,8 +636,8 @@ async def test_upload():
             d = fs.make_dir(os.path.join(username, 'test'))
             f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
 
-            files = {'uploads': open(f, 'rb'),
-                     'destPath': '/'}
+            files = {'destPath': '/',
+                     'uploads': open(f, 'rb')}
 
             res2 = await cli.post(os.path.join('upload'),
                                   headers={'Authorization': ''},
