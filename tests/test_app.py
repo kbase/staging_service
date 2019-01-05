@@ -7,11 +7,9 @@ import string
 import time
 from json import JSONDecoder
 
-from aiohttp import test_utils, MultipartWriter
+from aiohttp import test_utils
 from hypothesis import given, settings
 from hypothesis import strategies as st
-import unittest
-import io
 
 import staging_service.app as app
 import staging_service.globus as globus
