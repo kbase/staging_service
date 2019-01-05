@@ -9,7 +9,7 @@ from .globus import assert_globusid_exists, is_globusid
 from .JGIMetadata import read_metadata_for, translate_for_importer
 
 routes = web.RouteTableDef()
-VERSION = '1.1.7'
+VERSION = '1.1.6'
 
 
 @routes.get('/add-acl')
@@ -210,21 +210,17 @@ async def upload_files_chunked(request: web.Request):
     counter = 0
     user_file = None
     destPath = None
-    found_destPath = False
-    found_uploads = False
+
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
-        part = await reader.next()
 
-        if found_destPath and found_uploads:
-            break
+        part = await reader.next()
 
         if part.name == 'destPath':
             destPath = await part.text()
-            found_destPath = True
         elif part.name == 'uploads':
             user_file = part
-            found_uploads = True
+            break
         else:
             counter += 1
 
