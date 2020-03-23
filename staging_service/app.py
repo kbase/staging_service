@@ -19,9 +19,12 @@ async def add_acl_concierge(request: web.Request):
     username = await authorize_request(request)
     user_dir = Path.validate_path(username).full_path
     concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
-    result = AclManager().add_acl_concierge(shared_directory=user_dir,
-                                            concierge_path=concierge_path)
+    aclm = AclManager()
+    result = aclm.add_acl_concierge(shared_directory=user_dir,
+                                    concierge_path=concierge_path)
     result['msg'] = f'Requesting Globus Perms for the following globus dir: {concierge_path}'
+    result[
+        'link'] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
     return web.json_response(result)
 
 
