@@ -12,6 +12,15 @@ routes = web.RouteTableDef()
 VERSION = '1.1.1'
 
 
+@routes.get('/add-acl-concierge')
+async def add_acl_concierge(request: web.Request):
+    username = await authorize_request(request)
+    concierge_path = Path.validate_path(username, concierge=True).full_path
+    result = AclManager().add_acl(concierge_path+ "/" + username)
+    result['msg'] = 'Please transfer your data to the KBase Globus Endpoint in the following directory: kbaseconcierge/%s'.format(username)
+    return web.json_response(result)
+
+
 @routes.get('/add-acl')
 async def add_acl(request: web.Request):
     username = await authorize_request(request)
@@ -388,12 +397,16 @@ def app_factory(config):
     # potentially some type of code restructure would allow this without a bunch of globals
     DATA_DIR = config['staging_service']['DATA_DIR']
     META_DIR = config['staging_service']['META_DIR']
+    CONCIERGE_DIR = config['staging_service']['CONCIERGE_DIR']
     if DATA_DIR.startswith('.'):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
     if META_DIR.startswith('.'):
         META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
+    if CONCIERGE_DIR.startswith('.'):
+        CONCIERGE_DIR = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_DIR))
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
+    Path._CONCIERGE_DIR = CONCIERGE_DIR
     global auth_client
     auth_client = KBaseAuth2(config['staging_service']['AUTH_URL'])
     return app

@@ -40,6 +40,7 @@ async def run_command(*args):
 class Path(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
+    _CONCIERGE_DIR_ = None # expects to be set by config
     __slots__ = ['full_path', 'metadata_path', 'user_path', 'name', 'jgi_metadata']
 
     def __init__(self, full_path, metadata_path, user_path, name, jgi_metadata):
@@ -49,8 +50,9 @@ class Path(object):
         self.name = name
         self.jgi_metadata = jgi_metadata
 
+
     @staticmethod
-    def validate_path(username: str, path: str = ''):
+    def validate_path(username: str, path: str = '', concierge=False):
         """
         @returns a path object based on path that must start with username
         throws an exeception for an invalid path or username
@@ -64,7 +66,12 @@ class Path(object):
             while path.startswith('/'):
                 path = path[1:]
         user_path = os.path.join(username, path)
-        full_path = os.path.join(Path._DATA_DIR, user_path)
+
+        if concierge:
+            full_path = os.path.join(Path._CONCIERGE_DIR_, user_path)
+        else:
+            full_path = os.path.join(Path._DATA_DIR, user_path)
+
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(path)
         jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
