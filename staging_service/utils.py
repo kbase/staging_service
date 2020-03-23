@@ -200,6 +200,13 @@ class AclManager():
         :return: Result of attempt to add acl
         """
         user_identity_id = self._get_globus_identity(shared_directory)
+        cp_full = f"{Path._DATA_DIR}/{concierge_path}"
+        try:
+            os.mkdir(cp_full)
+            print(f"Attempting to create concierge dir {cp_full}")
+        except FileExistsError as e:
+            print(e)
+
         return self._add_acl(user_identity_id, concierge_path)
 
 
