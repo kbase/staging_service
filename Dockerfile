@@ -14,9 +14,10 @@ RUN pip install -r /requirements.txt
 
 COPY ./ /kb/module
 COPY ./globus.cfg /etc/globus.cfg
-
+RUN touch /var/log/globus.log && chmod 777 /var/log/globus.log
 RUN cp -r /kb/module/staging_service /kb/deployment/lib
 RUN cp -r /kb/module/deployment /kb
+
 
 EXPOSE 3000
 
