@@ -11,7 +11,7 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
-VERSION = '1.1.1'
+VERSION = '1.1.6'
 
 
 @routes.get('/add-acl-concierge')
@@ -229,6 +229,7 @@ async def upload_files_chunked(request: web.Request):
     while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
+
         if part.name == 'destPath':
             destPath = await part.text()
         elif part.name == 'uploads':
@@ -381,9 +382,13 @@ async def authorize_request(request):
     Authenticate a token from kbase_session in cookies or Authorization header and return the
      username
     """
-    token = request.cookies.get('kbase_session')
     if request.headers.get('Authorization'):
         token = request.headers.get('Authorization')
+    elif request.cookies.get('kbase_session'):
+        token = request.cookies.get('kbase_session')
+    else:
+        # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
+        token = request.cookies.get('kbase_session_backup')
     username = await auth_client.get_user(token)
     await assert_globusid_exists(username, token)
     return username

@@ -622,6 +622,7 @@ async def test_search():
             json = decoder.decode(json_text)
             assert len(json) == 2
 
+
 async def test_upload():
     txt = 'testing text\n'
     username = 'testuser'
@@ -631,19 +632,18 @@ async def test_upload():
                               headers={'Authorization': ''})
         assert res1.status == 400
 
-#         # testing missing destPath in body
-#         res2 = await cli.post('upload',
-#                               headers={'Authorization': ''},
-#                               data={'missing_destPath': 'test_destPath',
-#                                     'uploads': 'test_uploads'})
-#         assert res2.status == 400
+        with FileUtil() as fs:
+            d = fs.make_dir(os.path.join(username, 'test'))
+            f = fs.make_file(os.path.join(username, 'test', 'test_file_1'), txt)
 
-#         # # testing missing uploads in body
-#         res3 = await cli.post('upload',
-#                               headers={'Authorization': ''},
-#                               data={'destPath': 'test_destPath',
-#                                     'missing_uploads': 'test_uploads'})
-#         assert res3.status == 400
+            files = {'destPath': '/',
+                     'uploads': open(f, 'rb')}
+
+            res2 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data=files)
+
+            assert res2.status == 200
 
 
 @settings(deadline=None)

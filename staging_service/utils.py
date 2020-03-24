@@ -3,6 +3,7 @@ import configparser
 import json
 import logging
 import os
+import sys
 
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
@@ -90,7 +91,7 @@ class AclManager():
         """
         The ACLManager is used to add and remove acl endpoints for KBase Users on our Globus Share
         """
-        logging.basicConfig(filename="/var/log/globus.log", level=logging.DEBUG)
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         config = configparser.ConfigParser()
         config.read("/etc/globus.cfg")
         cf = config['globus']
@@ -176,10 +177,13 @@ class AclManager():
             acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)['DATA']
             for acl in acls:
                 if user_identity_id == acl['principal']:
-                    logging.info("About to delete" + acl['id'])
-                    resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,
+                    if 'id' in acl and acl['id'] is not None:
+                        resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id,
                                                                                 acl['id'])
-                    return {'message': str(resp), 'Success': True}
+                        return {'message': str(resp), 'Success': True}
+                    else:
+                        return {'message': 'Couldn\'t find ACL for principal. Did you already delete your ACL?' , 'Success': False, 'principal' : acl['principal']}
+
 
             response = {'success': False,
                         'error_type': 'Could Not Find or Delete User Identity Id (ACL)',
