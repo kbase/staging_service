@@ -9,6 +9,8 @@ services:
     # it further assumes that there is a pre-existing /data/metadata directory
     volumes:
       - "./data:/kb/deployment/lib/src/data"
+      - "./:/staging_service"
+
     environment:
       - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
       - FILE_LIFETIME="90"

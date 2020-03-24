@@ -1,12 +1,12 @@
 import asyncio
 import configparser
+import json
 import logging
 import os
 import sys
 
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
-import json
 
 
 async def run_command(*args):
@@ -41,6 +41,7 @@ async def run_command(*args):
 class Path(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
+    _CONCIERGE_PATH = None # expects to be set by config
     __slots__ = ['full_path', 'metadata_path', 'user_path', 'name', 'jgi_metadata']
 
     def __init__(self, full_path, metadata_path, user_path, name, jgi_metadata):
@@ -49,6 +50,7 @@ class Path(object):
         self.user_path = user_path
         self.name = name
         self.jgi_metadata = jgi_metadata
+
 
     @staticmethod
     def validate_path(username: str, path: str = ''):
@@ -66,6 +68,7 @@ class Path(object):
                 path = path[1:]
         user_path = os.path.join(username, path)
         full_path = os.path.join(Path._DATA_DIR, user_path)
+
         metadata_path = os.path.join(Path._META_DIR, user_path)
         name = os.path.basename(path)
         jgi_metadata = os.path.join(os.path.dirname(full_path), '.' + name + '.jgi')
@@ -192,6 +195,24 @@ class AclManager():
                         'error_type': 'GlobusAPIError',
                         'user_identity_id': user_identity_id}
             raise HTTPInternalServerError(text=json.dumps(response), content_type='application/json')
+
+    def add_acl_concierge(self, shared_directory: str, concierge_path: str):
+        """
+        Add ACL to the concierge globus share via the globus API
+        :param shared_directory: Dir to get globus ID from and to generate id to create ACL for share
+        :param shared_concierge_directory: KBase Concierge Dir to add acl for
+        :return: Result of attempt to add acl
+        """
+        user_identity_id = self._get_globus_identity(shared_directory)
+        cp_full = f"{Path._DATA_DIR}/{concierge_path}"
+        try:
+            os.mkdir(cp_full)
+            print(f"Attempting to create concierge dir {cp_full}")
+        except FileExistsError as e:
+            print(e)
+
+        return self._add_acl(user_identity_id, concierge_path)
+
 
     def add_acl(self, shared_directory: str):
         """

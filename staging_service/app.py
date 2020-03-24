@@ -1,15 +1,31 @@
-from aiohttp import web
-import aiohttp_cors
 import os
-from .metadata import stat_data, some_metadata, dir_info, add_upa, similar
 import shutil
-from .utils import Path, run_command, AclManager
+
+import aiohttp_cors
+from aiohttp import web
+
+from .JGIMetadata import read_metadata_for, translate_for_importer
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
-from .JGIMetadata import read_metadata_for, translate_for_importer
+from .metadata import some_metadata, dir_info, add_upa, similar
+from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
 VERSION = '1.1.6'
+
+
+@routes.get('/add-acl-concierge')
+async def add_acl_concierge(request: web.Request):
+    username = await authorize_request(request)
+    user_dir = Path.validate_path(username).full_path
+    concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
+    aclm = AclManager()
+    result = aclm.add_acl_concierge(shared_directory=user_dir,
+                                    concierge_path=concierge_path)
+    result['msg'] = f'Requesting Globus Perms for the following globus dir: {concierge_path}'
+    result[
+        'link'] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
+    return web.json_response(result)
 
 
 @routes.get('/add-acl')
@@ -240,7 +256,7 @@ async def upload_files_chunked(request: web.Request):
 
     if not os.path.exists(path.full_path):
         error_msg = 'We are sorry but upload was interrupted. Please try again.'.format(
-                                                                            path=path.full_path)
+            path=path.full_path)
         raise web.HTTPNotFound(text=error_msg)
 
     response = await some_metadata(
@@ -271,7 +287,7 @@ async def define_UPA(request: web.Request):
     await add_upa(path, UPA)
     return web.Response(
         text='succesfully updated UPA {UPA} for file {path}'.format(UPA=UPA, path=path.user_path)
-        )
+    )
 
 
 @routes.delete('/delete/{path:.+}')
@@ -350,7 +366,7 @@ async def decompress(request: web.Request):
     elif file_extension == '.zip' or file_extension == '.ZIP':
         await run_command('unzip', path.full_path, '-d', destination)
     elif file_extension == '.tar':
-        await run_command('tar',  'xf', path.full_path, '-C', destination)
+        await run_command('tar', 'xf', path.full_path, '-C', destination)
     elif file_extension == '.gz':
         await run_command('gzip', '-d', path.full_path)
     elif file_extension == '.bz2' or file_extension == 'bzip2':
@@ -383,10 +399,10 @@ def app_factory(config):
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(app, defaults={
         "*": aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-                expose_headers="*",
-                allow_headers="*",
-            )
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
     })
     # Configure CORS on all routes.
     for route in list(app.router.routes()):
@@ -395,12 +411,32 @@ def app_factory(config):
     # potentially some type of code restructure would allow this without a bunch of globals
     DATA_DIR = config['staging_service']['DATA_DIR']
     META_DIR = config['staging_service']['META_DIR']
+    CONCIERGE_PATH = config['staging_service']['CONCIERGE_PATH']
     if DATA_DIR.startswith('.'):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
     if META_DIR.startswith('.'):
         META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
+    if CONCIERGE_PATH.startswith('.'):
+        CONCIERGE_PATH = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_PATH))
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
+    Path._CONCIERGE_PATH = CONCIERGE_PATH
+
+    if Path._DATA_DIR is None:
+        raise Exception("Please provide DATA_DIR in the config file ")
+    else:
+        print("Setting DATA_DIR to", DATA_DIR)
+
+    if Path._META_DIR is None:
+        raise Exception("Please provide META_DIR in the config file ")
+    else:
+        print("Setting META_DIR dir to", META_DIR)
+
+    if Path._CONCIERGE_PATH is None:
+        raise Exception("Please provide CONCIERGE_PATH in the config file ")
+    else:
+        print("Setting CONCIERGE_PATH dir to", CONCIERGE_PATH)
+
     global auth_client
     auth_client = KBaseAuth2(config['staging_service']['AUTH_URL'])
     return app
