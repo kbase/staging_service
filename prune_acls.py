@@ -61,10 +61,10 @@ def remove_acl(acl):
     logging.info(
         "{}:About to remove ACL {} for {} (> {} days)".format(current_time, acl['id'], acl['path'],
                                                               THRESHOLD_DAYS))
-    # try:
-    #     resp = globus_transfer_client.delete_endpoint_acl_rule(endpoint_id, acl['id'])
-    # except TransferAPIError as error:
-    #     logging.error(error.raw_text)
+    try:
+        resp = globus_transfer_client.delete_endpoint_acl_rule(endpoint_id, acl['id'])
+    except TransferAPIError as error:
+        logging.error(error.raw_text)
 
 
 def main():
