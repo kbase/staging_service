@@ -11,7 +11,7 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
-VERSION = '1.1.6'
+VERSION = '1.1.7'
 
 
 @routes.get('/add-acl-concierge')
