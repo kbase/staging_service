@@ -1,4 +1,7 @@
 
+### Version 1.1.7
+- Add a file name check to void user uploading files with name starting with space or period
+
 ### Version 1.1.3
 - Add a add-acl-concierge endpoint
 - Added configs for that endpoint
