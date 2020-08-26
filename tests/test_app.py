@@ -645,6 +645,27 @@ async def test_upload():
 
             assert res2.status == 200
 
+            f2 = fs.make_file(os.path.join(username, 'test', '.test_file_1'), txt)
+            f3 = fs.make_file(os.path.join(username, 'test', ' test_file_1'), txt)
+
+            files = {'destPath': '/',
+                     'uploads': open(f2, 'rb')}
+
+            res3 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data=files)
+
+            assert res3.status == 403
+
+            files = {'destPath': '/',
+                     'uploads': open(f3, 'rb')}
+
+            res4 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data=files)
+
+            assert res4.status == 403
+
 
 @settings(deadline=None)
 @asyncgiven(contents=st.text())
