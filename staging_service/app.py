@@ -242,8 +242,8 @@ async def upload_files_chunked(request: web.Request):
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
     filename: str = user_file.filename
-    if filename.startswith('.') or filename.startswith(' '):
-        raise web.HTTPForbidden(text='cannot upload file with name beginning with a period or space')
+    if filename.lstrip() != filename:
+        raise web.HTTPForbidden(text='cannot upload file with name beginning with space')
 
     size = 0
     destPath = os.path.join(destPath, filename)
