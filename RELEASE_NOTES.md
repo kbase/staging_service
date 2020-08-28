@@ -1,6 +1,7 @@
 
 ### Version 1.1.7
 - Add a file name check to void user uploading files with name starting with space
+- Update list endpoint so that it only hide .globus_id file by default
 
 ### Version 1.1.3
 - Add a add-acl-concierge endpoint

@@ -137,7 +137,7 @@ async def dir_info(path: Path, show_hidden: bool, query: str = '', recurse=True)
     response = []
     for entry in os.scandir(path.full_path):
         specific_path = Path.from_full_path(entry.path)
-        if not show_hidden and entry.name.startswith('.'):
+        if not show_hidden and '.globus_id' in entry.name:
             continue
         if entry.is_dir():
             if query == '' or specific_path.user_path.find(query) != -1:
