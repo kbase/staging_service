@@ -11,7 +11,7 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
-VERSION = '1.1.6'
+VERSION = '1.1.7'
 
 
 @routes.get('/add-acl-concierge')
@@ -242,6 +242,9 @@ async def upload_files_chunked(request: web.Request):
         raise web.HTTPBadRequest(text='must provide destPath and uploads in body')
 
     filename: str = user_file.filename
+    if filename.lstrip() != filename:
+        raise web.HTTPForbidden(text='cannot upload file with name beginning with space')
+
     size = 0
     destPath = os.path.join(destPath, filename)
     path = Path.validate_path(username, destPath)
