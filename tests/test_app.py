@@ -668,6 +668,7 @@ async def test_upload():
 
             assert res2.status == 200
 
+            # test upload file with leading space
             f2 = fs.make_file(os.path.join(username, 'test', ' test_file_1'), txt)
 
             files = {'destPath': '/',
