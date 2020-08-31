@@ -482,6 +482,29 @@ async def test_list():
             assert len(file_folder_count) == 3
             assert sum(file_folder_count) == 1
 
+            # testing list dot-files
+            f4 = fs.make_file(os.path.join(username, 'test', '.test_file_1'), txt)
+            # f5 = fs.make_file(os.path.join(username, 'test', '.globus_id'), txt)
+            res6 = await cli.get('/list/', headers={'Authorization': ''})
+            assert res6.status == 200
+            json_text = await res6.text()
+            json = decoder.decode(json_text)
+
+            file_names = [file_json['name'] for file_json in json if not file_json['isFolder']]
+            assert ('.test_file_1' in file_names)
+            assert ('.globus_id' not in file_names)
+            assert len(file_names) == 3
+
+            # testing list showHidden option
+            res7 = await cli.get('/list/', headers={'Authorization': ''}, params={'showHidden': 'True'})
+            assert res7.status == 200
+            json_text = await res7.text()
+            json = decoder.decode(json_text)
+            file_names = [file_json['name'] for file_json in json if not file_json['isFolder']]
+            assert ('.test_file_1' in file_names)
+            assert ('.globus_id' in file_names)
+            assert len(file_names) == 4
+
 
 @asyncgiven(txt=st.text())
 async def test_download(txt):
@@ -644,6 +667,18 @@ async def test_upload():
                                   data=files)
 
             assert res2.status == 200
+
+            # test upload file with leading space
+            f2 = fs.make_file(os.path.join(username, 'test', ' test_file_1'), txt)
+
+            files = {'destPath': '/',
+                     'uploads': open(f2, 'rb')}
+
+            res3 = await cli.post(os.path.join('upload'),
+                                  headers={'Authorization': ''},
+                                  data=files)
+
+            assert res3.status == 403
 
 
 @settings(deadline=None)
