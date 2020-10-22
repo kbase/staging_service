@@ -33,6 +33,7 @@ utils.Path._META_DIR = META_DIR
 
 def asyncgiven(**kwargs):
     """alterantive to hypothesis.given decorator for async"""
+
     def real_decorator(fn):
         @given(**kwargs)
         def aio_wrapper(*args, **kwargs):
@@ -40,7 +41,9 @@ def asyncgiven(**kwargs):
             asyncio.set_event_loop(loop)
             future = asyncio.wait_for(fn(*args, **kwargs), timeout=60)
             loop.run_until_complete(future)
+
         return aio_wrapper
+
     return real_decorator
 
 
@@ -49,10 +52,12 @@ def mock_auth_app():
 
     async def mock_auth(*args, **kwargs):
         return 'testuser'
+
     app.auth_client.get_user = mock_auth
 
     async def mock_globus_id(*args, **kwargs):
         return ['testuser@globusid.org']
+
     globus._get_globus_ids = mock_globus_id  # TODO this doesn't allow testing of this fn does it
     return application
 
@@ -99,10 +104,12 @@ class FileUtil():
         shutil.rmtree(path)
 
 
-first_letter_alphabet = [c for c in string.ascii_lowercase+string.ascii_uppercase]
-username_alphabet = [c for c in '_'+string.ascii_lowercase+string.ascii_uppercase+string.digits]
+first_letter_alphabet = [c for c in string.ascii_lowercase + string.ascii_uppercase]
+username_alphabet = [c for c in
+                     '_' + string.ascii_lowercase + string.ascii_uppercase + string.digits]
 username_strat = st.text(max_size=99, min_size=1, alphabet=username_alphabet)
 username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alphabet)
+
 
 #
 # BEGIN TESTS
@@ -154,7 +161,9 @@ async def test_cmd(txt):
         f = fs.make_file('test/test2', txt)
         md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
         md52 = await utils.run_command('md5sum', f)
-        assert md5 == md52.split()[0]
+        # assert md5 == md52.split()[0]
+        # For mac osx, copy md5 to md5sum and check 3rd element
+        assert md5 == md52.split()[3]
 
 
 async def test_auth():
@@ -454,7 +463,7 @@ async def test_list():
             assert json[0]['isFolder'] is True
             assert json[0]['name'] == 'test'
             assert json[0]['path'] == 'testuser/test'
-            assert json[0]['mtime'] <= time.time()*1000
+            assert json[0]['mtime'] <= time.time() * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
@@ -467,7 +476,7 @@ async def test_list():
             assert json[0]['isFolder'] is True
             assert json[0]['name'] == 'test'
             assert json[0]['path'] == 'testuser/test'
-            assert json[0]['mtime'] <= time.time()*1000
+            assert json[0]['mtime'] <= time.time() * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
@@ -496,7 +505,8 @@ async def test_list():
             assert len(file_names) == 3
 
             # testing list showHidden option
-            res7 = await cli.get('/list/', headers={'Authorization': ''}, params={'showHidden': 'True'})
+            res7 = await cli.get('/list/', headers={'Authorization': ''},
+                                 params={'showHidden': 'True'})
             assert res7.status == 200
             json_text = await res7.text()
             json = decoder.decode(json_text)
@@ -543,7 +553,8 @@ async def test_similar():
             f = fs.make_file(os.path.join(username, 'test', 'test_file_1.fq'), txt)
             d1 = fs.make_dir(os.path.join(username, 'test', 'test_sub_dir'))
             f1 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_2.fq'), txt)
-            f2 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_right.fq'), txt)
+            f2 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'test_file_right.fq'),
+                              txt)
             f3 = fs.make_file(os.path.join(username, 'test', 'test_sub_dir', 'my_files'), txt)
 
             # testing similar file name
@@ -717,7 +728,7 @@ async def test_directory_decompression(contents):
                     basename, _ = os.path.splitext(basename)
                     # this should handle the .stuff.stuff case as well as .stuff
                     # it won't handle any more though such as .stuff.stuff.stuff
-                    new_name = basename+extension
+                    new_name = basename + extension
                     os.rename(compressed, new_name)
                     compressed = new_name
                 shutil.rmtree(d)
@@ -727,7 +738,7 @@ async def test_directory_decompression(contents):
                 assert not os.path.exists(d2)
                 assert not os.path.exists(f3)
                 assert os.path.exists(compressed)
-                resp = await cli.patch('/decompress/'+name, headers={'Authorization': ''})
+                resp = await cli.patch('/decompress/' + name, headers={'Authorization': ''})
                 assert resp.status == 200
                 text = await resp.text()
                 assert 'succesfully decompressed' in text
@@ -766,7 +777,7 @@ async def test_file_decompression(contents):
                 assert not os.path.exists(f1)
                 assert os.path.exists(os.path.join(d, name))
                 resp = await cli.patch(
-                    '/decompress/'+os.path.join(dirname, name),
+                    '/decompress/' + os.path.join(dirname, name),
                     headers={'Authorization': ''})
                 assert resp.status == 200
                 text = await resp.text()
