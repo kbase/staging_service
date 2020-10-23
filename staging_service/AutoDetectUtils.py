@@ -1,5 +1,6 @@
-from typing import NamedTuple
 import json
+
+from typing import NamedTuple
 
 
 class AutodetectConfigs(NamedTuple):
@@ -8,13 +9,8 @@ class AutodetectConfigs(NamedTuple):
 
 
 class AutoDetectUtils:
-    AVAILABLE_APPS_FP = "/Users/bsadkhin/workspace/staging_service/staging_service/autodetect/supported_apps.json"
-    EXTENSION_MAPPINGS_FP = "/Users/bsadkhin/workspace/staging_service/staging_service/autodetect/extension_to_app.json"
-    with open(AVAILABLE_APPS_FP) as f:
-        SUPPORTED_APPS = json.load(f)
-
-    with open(EXTENSION_MAPPINGS_FP) as f:
-        EXTENSION_MAPPINGS = json.load(f)
+    _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
+    _MAPPINGS = None  # expects to be set by config
 
     # SUPPORTED_APPS = json.load(AVAILABLE_APPS_FP)
     # EXTENSION_MAPPINGS = json.load(EXTENSION_MAPPINGS_FP)
@@ -22,8 +18,8 @@ class AutoDetectUtils:
     @staticmethod
     def determine_possible_importers(filename):
         if "." in filename:
-            suffix = filename.split(".")[-1]
-
+            suffix = filename.split(".")[-1].lower()
+            return AutoDetectUtils._MAPPINGS["types"].get(suffix)
         else:
             return None
 

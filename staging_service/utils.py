@@ -46,7 +46,7 @@ class Path(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
     _CONCIERGE_PATH = None  # expects to be set by config
-    _IMPORTER_MAPPINGS_FILE_PATH = None  # expects to be set by config
+    _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
 
     __slots__ = ["full_path", "metadata_path", "user_path", "name", "jgi_metadata"]
 

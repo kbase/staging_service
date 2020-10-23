@@ -63,7 +63,7 @@ MEDIA = "KBaseBiochem.Media"
 PHENOTYPE = "KBasePhenotypes.PhenotypeSet"
 
 type_to_extension_mapping = {
-    FASTA: ["fna", "fa", "faa", "fsa"],
+    FASTA: ["fna", "fa", "faa", "fsa", "fasta"],
     FASTQ: ["fq", "fastq"],
     GFF: ["gff", "gff2", "gff3"],
     GTF: ["gtf"],

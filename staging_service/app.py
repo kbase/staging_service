@@ -1,16 +1,16 @@
+import json
 import os
 import shutil
 
 import aiohttp_cors
 from aiohttp import web
-
+from pprint import pprint
 from .AutoDetectUtils import AutoDetectUtils
 from .JGIMetadata import read_metadata_for, translate_for_importer
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
-
 
 routes = web.RouteTableDef()
 VERSION = "1.1.7"
@@ -450,6 +450,7 @@ def inject_config_dependencies(config):
     DATA_DIR = config["staging_service"]["DATA_DIR"]
     META_DIR = config["staging_service"]["META_DIR"]
     CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
+    FILE_EXTENSION_MAPPINGS = config["staging_service"]["FILE_EXTENSION_MAPPINGS"]
 
     if DATA_DIR.startswith("."):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
@@ -457,10 +458,15 @@ def inject_config_dependencies(config):
         META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
     if CONCIERGE_PATH.startswith("."):
         CONCIERGE_PATH = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_PATH))
+    if FILE_EXTENSION_MAPPINGS.startswith("."):
+        FILE_EXTENSION_MAPPINGS = os.path.normpath(
+            os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
+        )
 
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
+    AutoDetectUtils._FILE_EXTENSION_MAPPINGS = FILE_EXTENSION_MAPPINGS
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -471,15 +477,20 @@ def inject_config_dependencies(config):
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
 
-    if Path._IMPORTER_MAPPINGS_FILE_PATH is None:
-        raise Exception(
-            "Please provide IMPORTER_MAPPINGS_FILE_PATH in the config file "
-        )
-    print(
-        "Setting META_DIR, DATA_DIR , CONCIERGE_PATH to",
-        DATA_DIR,
-        META_DIR,
-        CONCIERGE_PATH,
+    if AutoDetectUtils._FILE_EXTENSION_MAPPINGS is None:
+        raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
+    else:
+        with open(AutoDetectUtils._FILE_EXTENSION_MAPPINGS) as f:
+            AutoDetectUtils._MAPPINGS = json.load(f)
+
+    pprint(
+        [
+            "Setting META_DIR, DATA_DIR , CONCIERGE_PATH, FILE_EXTENSION_MAPPINGS, to",
+            DATA_DIR,
+            META_DIR,
+            CONCIERGE_PATH,
+            FILE_EXTENSION_MAPPINGS,
+        ]
     )
 
 
