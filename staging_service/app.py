@@ -4,12 +4,13 @@ import shutil
 import aiohttp_cors
 from aiohttp import web
 
-from .ImporterFilePaths import ImporterFilePaths
+from .AutoDetectUtils import AutoDetectUtils
 from .JGIMetadata import read_metadata_for, translate_for_importer
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
+
 
 routes = web.RouteTableDef()
 VERSION = "1.1.7"
@@ -17,9 +18,7 @@ VERSION = "1.1.7"
 
 @routes.get("/importer_mappings/{query:.*}")
 async def importer_mappings(request: web.Request):
-    ifp = ImporterFilePaths(request=request, config=Path._IMPORTER_MAPPINGS_FILE_PATH)
-    result = ifp.get_mappings()
-    return web.json_response(result)
+    return web.json_response(AutoDetectUtils.get_mappings(request))
 
 
 @routes.get("/add-acl-concierge")
@@ -440,28 +439,17 @@ async def authorize_request(request):
     return username
 
 
-def app_factory(config):
-    app = web.Application()
-    app.router.add_routes(routes)
-    cors = aiohttp_cors.setup(
-        app,
-        defaults={
-            "*": aiohttp_cors.ResourceOptions(
-                allow_credentials=True, expose_headers="*", allow_headers="*"
-            )
-        },
-    )
-    # Configure CORS on all routes.
-    for route in list(app.router.routes()):
-        cors.add(route)
+def inject_config_dependencies(config):
+    """
     # TODO this is pretty hacky dependency injection
     # potentially some type of code restructure would allow this without a bunch of globals
+    # This ove
+    :param config: The staging service main config
+    """
+
     DATA_DIR = config["staging_service"]["DATA_DIR"]
     META_DIR = config["staging_service"]["META_DIR"]
     CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
-    IMPORTER_MAPPINGS_FILE_PATH = config["staging_service"][
-        "IMPORTER_MAPPINGS_FILE_PATH"
-    ]
 
     if DATA_DIR.startswith("."):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
@@ -469,15 +457,10 @@ def app_factory(config):
         META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
     if CONCIERGE_PATH.startswith("."):
         CONCIERGE_PATH = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_PATH))
-    if IMPORTER_MAPPINGS_FILE_PATH.startswith("."):
-        IMPORTER_MAPPINGS_FILE_PATH = os.path.normpath(
-            os.path.join(os.getcwd(), IMPORTER_MAPPINGS_FILE_PATH)
-        )
 
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
-    Path._IMPORTER_MAPPINGS_FILE_PATH = IMPORTER_MAPPINGS_FILE_PATH
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -492,14 +475,30 @@ def app_factory(config):
         raise Exception(
             "Please provide IMPORTER_MAPPINGS_FILE_PATH in the config file "
         )
-
     print(
-        "Setting META_DIR, DATA_DIR , CONCIERGE_PATH, _IMPORTER_MAPPINGS_FILE_PATH to",
+        "Setting META_DIR, DATA_DIR , CONCIERGE_PATH to",
         DATA_DIR,
         META_DIR,
         CONCIERGE_PATH,
-        IMPORTER_MAPPINGS_FILE_PATH,
     )
+
+
+def app_factory(config):
+    app = web.Application()
+    app.router.add_routes(routes)
+    cors = aiohttp_cors.setup(
+        app,
+        defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True, expose_headers="*", allow_headers="*"
+            )
+        },
+    )
+    # Configure CORS on all routes.
+    for route in list(app.router.routes()):
+        cors.add(route)
+
+    inject_config_dependencies()
 
     global auth_client
     auth_client = KBaseAuth2(config["staging_service"]["AUTH_URL"])
