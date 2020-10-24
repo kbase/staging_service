@@ -1,4 +1,3 @@
-
 # Regular Formats
 JSON = "JSON"
 TSV = "TSV"
@@ -37,7 +36,7 @@ type_to_extension_mapping = {
     GFF: ["gff", "gff2", "gff3"],
     # GTF: ["gtf"],
     SRA: ["sra"],
-    GENBANK: ["gbk","genbank"],
+    GENBANK: ["gbk", "genbank"],
     # SAM: ["sam"],
     # VCF: ["vcf"],
     # MSA: [

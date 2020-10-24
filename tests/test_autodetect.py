@@ -5,8 +5,6 @@ from staging_service.app import inject_config_dependencies
 from tests.test_utils import bootstrap_config
 
 
-
-
 @pytest.fixture(autouse=True)
 def run_before_and_after_tests(tmpdir):
     config = bootstrap_config()
@@ -65,9 +63,14 @@ def test_reasonable_filenames():
             suffix = filename_variant.split(".")[-1].lower()
             assert possible_importers == AutoDetectUtils._MAPPINGS["types"].get(suffix)
 
+
 def test_sra_mappings():
+    """
+    Just testing a single app
+    :return:
+    """
     sra_file = "test.sra"
-    possible_importers = AutoDetectUtils.determine_possible_importers(
-        filename=sra_file
-    )
-    assert  AutoDetectUtils._MAPPINGS["apps"].get(suffix)
+    possible_importers = AutoDetectUtils.determine_possible_importers(filename=sra_file)
+    app = AutoDetectUtils._MAPPINGS["apps"][possible_importers[0][0]]
+    assert app["app"] == "kb_uploadmethods/import_fastq_sra_as_reads_from_staging"
+    assert app["extensions"] == ["sra"]

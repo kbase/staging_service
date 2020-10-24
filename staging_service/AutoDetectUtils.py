@@ -22,4 +22,3 @@ class AutoDetectUtils:
             return AutoDetectUtils._MAPPINGS["types"].get(suffix)
         else:
             return None
-

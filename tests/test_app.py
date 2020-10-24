@@ -888,10 +888,7 @@ async def test_file_decompression(contents):
         # invalid test case
         # TODO it should be faster if hypothesis could generate all cases except these
         return
-    methods = [
-        ("gzip", ".gz"),
-        ("bzip2", ".bz2"),
-    ]
+    methods = [("gzip", ".gz"), ("bzip2", ".bz2")]
     async with AppClient(config, username) as cli:
         for method, extension in methods:
             with FileUtil() as fs:

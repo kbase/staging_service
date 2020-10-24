@@ -26,7 +26,6 @@ Functionality: Running this script will
 import copy
 import json
 from collections import defaultdict
-# Requires pyyaml
 from pprint import pprint
 
 from staging_service.autodetect.Mappings import *
@@ -253,65 +252,8 @@ for extension in extensions_flat:
             if mapping_tuple not in type_to_app_mapping_with_weights[extension]:
                 type_to_app_mapping_with_weights[extension].append(mapping_tuple)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pprint(type_to_app_mapping_with_weights)
-
-    # So uniqueify them above
-    # Give them an index
-    # Save them with an id field inside
-    # Build mapping based off of the title, and the id inside
-
-    # Maybe start over and build apps in a seperate file with IDs
-    # Then associate the mappings with IDs instead
-    # Then iterate over file extensions, collecting the ids/weigths of possible importers
-
-    # for datatype in type_to_extension_mapping:
-    #     for file_extension in type_to_extension_mapping[datatype]:
-    #
-
-    # yaml.Dumper.ignore_aliases = lambda *args: True
-
-    # print("Extension to type mapping")
-    # dumps = json.dumps(extension_to_type_mapping, indent=2)
-    # print(dumps)
-    #
-    # with open("./autodetect/extension_to_type.json", "w") as f:
-    #     json.dump(obj=extension_to_type_mapping, fp=f, indent=2)
-    #
-    # with open("./autodetect/extension_to_type.yaml", "w") as f:
-    #     yaml.dump(dict(extension_to_type_mapping), f)
-    #
-    # print("Extension to app mapping")
-    # dumps = json.dumps(extension_to_app_mapping, indent=2)
-    # print(dumps)
-    #
-    # with open("./autodetect/extension_to_app.json", "w") as f:
-    #     json.dump(obj=extension_to_app_mapping, fp=f, indent=2)
-    #
-    # with open("./autodetect/extension_to_app.yaml", "w") as f:
-    #     yaml.dump(dict(extension_to_app_mapping), f)
-    #
-    # print("Supported Apps List")
-    # dumps = json.dumps(apps_list_unique, indent=2)
-    # print(dumps)
-    #
-    # with open("./autodetect/supported_apps.json", "w") as f:
-    #     json.dump(obj=apps_list_unique, fp=f, indent=2)
-    #
-    # with open("./autodetect/supported_apps.yaml", "w") as f:
-    #     yaml.dump(dict(apps_list_unique), f)
-    #
-
-    # print("Supported Apps List2")
-    # dumps = json.dumps(apps_list_list, indent=2)
-    # print(dumps)
-
     data = {"apps": list_of_apps, "types": type_to_app_mapping_with_weights}
-
     with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
         json.dump(obj=data, fp=f, indent=2)
-
-    # with open("./autodetect/supported_apps_w_extensions.yaml", "w") as f:
-    #     yaml.dump(dict(apps_list_list), f)
-    #
-    #
