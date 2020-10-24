@@ -23,15 +23,3 @@ class AutoDetectUtils:
         else:
             return None
 
-    @staticmethod
-    def get_mappings(request):
-        request = [
-            "Genome1.fastq",
-            "Genome2.fastq",
-            "Genome3.fa",
-            "Genome3.zip",
-            "Genome3.cat" "Genome3",
-        ]
-        response = []
-        for filename in request:
-            response.append(AutoDetectUtils.determine_possible_importers(filename))

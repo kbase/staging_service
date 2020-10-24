@@ -23,82 +23,13 @@ Functionality: Running this script will
 
 * Note: We should serve the generated content from memory
 """
+import copy
 import json
 from collections import defaultdict
-
 # Requires pyyaml
-import yaml
 from pprint import pprint
 
-# Regular Formats
-JSON = "JSON"
-TSV = "TSV"
-CSV = "CSV"
-EXCEL = "EXCEL"
-ZIP = "CompressedFileFormatArchive"
-
-# BIOINFORMATICS FORMATS
-FASTA = "FASTA"
-FASTQ = "FASTQ Reads"
-GFF = "GFF"
-GTF = "GTF"
-SRA = "SRA"
-SAM = "SAM"
-BAM = "BAM"
-GENBANK = "GENBANK"
-VCF = "VCF"
-FBA = "FBAModel"
-SBML = "SBML"
-
-# KBASE SPECIFIC FORMATS
-MSA = "MultipleSequenceAlignment"
-PHENOTYPE = "PHENOTYPE"
-ESCHER = "ESCHER"
-ANNOTATIONS = "ANNOTATIONS"
-
-# Omitting file.sanfastq
-# GFF3 = "GFF3" do we need to only allow GFF3 and not support GFF2/GFF1?
-
-MEDIA = "KBaseBiochem.Media"
-PHENOTYPE = "KBasePhenotypes.PhenotypeSet"
-
-type_to_extension_mapping = {
-    FASTA: ["fna", "fa", "faa", "fsa", "fasta"],
-    FASTQ: ["fq", "fastq"],
-    GFF: ["gff", "gff2", "gff3"],
-    GTF: ["gtf"],
-    SRA: ["sra"],
-    GENBANK: ["gbk"],
-    SAM: ["sam"],
-    VCF: ["vcf"],
-    MSA: [
-        "clustal",
-        "clustalw",
-        "emboss",
-        "embl",
-        "ig",
-        "maf",
-        "maue",
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "phylip",
-        "stockholm",
-    ],
-    TSV: ["tsv"],
-    CSV: ["csv"],
-    JSON: ["json"],
-    EXCEL: ["xls", "xlsx"],
-    ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
-    SBML: ["smbl"],
-    # Custom File Types?
-    MEDIA: ["tsv", "xls", "xlsx"],
-    PHENOTYPE: ["tsv"],
-    ESCHER: ["json"],
-    ANNOTATIONS: ["tsv"],
-    FBA: ["tsv", "xls", "xlsx", "smbl"],
-}
+from staging_service.autodetect.Mappings import *
 
 mapping = defaultdict(list)
 
@@ -156,13 +87,13 @@ mapping[FASTA] = [
     #     "output_type": ["KBaseTrees.MSA"],
     # },
 ]
-mapping[MSA] = [
-    # {
-    #     "title": "Multiple Sequence Alignment",
-    #     "app": "MSAUtils/import_msa_file",
-    #     "output_type": ["KBaseTrees.MSA"],
-    # }
-]
+# mapping[MSA] = [
+# {
+#     "title": "Multiple Sequence Alignment",
+#     "app": "MSAUtils/import_msa_file",
+#     "output_type": ["KBaseTrees.MSA"],
+# }
+# ]
 
 mapping[GENBANK] = [
     {
@@ -290,12 +221,12 @@ mapping[SBML] = [
 
 extension_to_type_mapping = defaultdict(list)
 
-
-apps_list = {}
+# apps_list = {}
 apps_list_unique = {}
-apps_list_list = []
+list_of_apps = []
 extensions_flat = []
 counter = 0
+
 for datatype in type_to_extension_mapping:
     for file_extension in type_to_extension_mapping[datatype]:
         extensions_flat.append(file_extension)
@@ -303,87 +234,84 @@ for datatype in type_to_extension_mapping:
         available_apps = mapping[datatype]
         # Give each entry a counter
         for app in available_apps:
-            title = app["title"]
-            if title in apps_list:
-                continue
-            apps_list[title] = app
-            app["id"] = counter
-            app["extensions"] = type_to_extension_mapping[datatype]
-            apps_list_unique[counter] = app
-            apps_list_list.append(app)
+            app_copy = copy.copy(app)
+            title = app_copy["title"]
+            app_copy["id"] = counter
+            app_copy["extensions"] = type_to_extension_mapping[datatype]
+            list_of_apps.append(app_copy)
             counter += 1
+        pprint(["apps list now contains ", len(list_of_apps), list_of_apps])
 
 extensions_flat = list(set(extensions_flat))
 type_to_app_mapping_with_weights = defaultdict(list)
 for extension in extensions_flat:
-    for app in apps_list_list:
+    print("Working on", extensions_flat)
+    for app in list_of_apps:
         extension_list = app["extensions"]
         if extension in extension_list:
-            app_id = app["id"]
-            type_to_app_mapping_with_weights[extension].append([app_id, 1])
+            mapping_tuple = [app["id"], 1]
+            if mapping_tuple not in type_to_app_mapping_with_weights[extension]:
+                type_to_app_mapping_with_weights[extension].append(mapping_tuple)
 
+if __name__ == '__main__':
+    pprint(type_to_app_mapping_with_weights)
 
-pprint(type_to_app_mapping_with_weights)
+    # So uniqueify them above
+    # Give them an index
+    # Save them with an id field inside
+    # Build mapping based off of the title, and the id inside
 
+    # Maybe start over and build apps in a seperate file with IDs
+    # Then associate the mappings with IDs instead
+    # Then iterate over file extensions, collecting the ids/weigths of possible importers
 
-# So uniqueify them above
-# Give them an index
-# Save them with an id field inside
-# Build mapping based off of the title, and the id inside
+    # for datatype in type_to_extension_mapping:
+    #     for file_extension in type_to_extension_mapping[datatype]:
+    #
 
-# Maybe start over and build apps in a seperate file with IDs
-# Then associate the mappings with IDs instead
-# Then iterate over file extensions, collecting the ids/weigths of possible importers
+    # yaml.Dumper.ignore_aliases = lambda *args: True
 
+    # print("Extension to type mapping")
+    # dumps = json.dumps(extension_to_type_mapping, indent=2)
+    # print(dumps)
+    #
+    # with open("./autodetect/extension_to_type.json", "w") as f:
+    #     json.dump(obj=extension_to_type_mapping, fp=f, indent=2)
+    #
+    # with open("./autodetect/extension_to_type.yaml", "w") as f:
+    #     yaml.dump(dict(extension_to_type_mapping), f)
+    #
+    # print("Extension to app mapping")
+    # dumps = json.dumps(extension_to_app_mapping, indent=2)
+    # print(dumps)
+    #
+    # with open("./autodetect/extension_to_app.json", "w") as f:
+    #     json.dump(obj=extension_to_app_mapping, fp=f, indent=2)
+    #
+    # with open("./autodetect/extension_to_app.yaml", "w") as f:
+    #     yaml.dump(dict(extension_to_app_mapping), f)
+    #
+    # print("Supported Apps List")
+    # dumps = json.dumps(apps_list_unique, indent=2)
+    # print(dumps)
+    #
+    # with open("./autodetect/supported_apps.json", "w") as f:
+    #     json.dump(obj=apps_list_unique, fp=f, indent=2)
+    #
+    # with open("./autodetect/supported_apps.yaml", "w") as f:
+    #     yaml.dump(dict(apps_list_unique), f)
+    #
 
-# for datatype in type_to_extension_mapping:
-#     for file_extension in type_to_extension_mapping[datatype]:
-#
+    # print("Supported Apps List2")
+    # dumps = json.dumps(apps_list_list, indent=2)
+    # print(dumps)
 
+    data = {"apps": list_of_apps, "types": type_to_app_mapping_with_weights}
 
-# yaml.Dumper.ignore_aliases = lambda *args: True
+    with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
+        json.dump(obj=data, fp=f, indent=2)
 
-# print("Extension to type mapping")
-# dumps = json.dumps(extension_to_type_mapping, indent=2)
-# print(dumps)
-#
-# with open("./autodetect/extension_to_type.json", "w") as f:
-#     json.dump(obj=extension_to_type_mapping, fp=f, indent=2)
-#
-# with open("./autodetect/extension_to_type.yaml", "w") as f:
-#     yaml.dump(dict(extension_to_type_mapping), f)
-#
-# print("Extension to app mapping")
-# dumps = json.dumps(extension_to_app_mapping, indent=2)
-# print(dumps)
-#
-# with open("./autodetect/extension_to_app.json", "w") as f:
-#     json.dump(obj=extension_to_app_mapping, fp=f, indent=2)
-#
-# with open("./autodetect/extension_to_app.yaml", "w") as f:
-#     yaml.dump(dict(extension_to_app_mapping), f)
-#
-# print("Supported Apps List")
-# dumps = json.dumps(apps_list_unique, indent=2)
-# print(dumps)
-#
-# with open("./autodetect/supported_apps.json", "w") as f:
-#     json.dump(obj=apps_list_unique, fp=f, indent=2)
-#
-# with open("./autodetect/supported_apps.yaml", "w") as f:
-#     yaml.dump(dict(apps_list_unique), f)
-#
-
-# print("Supported Apps List2")
-# dumps = json.dumps(apps_list_list, indent=2)
-# print(dumps)
-
-data = {"apps": apps_list_list, "types": type_to_app_mapping_with_weights}
-
-with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
-    json.dump(obj=data, fp=f, indent=2)
-
-# with open("./autodetect/supported_apps_w_extensions.yaml", "w") as f:
-#     yaml.dump(dict(apps_list_list), f)
-#
-#
+    # with open("./autodetect/supported_apps_w_extensions.yaml", "w") as f:
+    #     yaml.dump(dict(apps_list_list), f)
+    #
+    #
