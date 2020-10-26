@@ -1,1568 +1,496 @@
 {
-  "apps": [
-    {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": 0,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 1,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 2,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": 3,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 4,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 5,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": 6,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 7,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 8,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": 9,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 10,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 11,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": 12,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 13,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 14,
-      "extensions": [
-        "fna",
-        "fa",
-        "faa",
-        "fsa",
-        "fasta"
-      ]
-    },
-    {
-      "title": "FastQ Reads Interleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": 15,
-      "extensions": [
-        "fq",
-        "fastq"
-      ]
-    },
-    {
-      "title": "FastQ Reads UnInterleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": 16,
-      "extensions": [
-        "fq",
-        "fastq"
-      ]
-    },
-    {
-      "title": "FastQ Reads Interleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": 17,
-      "extensions": [
-        "fq",
-        "fastq"
-      ]
-    },
-    {
-      "title": "FastQ Reads UnInterleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": 18,
-      "extensions": [
-        "fq",
-        "fastq"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 19,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 20,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 21,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 22,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": 23,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": 24,
-      "extensions": [
-        "gff",
-        "gff2",
-        "gff3"
-      ]
-    },
-    {
+  "apps": {
+    "SRA Reads": {
       "title": "SRA Reads",
       "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
       "output_type": [
         "KBaseFile.SingleEndLibrary",
         "KBaseFile.PairedEndLibrary"
       ],
-      "id": 25,
       "extensions": [
         "sra"
-      ]
+      ],
+      "id": 0
     },
-    {
+    "FastQ Reads Interleaved": {
+      "title": "FastQ Reads Interleaved",
+      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+      "output_type": [
+        "KBaseFile.SingleEndLibrary",
+        "KBaseFile.PairedEndLibrary"
+      ],
+      "extensions": [
+        "fq",
+        "fastq"
+      ],
+      "id": 1
+    },
+    "FastQ Reads UnInterleaved": {
+      "title": "FastQ Reads UnInterleaved",
+      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+      "output_type": [
+        "KBaseFile.SingleEndLibrary",
+        "KBaseFile.PairedEndLibrary"
+      ],
+      "extensions": [
+        "fq",
+        "fastq"
+      ],
+      "id": 2
+    },
+    "Assembly": {
+      "title": "Assembly",
+      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
+      "output_type": [
+        "KBaseGenomeAnnotations.Assembly"
+      ],
+      "extensions": [
+        "fna",
+        "fa",
+        "faa",
+        "fsa",
+        "fasta"
+      ],
+      "id": 3
+    },
+    "GFF/FASTA Genome": {
+      "title": "GFF/FASTA Genome",
+      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
+      "output_type": [
+        "KBaseGenomes.Genome"
+      ],
+      "extensions": [
+        "fna",
+        "fa",
+        "faa",
+        "fsa",
+        "fasta",
+        "gff",
+        "gff2",
+        "gff3"
+      ],
+      "id": 4
+    },
+    "GFF/FASTA MetaGenome": {
+      "title": "GFF/FASTA MetaGenome",
+      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
+      "output_type": [
+        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
+      ],
+      "extensions": [
+        "fna",
+        "fa",
+        "faa",
+        "fsa",
+        "fasta",
+        "gff",
+        "gff2",
+        "gff3"
+      ],
+      "id": 5
+    },
+    "Genbank Genome": {
       "title": "Genbank Genome",
       "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
       "output_type": [
         "KBaseGenomes.Genome"
       ],
-      "id": 26,
       "extensions": [
         "gbk",
         "genbank"
-      ]
-    },
-    {
-      "title": "Genbank Genome",
-      "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
       ],
-      "id": 27,
-      "extensions": [
-        "gbk",
-        "genbank"
-      ]
+      "id": 6
     },
-    {
+    "Decompress/Unpack": {
+      "title": "Decompress/Unpack",
+      "app": "kb_uploadmethods/unpack_staging_file",
+      "output_type": [
+        null
+      ],
+      "extensions": [
+        "zip",
+        "tar",
+        "tgz",
+        "tar.gz",
+        "7z",
+        "gz",
+        "gzip",
+        "rar"
+      ],
+      "id": 7
+    },
+    "Samples": {
+      "title": "Samples",
+      "app": "sample_uploader/import_samples",
+      "output_type": [
+        "KBaseSets.SampleSet"
+      ],
+      "extensions": [
+        "csv",
+        "xls",
+        "xlsx"
+      ],
+      "id": 8
+    },
+    "Media": {
       "title": "Media",
       "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
       "output_type": [
         "KBaseBiochem.Media"
       ],
-      "id": 28,
       "extensions": [
-        "tsv"
-      ]
+        "tsv",
+        "xls",
+        "xlsx"
+      ],
+      "id": 9
     },
-    {
+    "Expression Matrix": {
       "title": "Expression Matrix",
       "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
       "output_type": [
         "KBaseFeatureValues.ExpressionMatrix"
       ],
-      "id": 29,
       "extensions": [
         "tsv"
-      ]
+      ],
+      "id": 10
     },
-    {
+    "Metabolic Annotations": {
       "title": "Metabolic Annotations",
       "app": "MergeMetabolicAnnotations/import_annotations",
       "output_type": [
         "KBaseGenomes.Genome"
       ],
-      "id": 30,
       "extensions": [
         "tsv"
-      ]
+      ],
+      "id": 11
     },
-    {
+    "Bulk Metabolic Annotations": {
       "title": "Bulk Metabolic Annotations",
       "app": "MergeMetabolicAnnotations/import_bulk_annotations",
       "output_type": [
         "KBaseGenomes.Genome"
       ],
-      "id": 31,
       "extensions": [
         "tsv"
-      ]
+      ],
+      "id": 12
     },
-    {
+    "FBA Model": {
       "title": "FBA Model",
       "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
       "output_type": [
         "KBaseFBA.FBAModel"
       ],
-      "id": 32,
       "extensions": [
-        "tsv"
-      ]
+        "tsv",
+        "xls",
+        "xlsx",
+        "smbl"
+      ],
+      "id": 13
     },
-    {
+    "Phenotype Set": {
       "title": "Phenotype Set",
       "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
       "output_type": [
         "KBasePhenotypes.PhenotypeSet"
       ],
-      "id": 33,
       "extensions": [
         "tsv"
-      ]
-    },
-    {
-      "title": "Samples",
-      "app": "sample_uploader/import_samples",
-      "output_type": [
-        "KBaseSets.SampleSet"
       ],
-      "id": 34,
-      "extensions": [
-        "csv"
-      ]
+      "id": 14
     },
-    {
+    "Attribute Mapping": {
+      "title": "Attribute Mapping",
+      "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
+      "output_type": [
+        "KBaseExperiments.AttributeMapping"
+      ],
+      "extensions": [
+        "xls",
+        "xlsx"
+      ],
+      "id": 15
+    },
+    "EscherMap": {
       "title": "EscherMap",
       "app": "kb_uploadmethods/import_eschermap_from_staging",
       "output_type": [
         "KBaseFBA.EscherMap"
       ],
-      "id": 35,
       "extensions": [
         "json"
-      ]
-    },
-    {
-      "title": "Samples",
-      "app": "sample_uploader/import_samples",
-      "output_type": [
-        "KBaseSets.SampleSet"
       ],
-      "id": 36,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Media",
-      "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
-      "output_type": [
-        "KBaseBiochem.Media"
-      ],
-      "id": 37,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Attribute Mapping",
-      "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-      "output_type": [
-        "KBaseExperiments.AttributeMapping"
-      ],
-      "id": 38,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "FBA Model",
-      "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-      "output_type": [
-        "KBaseFBA.FBAModel"
-      ],
-      "id": 39,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Samples",
-      "app": "sample_uploader/import_samples",
-      "output_type": [
-        "KBaseSets.SampleSet"
-      ],
-      "id": 40,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Media",
-      "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
-      "output_type": [
-        "KBaseBiochem.Media"
-      ],
-      "id": 41,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Attribute Mapping",
-      "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-      "output_type": [
-        "KBaseExperiments.AttributeMapping"
-      ],
-      "id": 42,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "FBA Model",
-      "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-      "output_type": [
-        "KBaseFBA.FBAModel"
-      ],
-      "id": 43,
-      "extensions": [
-        "xls",
-        "xlsx"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 44,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 45,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 46,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 47,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 48,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 49,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 50,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": 51,
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ]
-    },
-    {
-      "title": "FBA Model",
-      "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-      "output_type": [
-        "KBaseFBA.FBAModel"
-      ],
-      "id": 52,
-      "extensions": [
-        "smbl"
-      ]
+      "id": 16
     }
-  ],
+  },
   "types": {
-    "tar": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "fa": [
+    "sra": [
       [
         0,
-        1
-      ],
-      [
-        1,
-        1
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
-        1
-      ],
-      [
-        7,
-        1
-      ],
-      [
-        8,
-        1
-      ],
-      [
-        9,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        11,
-        1
-      ],
-      [
-        12,
-        1
-      ],
-      [
-        13,
-        1
-      ],
-      [
-        14,
-        1
-      ]
-    ],
-    "gff2": [
-      [
-        19,
-        1
-      ],
-      [
-        20,
-        1
-      ],
-      [
-        21,
-        1
-      ],
-      [
-        22,
-        1
-      ],
-      [
-        23,
-        1
-      ],
-      [
-        24,
-        1
-      ]
-    ],
-    "gff": [
-      [
-        19,
-        1
-      ],
-      [
-        20,
-        1
-      ],
-      [
-        21,
-        1
-      ],
-      [
-        22,
-        1
-      ],
-      [
-        23,
-        1
-      ],
-      [
-        24,
-        1
-      ]
-    ],
-    "csv": [
-      [
-        34,
-        1
-      ]
-    ],
-    "fasta": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        1
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
-        1
-      ],
-      [
-        7,
-        1
-      ],
-      [
-        8,
-        1
-      ],
-      [
-        9,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        11,
-        1
-      ],
-      [
-        12,
-        1
-      ],
-      [
-        13,
-        1
-      ],
-      [
-        14,
-        1
-      ]
-    ],
-    "tsv": [
-      [
-        28,
-        1
-      ],
-      [
-        29,
-        1
-      ],
-      [
-        30,
-        1
-      ],
-      [
-        31,
-        1
-      ],
-      [
-        32,
-        1
-      ],
-      [
-        33,
-        1
-      ]
-    ],
-    "rar": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "faa": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        1
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
-        1
-      ],
-      [
-        7,
-        1
-      ],
-      [
-        8,
-        1
-      ],
-      [
-        9,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        11,
-        1
-      ],
-      [
-        12,
-        1
-      ],
-      [
-        13,
-        1
-      ],
-      [
-        14,
-        1
-      ]
-    ],
-    "xlsx": [
-      [
-        36,
-        1
-      ],
-      [
-        37,
-        1
-      ],
-      [
-        38,
-        1
-      ],
-      [
-        39,
-        1
-      ],
-      [
-        40,
-        1
-      ],
-      [
-        41,
-        1
-      ],
-      [
-        42,
-        1
-      ],
-      [
-        43,
-        1
-      ]
-    ],
-    "tgz": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "smbl": [
-      [
-        52,
-        1
-      ]
-    ],
-    "zip": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "xls": [
-      [
-        36,
-        1
-      ],
-      [
-        37,
-        1
-      ],
-      [
-        38,
-        1
-      ],
-      [
-        39,
-        1
-      ],
-      [
-        40,
-        1
-      ],
-      [
-        41,
-        1
-      ],
-      [
-        42,
-        1
-      ],
-      [
-        43,
-        1
-      ]
-    ],
-    "gz": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "fna": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        1
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
-        1
-      ],
-      [
-        7,
-        1
-      ],
-      [
-        8,
-        1
-      ],
-      [
-        9,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        11,
-        1
-      ],
-      [
-        12,
-        1
-      ],
-      [
-        13,
-        1
-      ],
-      [
-        14,
-        1
-      ]
-    ],
-    "genbank": [
-      [
-        26,
-        1
-      ],
-      [
-        27,
-        1
-      ]
-    ],
-    "fsa": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        1
-      ],
-      [
-        2,
-        1
-      ],
-      [
-        3,
-        1
-      ],
-      [
-        4,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        6,
-        1
-      ],
-      [
-        7,
-        1
-      ],
-      [
-        8,
-        1
-      ],
-      [
-        9,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        11,
-        1
-      ],
-      [
-        12,
-        1
-      ],
-      [
-        13,
-        1
-      ],
-      [
-        14,
-        1
-      ]
-    ],
-    "tar.gz": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
-        1
-      ]
-    ],
-    "fastq": [
-      [
-        15,
-        1
-      ],
-      [
-        16,
-        1
-      ],
-      [
-        17,
-        1
-      ],
-      [
-        18,
-        1
-      ]
-    ],
-    "gzip": [
-      [
-        44,
-        1
-      ],
-      [
-        45,
-        1
-      ],
-      [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
         1
       ]
     ],
     "fq": [
       [
-        15,
+        1,
         1
       ],
       [
-        16,
-        1
-      ],
-      [
-        17,
-        1
-      ],
-      [
-        18,
+        2,
         1
       ]
     ],
-    "sra": [
+    "fastq": [
       [
-        25,
+        1,
+        1
+      ],
+      [
+        2,
         1
       ]
     ],
-    "gbk": [
+    "fna": [
       [
-        26,
+        3,
         1
       ],
       [
-        27,
+        4,
+        1
+      ],
+      [
+        5,
         1
       ]
     ],
-    "7z": [
+    "fa": [
       [
-        44,
+        3,
         1
       ],
       [
-        45,
+        4,
         1
       ],
       [
-        46,
-        1
-      ],
-      [
-        47,
-        1
-      ],
-      [
-        48,
-        1
-      ],
-      [
-        49,
-        1
-      ],
-      [
-        50,
-        1
-      ],
-      [
-        51,
+        5,
         1
       ]
     ],
-    "json": [
+    "faa": [
       [
-        35,
+        3,
+        1
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ]
+    ],
+    "fsa": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ]
+    ],
+    "fasta": [
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ]
+    ],
+    "gff": [
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ]
+    ],
+    "gff2": [
+      [
+        4,
+        1
+      ],
+      [
+        5,
         1
       ]
     ],
     "gff3": [
       [
-        19,
+        4,
         1
       ],
       [
-        20,
+        5,
+        1
+      ]
+    ],
+    "gbk": [
+      [
+        6,
+        1
+      ]
+    ],
+    "genbank": [
+      [
+        6,
+        1
+      ]
+    ],
+    "zip": [
+      [
+        7,
+        1
+      ]
+    ],
+    "tar": [
+      [
+        7,
+        1
+      ]
+    ],
+    "tgz": [
+      [
+        7,
+        1
+      ]
+    ],
+    "tar.gz": [
+      [
+        7,
+        1
+      ]
+    ],
+    "7z": [
+      [
+        7,
+        1
+      ]
+    ],
+    "gz": [
+      [
+        7,
+        1
+      ]
+    ],
+    "gzip": [
+      [
+        7,
+        1
+      ]
+    ],
+    "rar": [
+      [
+        7,
+        1
+      ]
+    ],
+    "csv": [
+      [
+        8,
+        1
+      ]
+    ],
+    "xls": [
+      [
+        8,
         1
       ],
       [
-        21,
+        9,
         1
       ],
       [
-        22,
+        13,
         1
       ],
       [
-        23,
+        15,
+        1
+      ]
+    ],
+    "xlsx": [
+      [
+        8,
         1
       ],
       [
-        24,
+        9,
+        1
+      ],
+      [
+        13,
+        1
+      ],
+      [
+        15,
+        1
+      ]
+    ],
+    "tsv": [
+      [
+        9,
+        1
+      ],
+      [
+        10,
+        1
+      ],
+      [
+        11,
+        1
+      ],
+      [
+        12,
+        1
+      ],
+      [
+        13,
+        1
+      ],
+      [
+        14,
+        1
+      ]
+    ],
+    "smbl": [
+      [
+        13,
+        1
+      ]
+    ],
+    "json": [
+      [
+        16,
         1
       ]
     ]

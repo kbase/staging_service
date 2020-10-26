@@ -22,10 +22,10 @@ Functionality: Running this script will
 * Save this indirectly as a yaml file
 
 * Note: We should serve the generated content from memory
+* Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
 import copy
-import json
-from collections import defaultdict
+from collections import defaultdict,OrderedDict
 from pprint import pprint
 
 from staging_service.autodetect.Mappings import *
@@ -218,42 +218,42 @@ mapping[SBML] = [
     }
 ]
 
-extension_to_type_mapping = defaultdict(list)
-
-# apps_list = {}
-apps_list_unique = {}
-list_of_apps = []
+new_apps = OrderedDict()
 extensions_flat = []
+
 counter = 0
+for category in mapping:
+    apps = mapping[category]
+    for app in apps:
+        #print("looking at", app)
+        title = app['title']
+        if title not in new_apps:
+            app['extensions'] = []
+            app['id'] = counter
+            counter+=1
+            new_apps[title] = copy.copy(app)
 
-for datatype in type_to_extension_mapping:
-    for file_extension in type_to_extension_mapping[datatype]:
-        extensions_flat.append(file_extension)
-        extension_to_type_mapping[file_extension.lower()].append(datatype)
-        available_apps = mapping[datatype]
-        # Give each entry a counter
-        for app in available_apps:
-            app_copy = copy.copy(app)
-            title = app_copy["title"]
-            app_copy["id"] = counter
-            app_copy["extensions"] = type_to_extension_mapping[datatype]
-            list_of_apps.append(app_copy)
-            counter += 1
-        pprint(["apps list now contains ", len(list_of_apps), list_of_apps])
+        for extension in type_to_extension_mapping:
+            if extension == category:
+                new_apps[title]['extensions'].extend(type_to_extension_mapping[extension])
+                extensions_flat.extend(type_to_extension_mapping[extension])
 
-extensions_flat = list(set(extensions_flat))
-type_to_app_mapping_with_weights = defaultdict(list)
-for extension in extensions_flat:
-    print("Working on", extensions_flat)
-    for app in list_of_apps:
-        extension_list = app["extensions"]
-        if extension in extension_list:
-            mapping_tuple = [app["id"], 1]
-            if mapping_tuple not in type_to_app_mapping_with_weights[extension]:
-                type_to_app_mapping_with_weights[extension].append(mapping_tuple)
+
+extensions_mapping = defaultdict(list)
+for app in new_apps:
+    app = new_apps[app]
+    app_id = app['id']
+    extensions = app['extensions']
+
+    for extension in extensions:
+        extensions_mapping[extension].append([app_id,1])
+
 
 if __name__ == "__main__":
-    pprint(type_to_app_mapping_with_weights)
-    data = {"apps": list_of_apps, "types": type_to_app_mapping_with_weights}
-    with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
+    import json
+    print("About to generate supported apps with extensions")
+    data = {"apps": new_apps, "types": extensions_mapping}
+    # with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
+    #     json.dump(obj=data, fp=f, indent=2)
+    with open("supported_apps_w_extensions.json", "w") as f:
         json.dump(obj=data, fp=f, indent=2)

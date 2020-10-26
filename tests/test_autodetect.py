@@ -59,6 +59,7 @@ def test_reasonable_filenames():
             possible_importers = AutoDetectUtils.determine_possible_importers(
                 filename=filename_variant
             )
+            print("Testing",filename_variant,possible_importers)
             assert possible_importers is not None
             suffix = filename_variant.split(".")[-1].lower()
             assert possible_importers == AutoDetectUtils._MAPPINGS["types"].get(suffix)
@@ -71,6 +72,10 @@ def test_sra_mappings():
     """
     sra_file = "test.sra"
     possible_importers = AutoDetectUtils.determine_possible_importers(filename=sra_file)
-    app = AutoDetectUtils._MAPPINGS["apps"][possible_importers[0][0]]
+    print(possible_importers)
+    app = AutoDetectUtils._MAPPINGS["apps"]['SRA Reads']
+    mapping = app['id']
+    assert possible_importers[0][0] == mapping
+    # Just double check below to make sure its the right app, and doesn't happen to have the id
     assert app["app"] == "kb_uploadmethods/import_fastq_sra_as_reads_from_staging"
     assert app["extensions"] == ["sra"]
