@@ -129,20 +129,20 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
     assert (
-            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+        username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
     )
     assert (
-            username + "/baz"
-            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+        username + "/baz"
+        == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
     )
     assert (
-            username + "/bar"
-            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
+        username + "/bar"
+        == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
     assert (
-            username + "/foo/bar"
-            == utils.Path.validate_path(username, "../foo/bar").user_path
+        username + "/foo/bar"
+        == utils.Path.validate_path(username, "../foo/bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
@@ -156,8 +156,8 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
     assert (
-            username + "/stuff.ext"
-            == utils.Path.validate_path(username, "/stuff.ext").user_path
+        username + "/stuff.ext"
+        == utils.Path.validate_path(username, "/stuff.ext").user_path
     )
 
 
@@ -927,58 +927,68 @@ async def test_importer_mappings():
     username = "testuser"
 
     # Normal case, no match
-    data = {'file_list': ['file1.txt']}
+    data = {"file_list": ["file1.txt"]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post("importer_mappings/", headers={"Authorization": ""}, data=data)
+        resp = await cli.post(
+            "importer_mappings/", headers={"Authorization": ""}, data=data
+        )
         assert resp.status == 200
-        text = (await resp.json())
+        text = await resp.json()
         assert "mappings" in text
-        mappings = text['mappings']
+        mappings = text["mappings"]
         assert mappings[0] is None
 
     # Normal case, one match
-    data = {'file_list': ['file1.txt', 'file.zip']}
+    data = {"file_list": ["file1.txt", "file.zip"]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post("importer_mappings/", headers={"Authorization": ""}, data=data)
+        resp = await cli.post(
+            "importer_mappings/", headers={"Authorization": ""}, data=data
+        )
         assert resp.status == 200
-        text = (await resp.json())
+        text = await resp.json()
         assert "mappings" in text
-        mappings = text['mappings']
+        mappings = text["mappings"]
         assert mappings[0] is None
         # As we update the app mappings this test may need to be changed
         # Or we need to reload json file itself
 
-        unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]['Decompress/Unpack']['id']
+        unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["Decompress/Unpack"]["id"]
         assert mappings[1][0] == [unzip_mapping, 1]
 
     # No files passed in
     data = {}
     async with AppClient(config, username) as cli:
-        resp = await cli.post("importer_mappings/", headers={"Authorization": ""}, data=data)
+        resp = await cli.post(
+            "importer_mappings/", headers={"Authorization": ""}, data=data
+        )
         assert resp.status == 200
-        text = (await resp.json())
+        text = await resp.json()
         assert "mappings" in text
-        mappings = text['mappings']
+        mappings = text["mappings"]
         assert len(mappings) == 0
         assert mappings == []
 
     # No files passed in
-    data = {'file_list': []}
+    data = {"file_list": []}
     async with AppClient(config, username) as cli:
-        resp = await cli.post("importer_mappings/", headers={"Authorization": ""}, data=data)
+        resp = await cli.post(
+            "importer_mappings/", headers={"Authorization": ""}, data=data
+        )
         assert resp.status == 200
-        text = (await resp.json())
+        text = await resp.json()
         assert "mappings" in text
-        mappings = text['mappings']
+        mappings = text["mappings"]
         assert len(mappings) == 0
         assert mappings == []
 
     # A dict is passed in
-    data = {'file_list': [{}]}
+    data = {"file_list": [{}]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post("importer_mappings/", headers={"Authorization": ""}, data=data)
+        resp = await cli.post(
+            "importer_mappings/", headers={"Authorization": ""}, data=data
+        )
         assert resp.status == 200
-        text = (await resp.json())
+        text = await resp.json()
         assert "mappings" in text
-        mappings = text['mappings']
+        mappings = text["mappings"]
         assert mappings[0] is None

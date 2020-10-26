@@ -26,7 +26,7 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     Mappings are a list of mapping between passed in files, and available apps
     :param request: contains a list of files e.g. ['file1.txt','file2.fasta']
     """
-    file_list = parse_qs(await request.text()).get('file_list', [])
+    file_list = parse_qs(await request.text()).get("file_list", [])
     mappings = AutoDetectUtils.get_mappings(file_list)
     return web.json_response(mappings)
 
@@ -259,7 +259,7 @@ async def upload_files_chunked(request: web.Request):
     user_file = None
     destPath = None
     while (
-            counter < 100
+        counter < 100
     ):  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
@@ -410,11 +410,11 @@ async def decompress(request: web.Request):
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
     if (
-            upper_file_extension == ".tar" and file_extension == ".gz"
+        upper_file_extension == ".tar" and file_extension == ".gz"
     ) or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
     elif upper_file_extension == ".tar" and (
-            file_extension == ".bz" or file_extension == ".bz2"
+        file_extension == ".bz" or file_extension == ".bz2"
     ):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":

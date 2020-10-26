@@ -25,7 +25,7 @@ Functionality: Running this script will
 * Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
 import copy
-from collections import defaultdict,OrderedDict
+from collections import defaultdict, OrderedDict
 from pprint import pprint
 
 from staging_service.autodetect.Mappings import *
@@ -225,32 +225,35 @@ counter = 0
 for category in mapping:
     apps = mapping[category]
     for app in apps:
-        #print("looking at", app)
-        title = app['title']
+        # print("looking at", app)
+        title = app["title"]
         if title not in new_apps:
-            app['extensions'] = []
-            app['id'] = counter
-            counter+=1
+            app["extensions"] = []
+            app["id"] = counter
+            counter += 1
             new_apps[title] = copy.copy(app)
 
         for extension in type_to_extension_mapping:
             if extension == category:
-                new_apps[title]['extensions'].extend(type_to_extension_mapping[extension])
+                new_apps[title]["extensions"].extend(
+                    type_to_extension_mapping[extension]
+                )
                 extensions_flat.extend(type_to_extension_mapping[extension])
 
 
 extensions_mapping = defaultdict(list)
 for app in new_apps:
     app = new_apps[app]
-    app_id = app['id']
-    extensions = app['extensions']
+    app_id = app["id"]
+    extensions = app["extensions"]
 
     for extension in extensions:
-        extensions_mapping[extension].append([app_id,1])
+        extensions_mapping[extension].append([app_id, 1])
 
 
 if __name__ == "__main__":
     import json
+
     print("About to generate supported apps with extensions")
     data = {"apps": new_apps, "types": extensions_mapping}
     # with open("./autodetect/supported_apps_w_extensions.json", "w") as f:
