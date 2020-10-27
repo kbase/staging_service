@@ -453,7 +453,7 @@ def inject_config_dependencies(config):
     """
     # TODO this is pretty hacky dependency injection
     # potentially some type of code restructure would allow this without a bunch of globals
-    # This ove
+    # This overwrites the PATH class and the AutoDetectUtils Class
     :param config: The staging service main config
     """
 
