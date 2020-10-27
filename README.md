@@ -772,7 +772,7 @@ data = {"file_list": ["file1.txt", "file.zip"]}
                                 'id': 7,
                                 'output_type': [None],
                                 'title': 'Decompress/Unpack'},
-    'mappings': [None, [[7, 1]]]}
+    'mappings': [None, [{'app_weight': 1, 'id': 7, 'title': 'decompress/unpack'}]]
 
 ```
 ## Error Response
