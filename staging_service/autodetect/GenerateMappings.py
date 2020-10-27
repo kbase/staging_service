@@ -287,8 +287,9 @@ for app in new_apps:
     app_id = app["id"]
     extensions = app["extensions"]
 
+    perfect_match_weight = 1
     for extension in extensions:
-        extensions_mapping[extension].append([app_id, 1])
+        extensions_mapping[extension].append([app_id, perfect_match_weight])
 
 if __name__ == "__main__":
     import json
