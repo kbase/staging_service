@@ -129,20 +129,20 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
     assert (
-        username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
     )
     assert (
-        username + "/baz"
-        == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+            username + "/baz"
+            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
     )
     assert (
-        username + "/bar"
-        == utils.Path.validate_path(username, "foo/../../../../bar").user_path
+            username + "/bar"
+            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
     assert (
-        username + "/foo/bar"
-        == utils.Path.validate_path(username, "../foo/bar").user_path
+            username + "/foo/bar"
+            == utils.Path.validate_path(username, "../foo/bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
@@ -156,8 +156,8 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
     assert (
-        username + "/stuff.ext"
-        == utils.Path.validate_path(username, "/stuff.ext").user_path
+            username + "/stuff.ext"
+            == utils.Path.validate_path(username, "/stuff.ext").user_path
     )
 
 
@@ -939,7 +939,7 @@ async def test_importer_mappings():
         assert mappings[0] is None
 
     # Normal case, one match
-    data = {"file_list": ["file1.txt", "file.zip"]}
+    data = {"file_list": ["file1.txt", "file.tar.gz"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
             "importer_mappings/", headers={"Authorization": ""}, data=data
@@ -953,34 +953,7 @@ async def test_importer_mappings():
         # Or we need to reload json file itself
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
-        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]['zip'][0]
-
-
-    # No files passed in
-    data = {}
-    async with AppClient(config, username) as cli:
-        resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
-        )
-        assert resp.status == 200
-        text = await resp.json()
-        assert "mappings" in text
-        mappings = text["mappings"]
-        assert len(mappings) == 0
-        assert mappings == []
-
-    # No files passed in
-    data = {"file_list": []}
-    async with AppClient(config, username) as cli:
-        resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
-        )
-        assert resp.status == 200
-        text = await resp.json()
-        assert "mappings" in text
-        mappings = text["mappings"]
-        assert len(mappings) == 0
-        assert mappings == []
+        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]['gz'][0]
 
     # A dict is passed in
     data = {"file_list": [{}]}
@@ -993,3 +966,21 @@ async def test_importer_mappings():
         assert "mappings" in text
         mappings = text["mappings"]
         assert mappings[0] is None
+
+    # Missing the inputs field
+    bad_data = []
+    bad_data.append({"apple": [{}]})
+    # No files passed in
+    bad_data.append({})
+    # No files passed in
+    bad_data.append({"file_list": []})
+
+    for data in bad_data:
+        async with AppClient(config, username) as cli:
+            resp = await cli.post(
+                "importer_mappings/", headers={"Authorization": ""}, data=data
+            )
+            assert resp.status == 400
+
+            text = await resp.text()
+            assert text == "must provide file_list field "
