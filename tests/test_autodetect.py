@@ -76,3 +76,16 @@ def test_sra_mappings():
     possible_app = possible_importers[0]['title']
     mappings = AutoDetectUtils._MAPPINGS
     assert mappings["apps"][possible_app] == mappings["apps"][app_title]
+
+
+def test_zip_mappings():
+    """
+    Just testing a single app
+    :return:
+    """
+    gz_file = "test.tar.gz"
+    possible_importers = AutoDetectUtils.determine_possible_importers(filename=gz_file)
+    app_title = "decompress/unpack"
+    possible_app = possible_importers[0]['title']
+    mappings = AutoDetectUtils._MAPPINGS
+    assert mappings["apps"][possible_app] == mappings["apps"][app_title]
