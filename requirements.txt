@@ -1,4 +1,4 @@
-uvloop==0.8.1
+uvloop
 aiohttp==2.3.8
 aiohttp_cors==0.5.3
 pytest==3.2.3
