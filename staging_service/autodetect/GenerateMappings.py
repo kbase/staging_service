@@ -258,7 +258,8 @@ for category in mapping:
     apps = mapping[category]
     for app in apps:
         # print("looking at", app)
-        title = app["title"]
+        title = app["title"].replace(" ", "_").lower()
+
         if title not in new_apps:
             # Create a new entry for extensions and id in the app
             app["extensions"] = []
@@ -282,14 +283,16 @@ for category in mapping:
 # with 6 being the id of the matched app
 # and 1 being a perfect weight score of 100%
 extensions_mapping = defaultdict(list)
-for app in new_apps:
-    app = new_apps[app]
+for app_title in new_apps:
+
+    app = new_apps[app_title]
     app_id = app["id"]
     extensions = app["extensions"]
 
     perfect_match_weight = 1
     for extension in extensions:
-        extensions_mapping[extension].append([app_id, perfect_match_weight])
+        extensions_mapping[extension].append(
+            {'id': app_id, 'title': app_title, 'app_weight': perfect_match_weight})
 
 if __name__ == "__main__":
     import json

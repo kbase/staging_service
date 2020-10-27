@@ -72,10 +72,7 @@ def test_sra_mappings():
     """
     sra_file = "test.sra"
     possible_importers = AutoDetectUtils.determine_possible_importers(filename=sra_file)
-    print(possible_importers)
-    app = AutoDetectUtils._MAPPINGS["apps"]["SRA Reads"]
-    mapping = app["id"]
-    assert possible_importers[0][0] == mapping
-    # Just double check below to make sure its the right app, and doesn't happen to have the id
-    assert app["app"] == "kb_uploadmethods/import_fastq_sra_as_reads_from_staging"
-    assert app["extensions"] == ["sra"]
+    app_title = "sra_reads"
+    possible_app = possible_importers[0]['title']
+    mappings = AutoDetectUtils._MAPPINGS
+    assert mappings["apps"][possible_app] == mappings["apps"][app_title]

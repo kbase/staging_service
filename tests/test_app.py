@@ -952,8 +952,9 @@ async def test_importer_mappings():
         # As we update the app mappings this test may need to be changed
         # Or we need to reload json file itself
 
-        unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["Decompress/Unpack"]["id"]
-        assert mappings[1][0] == [unzip_mapping, 1]
+        # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
+        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]['zip'][0]
+
 
     # No files passed in
     data = {}

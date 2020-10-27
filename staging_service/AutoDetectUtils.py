@@ -26,7 +26,7 @@ class AutoDetectUtils:
     def get_mappings(file_list: list) -> dict:
         """
         Given a list of files, get their mappings if they exist
-        :param file_list: A list of files 
+        :param file_list: A list of files
         :return: return a listing of apps and a listing of extension_mappings for each filename
         """
         mappings = []
