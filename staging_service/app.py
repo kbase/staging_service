@@ -27,6 +27,9 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     :param request: contains a list of files e.g. ['file1.txt','file2.fasta']
     """
     file_list = parse_qs(await request.text()).get("file_list", [])
+    if len(file_list) == 0:
+        raise web.HTTPBadRequest(text="must provide file_list field ")
+
     mappings = AutoDetectUtils.get_mappings(file_list)
     return web.json_response(mappings)
 

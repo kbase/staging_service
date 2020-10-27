@@ -1,7 +1,7 @@
 """
 * This script generates various potential api responses and serves as a list of supported apps and extensions
 for the staging service endpoint .
-* Afterwards, we can pick a json or yaml file and edit those, or keep editing this file in the future to generate the mappings
+* Afterwards, we can pick a json file and edit those, or keep editing this file in the future to generate the mappings
 
 
 ================================
@@ -19,7 +19,6 @@ for the staging service endpoint .
 
 Functionality: Running this script will
 * Save this indirectly as a json file
-* Save this indirectly as a yaml file
 
 * Note: We should serve the generated content from memory
 * Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
@@ -58,6 +57,7 @@ mapping[FASTA] = [
         "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
         "output_type": ["KBaseGenomeAnnotations.Assembly"],
     },
+    # Commented out because: Batch App
     # {
     #     "title": "Assembly Set",
     #     "app": "kb_uploadmethods/batch_import_assembly_from_staging",
@@ -73,18 +73,21 @@ mapping[FASTA] = [
         "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
         "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
     },
+    # Commented out because: Batch App
     # {
     #     "title": "GFF/FASTA Genome Set",
     #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
     #     "output_type": ["KBaseSearch.GenomeSet"],
     #     "comment" : "To use: select a directory from the narrative"
     # },
+    # Commented out because: It doesn't conform to standards and is out of scope right now
     # {
     #     "title": "Multiple Sequence Alignment",
     #     "app": "MSAUtils/import_msa_file",
     #     "output_type": ["KBaseTrees.MSA"],
     # },
 ]
+# Commented out because: It doesn't conform to standards and is out of scope right now
 # mapping[MSA] = [
 # {
 #     "title": "Multiple Sequence Alignment",
@@ -99,6 +102,7 @@ mapping[GENBANK] = [
         "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
     },
+    # Commented out because: Batch App
     # {
     #     "title": "Genbank Genome Set",
     #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
@@ -118,6 +122,7 @@ mapping[GFF] = [
         "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
         "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
     },
+    # Commented out because: Batch App
     # {
     #     "title": "GFF/FASTA Genome Set",
     #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
@@ -147,6 +152,7 @@ mapping[TSV] = [
         "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
         "output_type": ["KBaseBiochem.Media"],
     },
+    # Commented out because: Not in scope and requires an object
     # {
     #     "title": "Attribute Mapping",
     #     "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
@@ -279,7 +285,17 @@ for category in mapping:
 # Then create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of 6
 # so the mapping would look like
-# mapping['gbk'] = [6 , 1]
+# mapping['gbk'] =
+"""
+    "gbk": [
+      {
+        "id": 6,
+        "title": "genbank_genome",
+        "app_weight": 1
+      }
+    ],
+"""
+
 # with 6 being the id of the matched app
 # and 1 being a perfect weight score of 100%
 extensions_mapping = defaultdict(list)
