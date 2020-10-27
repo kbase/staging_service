@@ -776,4 +776,9 @@ data = {"file_list": ["file1.txt", "file.zip"]}
 
 ```
 ## Error Response
-* None known at this time
+**Code** : `400 Bad Request`
+
+**Content**
+```
+must provide file_list field 
+```
