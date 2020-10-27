@@ -8,3 +8,4 @@ coverage==4.4.2
 pytest-cov==2.5.1
 hypothesis==3.36.0
 globus-sdk==1.6.1
+python-dotenv==0.14.0
