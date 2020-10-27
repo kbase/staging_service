@@ -1,12 +1,13 @@
+"""
+This class is in charge of determining possible importers by determining the suffix of the filepath pulled in,
+and by looking up the appropriate mappings in the supported_apps_w_extensions.json file
+"""
 from typing import Optional
 
 
 class AutoDetectUtils:
     _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
     _MAPPINGS = None  # expects to be set by config
-
-    # SUPPORTED_APPS = json.load(AVAILABLE_APPS_FP)
-    # EXTENSION_MAPPINGS = json.load(EXTENSION_MAPPINGS_FP)
 
     @staticmethod
     def determine_possible_importers(filename: str) -> Optional[list]:
