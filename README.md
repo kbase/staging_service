@@ -760,7 +760,7 @@ Example with passing in two files, one with a match, and one without
 data = {"file_list": ["file1.txt", "file.zip"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
+            "importer_mappings/", data=data
         )
 ```
 
