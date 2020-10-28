@@ -129,20 +129,20 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
     assert (
-            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+        username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
     )
     assert (
-            username + "/baz"
-            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+        username + "/baz"
+        == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
     )
     assert (
-            username + "/bar"
-            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
+        username + "/bar"
+        == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
     assert (
-            username + "/foo/bar"
-            == utils.Path.validate_path(username, "../foo/bar").user_path
+        username + "/foo/bar"
+        == utils.Path.validate_path(username, "../foo/bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
@@ -156,8 +156,8 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
     assert (
-            username + "/stuff.ext"
-            == utils.Path.validate_path(username, "/stuff.ext").user_path
+        username + "/stuff.ext"
+        == utils.Path.validate_path(username, "/stuff.ext").user_path
     )
 
 
@@ -179,13 +179,12 @@ def test_path_sanitation(username_first, username_rest, path):
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
     with FileUtil(DATA_DIR) as fs:
-        d = fs.make_dir('test')
-        assert '' == await utils.run_command('ls', d)
-        f = fs.make_file('test/test2', txt)
-        md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
-        md52 = await utils.run_command('md5sum', f)
+        d = fs.make_dir("test")
+        assert "" == await utils.run_command("ls", d)
+        f = fs.make_file("test/test2", txt)
+        md5 = hashlib.md5(txt.encode("utf8")).hexdigest()
+        md52 = await utils.run_command("md5sum", f)
         assert md5 == md52.split()[0]
-
 
         # For mac osx, copy md5 to md5sum and check 3rd element
         # assert md5 == md52.split()[3]
@@ -955,7 +954,7 @@ async def test_importer_mappings():
         # Or we need to reload json file itself
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
-        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]['gz'][0]
+        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]["gz"][0]
 
     # A dict is passed in
     data = {"file_list": [{}]}

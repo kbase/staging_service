@@ -308,7 +308,8 @@ for app_title in new_apps:
     perfect_match_weight = 1
     for extension in extensions:
         extensions_mapping[extension].append(
-            {'id': app_id, 'title': app_title, 'app_weight': perfect_match_weight})
+            {"id": app_id, "title": app_title, "app_weight": perfect_match_weight}
+        )
 
 if __name__ == "__main__":
     import json
