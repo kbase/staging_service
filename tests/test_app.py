@@ -179,14 +179,16 @@ def test_path_sanitation(username_first, username_rest, path):
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
     with FileUtil(DATA_DIR) as fs:
-        d = fs.make_dir("test")
-        assert "" == await utils.run_command("ls", d)
-        f = fs.make_file("test/test2", txt)
-        md5 = hashlib.md5(txt.encode("utf8")).hexdigest()
-        md52 = await utils.run_command("md5sum", f)
-        # assert md5 == md52.split()[0]
+        d = fs.make_dir('test')
+        assert '' == await utils.run_command('ls', d)
+        f = fs.make_file('test/test2', txt)
+        md5 = hashlib.md5(txt.encode('utf8')).hexdigest()
+        md52 = await utils.run_command('md5sum', f)
+        assert md5 == md52.split()[0]
+
+
         # For mac osx, copy md5 to md5sum and check 3rd element
-        assert md5 == md52.split()[3]
+        # assert md5 == md52.split()[3]
 
 
 async def test_auth():
