@@ -931,7 +931,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
+            "importer_mappings/", data=data
         )
         assert resp.status == 200
         text = await resp.json()
@@ -943,7 +943,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
+            "importer_mappings/",  data=data
         )
         assert resp.status == 200
         text = await resp.json()
@@ -960,7 +960,7 @@ async def test_importer_mappings():
     data = {"file_list": [{}]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
-            "importer_mappings/", headers={"Authorization": ""}, data=data
+            "importer_mappings/", data=data
         )
         assert resp.status == 200
         text = await resp.json()
@@ -979,7 +979,7 @@ async def test_importer_mappings():
     for data in bad_data:
         async with AppClient(config, username) as cli:
             resp = await cli.post(
-                "importer_mappings/", headers={"Authorization": ""}, data=data
+                "importer_mappings/",  data=data
             )
             assert resp.status == 400
 
