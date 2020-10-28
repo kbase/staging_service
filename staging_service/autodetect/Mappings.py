@@ -20,7 +20,7 @@ SBML = "SBML"
 
 # KBASE SPECIFIC FORMATS
 MSA = "MultipleSequenceAlignment"
-PHENOTYPE = "PHENOTYPE"
+PHENOTYPE = "PHENOTYPE"  # "KBasePhenotypes.PhenotypeSet"
 ESCHER = "ESCHER"
 ANNOTATIONS = "ANNOTATIONS"
 
@@ -28,7 +28,6 @@ ANNOTATIONS = "ANNOTATIONS"
 # GFF3 = "GFF3" do we need to only allow GFF3 and not support GFF2/GFF1?
 
 MEDIA = "KBaseBiochem.Media"
-PHENOTYPE = "KBasePhenotypes.PhenotypeSet"
 
 type_to_extension_mapping = {
     FASTA: ["fna", "fa", "faa", "fsa", "fasta"],
