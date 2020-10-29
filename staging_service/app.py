@@ -18,6 +18,11 @@ routes = web.RouteTableDef()
 VERSION = "1.1.7"
 
 
+@routes.get("/importer_mappings/{query:.*}")
+async def importer_mappings(request: web.Request) -> web.json_response:
+    raise web.HTTPBadRequest(text="GET not supported. Use POST")
+
+
 @routes.post("/importer_mappings/{query:.*}")
 async def importer_mappings(request: web.Request) -> web.json_response:
     """

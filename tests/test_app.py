@@ -930,9 +930,7 @@ async def test_importer_mappings():
     # Normal case, no match
     data = {"file_list": ["file1.txt"]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post(
-            "importer_mappings/", data=data
-        )
+        resp = await cli.post("importer_mappings/", data=data)
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -942,9 +940,7 @@ async def test_importer_mappings():
     # Normal case, one match
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post(
-            "importer_mappings/",  data=data
-        )
+        resp = await cli.post("importer_mappings/", data=data)
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -959,9 +955,7 @@ async def test_importer_mappings():
     # A dict is passed in
     data = {"file_list": [{}]}
     async with AppClient(config, username) as cli:
-        resp = await cli.post(
-            "importer_mappings/", data=data
-        )
+        resp = await cli.post("importer_mappings/", data=data)
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -978,9 +972,7 @@ async def test_importer_mappings():
 
     for data in bad_data:
         async with AppClient(config, username) as cli:
-            resp = await cli.post(
-                "importer_mappings/",  data=data
-            )
+            resp = await cli.post("importer_mappings/", data=data)
             assert resp.status == 400
 
             text = await resp.text()
