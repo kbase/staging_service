@@ -1,2 +1,2 @@
 docker build . -t kbase/staging_service:develop
-docker-compose up
+docker-compose up -d &

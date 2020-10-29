@@ -725,3 +725,67 @@ Error Connecting to auth service ...
 }
 ```
 
+
+
+
+## Get Importer Mappings
+
+This endpoint returns a list of available staging importer apps that have been marked as supported. This endpoint also
+returns a mapping between a list of files and predicted importer app.
+
+For example,
+ * if we pass in nothing we get a response with a list of apps, and no mappings
+ * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a response
+ that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
+ which represents the probability that this is the correct importer for you.
+ * for files for which there is no predicted app, the return is a null value
+ * output type is not currently used for anything
+ * this endpoint is used to power the dropdowns for the staging service window in the Narrative
+
+**URL** : `ci.kbase.us/services/staging_service/importer_mappings`
+
+**local URL** : `localhost:3000/importer_mappings`
+
+**Method** : `POST`
+
+**Headers** : Not Required
+
+## Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+data = {"file_list": ["file1.txt", "file.zip"]}
+    async with AppClient(config, username) as cli:
+        resp = await cli.post(
+            "importer_mappings/", data=data
+        )
+```
+Response:
+```
+{
+	"apps": {
+		"decompress/unpack": {
+			"title": "Decompress/Unpack",
+			"app": "kb_uploadmethods/unpack_staging_file",
+			"output_type": [null],
+			"extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
+			"id": 7
+		},
+	"mappings": [null, [{
+		"id": 7,
+		"title": "decompress/unpack",
+		"app_weight": 1
+	}]]
+}
+```
+## Error Response
+**Code** : `400 Bad Request`
+
+**Content**
+```
+must provide file_list field 
+```
+
