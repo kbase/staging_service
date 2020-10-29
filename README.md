@@ -728,9 +728,9 @@ Error Connecting to auth service ...
 
 
 
-### Get Importer Mappings
+## Get Importer Mappings
 
-This endpoint returns a list of available staging importer apps that have been whitelisted. This endpoint also
+This endpoint returns a list of available staging importer apps that have been marked as supported. This endpoint also
 returns a mapping between a list of files and predicted importer app.
 
 For example,
@@ -738,7 +738,7 @@ For example,
  * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a response
  that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
  which represents the probability that this is the correct importer for you.
- * for files for which there is no predicted app, the return is a None/null value
+ * for files for which there is no predicted app, the return is a null value
  * output type is not currently used for anything
  * this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
@@ -748,14 +748,14 @@ For example,
 
 **Method** : `POST`
 
-**Headers** : `Authorization: Not Required`
+**Headers** : Not Required
 
 ## Success Response
 
 **Code** : `200 OK`
 
 **Content example**
-Example with passing in two files, one with a match, and one without
+
 ```
 data = {"file_list": ["file1.txt", "file.zip"]}
     async with AppClient(config, username) as cli:
@@ -763,17 +763,23 @@ data = {"file_list": ["file1.txt", "file.zip"]}
             "importer_mappings/", data=data
         )
 ```
-
+Response:
 ```
-    {'app_list' : {'Decompress/Unpack': {'app': 'kb_uploadmethods/unpack_staging_file',
-                                'extensions': ['zip',
-                                               'tar', ...
-                          
-                                'id': 7,
-                                'output_type': [None],
-                                'title': 'Decompress/Unpack'},
-    'mappings': [None, [{'app_weight': 1, 'id': 7, 'title': 'decompress/unpack'}]]
-
+{
+	"apps": {
+		"decompress/unpack": {
+			"title": "Decompress/Unpack",
+			"app": "kb_uploadmethods/unpack_staging_file",
+			"output_type": [null],
+			"extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
+			"id": 7
+		},
+	"mappings": [null, [{
+		"id": 7,
+		"title": "decompress/unpack",
+		"app_weight": 1
+	}]]
+}
 ```
 ## Error Response
 **Code** : `400 Bad Request`
@@ -782,3 +788,4 @@ data = {"file_list": ["file1.txt", "file.zip"]}
 ```
 must provide file_list field 
 ```
+
