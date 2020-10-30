@@ -1,16 +1,16 @@
-'''
+"""
 Created on Aug 1, 2016
 A very basic KBase auth client for the Python server.
 @author: gaprice@lbl.gov
 modified for python3 and authV2
-'''
+"""
 import time as _time
 import aiohttp
 import hashlib
 
 
 class TokenCache(object):
-    ''' A basic cache for tokens. '''
+    """ A basic cache for tokens. """
 
     _MAX_TIME_SEC = 5 * 60  # 5 min
 
@@ -20,7 +20,7 @@ class TokenCache(object):
         self._halfmax = maxsize / 2  # int division to round down
 
     def get_user(self, token):
-        token = hashlib.sha256(token.encode('utf8')).hexdigest()
+        token = hashlib.sha256(token.encode("utf8")).hexdigest()
         usertime = self._cache.get(token)
         if not usertime:
             return None
@@ -33,14 +33,15 @@ class TokenCache(object):
 
     def add_valid_token(self, token, user, expire_time):
         if not token:
-            raise aiohttp.web.HTTPBadRequest(text='Must supply token')
+            raise aiohttp.web.HTTPBadRequest(text="Must supply token")
         if not user:
-            raise aiohttp.web.HTTPBadRequest(text='Must supply user')
-        token = hashlib.sha256(token.encode('utf8')).hexdigest()
+            raise aiohttp.web.HTTPBadRequest(text="Must supply user")
+        token = hashlib.sha256(token.encode("utf8")).hexdigest()
         self._cache[token] = [user, _time.time(), expire_time]
         if len(self._cache) > self._maxsize:
-            for i, (t, _) in enumerate(sorted(self._cache.items(),
-                                              key=lambda v: v[1][1])):
+            for i, (t, _) in enumerate(
+                sorted(self._cache.items(), key=lambda v: v[1][1])
+            ):
                 if i <= self._halfmax:
                     del self._cache[t]
                 else:
@@ -48,32 +49,37 @@ class TokenCache(object):
 
 
 class KBaseAuth2(object):
-    '''
+    """
     A very basic KBase auth client for the Python server.
-    '''
+    """
 
     def __init__(self, auth_url):
-        '''
+        """
         Constructor
-        '''
+        """
         self._authurl = auth_url
         self._cache = TokenCache()
 
     async def get_user(self, token):
         if not token:
-            raise aiohttp.web.HTTPBadRequest(text='Must supply token')
+            raise aiohttp.web.HTTPBadRequest(text="Must supply token")
         user = self._cache.get_user(token)
         if user:
             return user
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._authurl, headers={'Authorization': token}) as resp:
+            async with session.get(
+                self._authurl, headers={"Authorization": token}
+            ) as resp:
                 ret = await resp.json()
-                if not resp.reason == 'OK':
+                if not resp.reason == "OK":
                     raise aiohttp.web.HTTPUnauthorized(
-                        text='Error connecting to auth service: {} {}\n{}'.format(
-                                ret['error']['httpcode'], resp.reason,
-                                ret['error']['message']))
+                        text="Error connecting to auth service: {} {}\n{}".format(
+                            ret["error"]["httpcode"],
+                            resp.reason,
+                            ret["error"]["message"],
+                        )
+                    )
         # whichever one comes first
-        self._cache._MAX_TIME_SEC = ret['cachefor']
-        self._cache.add_valid_token(token, ret['user'], ret['expires'])
-        return ret['user']
+        self._cache._MAX_TIME_SEC = ret["cachefor"]
+        self._cache.add_valid_token(token, ret["user"], ret["expires"])
+        return ret["user"]
