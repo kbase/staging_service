@@ -26,35 +26,17 @@ async def stat_data(path: Path) -> dict:
     }
 
 
-def _file_read_from_tail(file_path, nlines):
-    data = []
-    with open(file_path) as qfile:
-        qfile.seek(0, os.SEEK_END)
-        endf = position = qfile.tell()
-        linecnt = 0
-        while position >= 0:
-            qfile.seek(position)
-            next_char = qfile.read(1)
-            if next_char == "\n" and position != endf - 1:
-                linecnt += 1
-
-            if linecnt == nlines:
-                break
-            position -= 1
-
-        if position < 0:
-            qfile.seek(0)
-
-        data.append(qfile.read())
-
-    return "".join(data)
+def _file_read_from_tail(file_path):
+    upper_bound = min(1024, os.stat(file_path).st_size)
+    with open(file_path, "r") as file:
+        file.seek(0, os.SEEK_END)
+        file.seek(file.tell() - upper_bound, os.SEEK_SET)
+        return file.read()
 
 
-def _file_read_from_head(file_path, nlines):
-    with open(file_path, "r") as source:
-        first_n_lines = [x for x in islice(source, nlines)]
-
-    return "".join(first_n_lines)
+def _file_read_from_head(file_path):
+    with open(file_path, "r") as file:
+        return file.read(1024)
 
 
 async def _generate_metadata(path: Path, source: str):
@@ -76,8 +58,8 @@ async def _generate_metadata(path: Path, source: str):
     # first output of wc is the count
     data["lineCount"] = str(sum((1 for i in open(path.full_path, "rb"))))
     try:  # all things that expect a text file to decode output should be in this block
-        data["head"] = _file_read_from_head(path.full_path, 10)
-        data["tail"] = _file_read_from_tail(path.full_path, 10)
+        data["head"] = _file_read_from_head(path.full_path)
+        data["tail"] = _file_read_from_tail(path.full_path)
     except:
         data["head"] = "not text file"
         data["tail"] = "not text file"
