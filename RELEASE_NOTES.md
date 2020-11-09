@@ -1,6 +1,7 @@
 ### Version 1.1.8
 - Added new endpoint `importer-mappings/` for getting a mapping of importers for file names
 - Ran black
+- BUGFIX: Change head/tail functionality to return 1024 chars to avoid bad cases with really large one line files
 
 ### Version 1.1.7
 - Add a file name check to void user uploading files with name starting with space
