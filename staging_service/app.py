@@ -8,7 +8,7 @@ import aiohttp_cors
 from aiohttp import web
 
 from .AutoDetectUtils import AutoDetectUtils
-from .JGIMetadata import read_metadata_for, translate_for_importer
+from .JGIMetadata import read_metadata_for
 from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 from .metadata import some_metadata, dir_info, add_upa, similar
@@ -16,17 +16,6 @@ from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
 VERSION = "1.1.8"
-
-
-@routes.get("/impoter-defaults/{path:.*}")
-async def get_impoter_defaults(request: web.Request):
-    """
-    tried to automatically populate an importer's fields with default data
-    """
-    username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
-    importer_type = request.match_info["importerType"]
-    return web.json_response(await translate_for_importer(importer_type, path))
 
 
 @routes.get("/importer_mappings/{query:.*}")
@@ -37,12 +26,15 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     Mappings are a list of mapping between passed in files, and available apps
     :param request: contains a list of files e.g. ['file1.txt','file2.fasta']
     """
-    file_list = parse_qs(await request.text()).get("file_list", [])
+
+    file_list = parse_qs(request.query_string).get("file_list", [])
     if len(file_list) == 0:
-        raise web.HTTPBadRequest(text="must provide file_list field ")
+        raise web.HTTPBadRequest(
+            text=f"must provide file_list field. Your provided qs: {request.query_string}",
+            headers={"Access-Control-Allow-Origin": "*"})
 
     mappings = AutoDetectUtils.get_mappings(file_list)
-    return web.json_response(mappings)
+    return web.json_response(data=mappings, headers={"Access-Control-Allow-Origin": "*"})
 
 
 @routes.get("/add-acl-concierge")
@@ -81,7 +73,8 @@ async def remove_acl(request: web.Request):
 
 @routes.get("/test-service")
 async def test_service(request: web.Request):
-    return web.Response(text="staging service verison: {}".format(VERSION))
+    return web.Response(text="staging service version: {}".format(VERSION),
+                        headers={"Access-Control-Allow-Origin": "*"})
 
 
 @routes.get("/test-auth")
