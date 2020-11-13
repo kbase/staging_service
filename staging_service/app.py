@@ -31,10 +31,10 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     if len(file_list) == 0:
         raise web.HTTPBadRequest(
             text=f"must provide file_list field. Your provided qs: {request.query_string}",
-            headers={"Access-Control-Allow-Origin": "*"})
+            )
 
     mappings = AutoDetectUtils.get_mappings(file_list)
-    return web.json_response(data=mappings, headers={"Access-Control-Allow-Origin": "*"})
+    return web.json_response(data=mappings)
 
 
 @routes.get("/add-acl-concierge")
