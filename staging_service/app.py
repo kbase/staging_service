@@ -18,12 +18,18 @@ routes = web.RouteTableDef()
 VERSION = "1.1.8"
 
 
+@routes.get("/impoter-defaults/{path:.*}")
+async def get_impoter_defaults(request: web.Request):
+    """
+    tried to automatically populate an importer's fields with default data
+    """
+    username = await authorize_request(request)
+    path = Path.validate_path(username, request.match_info["path"])
+    importer_type = request.match_info["importerType"]
+    return web.json_response(await translate_for_importer(importer_type, path))
+
+
 @routes.get("/importer_mappings/{query:.*}")
-async def importer_mappings(request: web.Request) -> web.json_response:
-    raise web.HTTPBadRequest(text="GET not supported. Use POST")
-
-
-@routes.post("/importer_mappings/{query:.*}")
 async def importer_mappings(request: web.Request) -> web.json_response:
     """
     Return a dictionary with two lists: apps and mappings
@@ -241,15 +247,6 @@ async def get_jgi_metadata(request: web.Request):
     return web.json_response(await read_metadata_for(path))
 
 
-@routes.get("/impoter-defaults/{path:.*}")
-async def get_impoter_defaults(request: web.Request):
-    """
-    tried to automatically populate an importer's fields with default data
-    """
-    username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
-    importer_type = request.match_info["importerType"]
-    return web.json_response(await translate_for_importer(importer_type, path))
 
 
 @routes.post("/upload")
