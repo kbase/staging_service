@@ -73,8 +73,7 @@ async def remove_acl(request: web.Request):
 
 @routes.get("/test-service")
 async def test_service(request: web.Request):
-    return web.Response(text="staging service version: {}".format(VERSION),
-                        headers={"Access-Control-Allow-Origin": "*"})
+    return web.Response(text="staging service version: {}".format(VERSION))
 
 
 @routes.get("/test-auth")
