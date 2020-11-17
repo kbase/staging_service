@@ -266,7 +266,7 @@ for category in mapping:
     apps = mapping[category]
     for app in apps:
         # print("looking at", app)
-        title = app["title"].replace(" ", "_").lower()
+        title = app["title"]
 
         if title not in new_apps:
             # Create a new entry for extensions and id in the app
