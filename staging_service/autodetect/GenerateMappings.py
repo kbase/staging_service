@@ -1,27 +1,6 @@
 """
-* This script generates various potential api responses and serves as a list of supported apps and extensions
-for the staging service endpoint .
-* Afterwards, we can pick a json file and edit those, or keep editing this file in the future to generate the mappings
 
 
-================================
-# In Scope Importer Apps
-* Note: FastQ Interleaved/Uninterleaved custom UIs not yet implemented
-* Note: MergeMetabolicAnnotations and PredictPhenotypes also require an object in addition to a file
-
-================================
-# Out of scope importer notes
-* Note: MultipleSequenceAlignmentApp Commented out because it has a weird interface
-
-================================
-# Batch App Importer notes
-* Commented out all batch apps, as those take a directory from the narrative itself
-
-Functionality: Running this script will
-* Save this indirectly as a json file
-
-* Note: We should serve the generated content from memory
-* Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
 import copy
 from collections import defaultdict, OrderedDict
@@ -32,6 +11,7 @@ mapping = defaultdict(list)
 
 mapping[SRA] = [
     {
+        "id": sra_reads_id,
         "title": "SRA Reads",
         "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
@@ -40,11 +20,13 @@ mapping[SRA] = [
 
 mapping[FASTQ] = [
     {
+        "id": fastq_reads_id,
         "title": "FastQ Reads Interleaved",
         "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     },
     {
+        "id": fastq_reads_id,
         "title": "FastQ Reads UnInterleaved",
         "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
@@ -53,6 +35,7 @@ mapping[FASTQ] = [
 
 mapping[FASTA] = [
     {
+        "id": assembly_id,
         "title": "Assembly",
         "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
         "output_type": ["KBaseGenomeAnnotations.Assembly"],
@@ -64,11 +47,13 @@ mapping[FASTA] = [
     #     "output_type": ["KBaseSets.AssemblySet"],
     # },
     {
+        "id": gff_genome_id,
         "title": "GFF/FASTA Genome",
         "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
     },
     {
+        "id": gff_metagenome_id,
         "title": "GFF/FASTA MetaGenome",
         "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
         "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
@@ -98,6 +83,7 @@ mapping[FASTA] = [
 
 mapping[GENBANK] = [
     {
+        "id": genbank_genome_id,
         "title": "Genbank Genome",
         "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
@@ -113,11 +99,13 @@ mapping[GENBANK] = [
 
 mapping[GFF] = [
     {
+        "id": gff_genome_id,
         "title": "GFF/FASTA Genome",
         "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
     },
     {
+        "id": gff_metagenome_id,
         "title": "GFF/FASTA MetaGenome",
         "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
         "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
@@ -133,6 +121,7 @@ mapping[GFF] = [
 
 mapping[ZIP] = [
     {
+        "id": decompress_id,
         "title": "Decompress/Unpack",
         "app": "kb_uploadmethods/unpack_staging_file",
         "output_type": [None],
@@ -140,6 +129,7 @@ mapping[ZIP] = [
 ]
 mapping[CSV] = [
     {
+        "id": sample_set_id,
         "title": "Samples",
         "app": "sample_uploader/import_samples",
         "output_type": ["KBaseSets.SampleSet"],
@@ -148,6 +138,7 @@ mapping[CSV] = [
 
 mapping[TSV] = [
     {
+        "id": media_id,
         "title": "Media",
         "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
         "output_type": ["KBaseBiochem.Media"],
@@ -159,26 +150,31 @@ mapping[TSV] = [
     #     "output_type": ["KBaseExperiments.AttributeMapping"],
     # },
     {
+        "id": expression_matrix_id,
         "title": "Expression Matrix",
         "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
         "output_type": ["KBaseFeatureValues.ExpressionMatrix"],
     },
     {
+        "id": metabolic_annotations_id,
         "title": "Metabolic Annotations",
         "app": "MergeMetabolicAnnotations/import_annotations",
         "output_type": ["KBaseGenomes.Genome"],
     },
     {
+        "id": metabolic_annotations_bulk_id,
         "title": "Bulk Metabolic Annotations",
         "app": "MergeMetabolicAnnotations/import_bulk_annotations",
         "output_type": ["KBaseGenomes.Genome"],
     },
     {
+        "id": fba_model_id,
         "title": "FBA Model",
         "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
         "output_type": ["KBaseFBA.FBAModel"],
     },
     {
+        "id": phenotype_set_id,
         "title": "Phenotype Set",
         "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
         "output_type": ["KBasePhenotypes.PhenotypeSet"],
@@ -187,21 +183,25 @@ mapping[TSV] = [
 
 mapping[EXCEL] = [
     {
+        "id": sample_set_id,
         "title": "Samples",
         "app": "sample_uploader/import_samples",
         "output_type": ["KBaseSets.SampleSet"],
     },
     {
+        "id": media_id,
         "title": "Media",
         "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
         "output_type": ["KBaseBiochem.Media"],
     },
     {
+        "id": attribute_mapping_id,
         "title": "Attribute Mapping",
         "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
         "output_type": ["KBaseExperiments.AttributeMapping"],
     },
     {
+        "id": fba_model_id,
         "title": "FBA Model",
         "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
         "output_type": ["KBaseFBA.FBAModel"],
@@ -209,6 +209,7 @@ mapping[EXCEL] = [
 ]
 mapping[JSON] = [
     {
+        "id": escher_map_id,
         "title": "EscherMap",
         "app": "kb_uploadmethods/import_eschermap_from_staging",
         "output_type": ["KBaseFBA.EscherMap"],
@@ -217,6 +218,7 @@ mapping[JSON] = [
 
 mapping[SBML] = [
     {
+        "id": fba_model_id,
         "title": "FBA Model",
         "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
         "output_type": ["KBaseFBA.FBAModel"],
@@ -269,7 +271,7 @@ for category in mapping:
         if title not in new_apps:
             # Create a new entry for extensions and id in the app
             app["extensions"] = []
-            app["id"] = counter
+            app["_id"] = counter
             counter += 1
             new_apps[title] = copy.copy(app)
         # Then for the current app we are looking at,
