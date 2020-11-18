@@ -6,6 +6,7 @@ import shutil
 import string
 import time
 from json import JSONDecoder
+from urllib.parse import urlencode
 
 from aiohttp import test_utils
 from hypothesis import given, settings
@@ -129,20 +130,20 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
     assert (
-        username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
     )
     assert (
-        username + "/baz"
-        == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+            username + "/baz"
+            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
     )
     assert (
-        username + "/bar"
-        == utils.Path.validate_path(username, "foo/../../../../bar").user_path
+            username + "/bar"
+            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
     assert (
-        username + "/foo/bar"
-        == utils.Path.validate_path(username, "../foo/bar").user_path
+            username + "/foo/bar"
+            == utils.Path.validate_path(username, "../foo/bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
@@ -156,8 +157,8 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
     assert (
-        username + "/stuff.ext"
-        == utils.Path.validate_path(username, "/stuff.ext").user_path
+            username + "/stuff.ext"
+            == utils.Path.validate_path(username, "/stuff.ext").user_path
     )
 
 
@@ -929,8 +930,10 @@ async def test_importer_mappings():
 
     # Normal case, no match
     data = {"file_list": ["file1.txt"]}
+    qs1 = urlencode(data, doseq=True)
+
     async with AppClient(config, username) as cli:
-        resp = await cli.get("importer_mappings/", data=data)
+        resp = await cli.get(f"importer_mappings/?{qs1}")
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -939,8 +942,10 @@ async def test_importer_mappings():
 
     # Normal case, one match
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
+    qs2 = urlencode(data, doseq=True)
+
     async with AppClient(config, username) as cli:
-        resp = await cli.get("importer_mappings/", data=data)
+        resp = await cli.get(f"importer_mappings/?{qs2}", data=data)
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -954,8 +959,9 @@ async def test_importer_mappings():
 
     # A dict is passed in
     data = {"file_list": [{}]}
+    qs3 = urlencode(data, doseq=True)
     async with AppClient(config, username) as cli:
-        resp = await cli.get("importer_mappings/", data=data)
+        resp = await cli.get(f"importer_mappings/?{qs3}", data=data)
         assert resp.status == 200
         text = await resp.json()
         assert "mappings" in text
@@ -971,8 +977,9 @@ async def test_importer_mappings():
     bad_data.append({"file_list": []})
 
     for data in bad_data:
+        qsd = urlencode(data, doseq=True)
         async with AppClient(config, username) as cli:
-            resp = await cli.get("importer_mappings/", data=data)
+            resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
             assert "must provide file_list field" in text
