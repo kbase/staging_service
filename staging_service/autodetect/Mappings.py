@@ -41,7 +41,7 @@ assembly_id = "assembly"
 phenotype_set_id = "phenotype_set"
 sample_set_id = "sample_set"
 
-# To be added
+# To be added to https://github.com/kbase/narrative/kbase-extension/static/kbase/config/staging_upload.json
 decompress_id = "decompress"
 metabolic_annotations_id = "metabolic_annotation"
 metabolic_annotations_bulk_id = "metabolic_annotation_bulk"
