@@ -1,6 +1,27 @@
 """
+* This script generates various potential api responses and serves as a list of supported apps and extensions
+for the staging service endpoint .
+* Afterwards, we can pick a json file and edit those, or keep editing this file in the future to generate the mappings
 
 
+================================
+# In Scope Importer Apps
+* Note: FastQ Interleaved/Uninterleaved custom UIs not yet implemented
+* Note: MergeMetabolicAnnotations and PredictPhenotypes also require an object in addition to a file
+
+================================
+# Out of scope importer notes
+* Note: MultipleSequenceAlignmentApp Commented out because it has a weird interface
+
+================================
+# Batch App Importer notes
+* Commented out all batch apps, as those take a directory from the narrative itself
+
+Functionality: Running this script will
+* Save this indirectly as a json file
+
+* Note: We should serve the generated content from memory
+* Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
 import copy
 from collections import defaultdict, OrderedDict
