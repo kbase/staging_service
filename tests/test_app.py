@@ -6,7 +6,8 @@ import shutil
 import string
 import time
 from json import JSONDecoder
-from urllib.parse import urlencode
+from urllib.parse import urlencode,unquote
+
 
 from aiohttp import test_utils
 from hypothesis import given, settings
@@ -982,4 +983,4 @@ async def test_importer_mappings():
             resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
-            assert "must provide file_list field" in text
+            assert f"must provide file_list field. Your provided qs: {unquote(qsd)}" in text
