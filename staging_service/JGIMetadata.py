@@ -20,7 +20,3 @@ async def read_metadata_for(path: Path):
         )
 
 
-async def translate_for_importer(importer: str, path: Path):
-    # TODO this should contain logic for translating jgi metadata
-    # into the fields the importer expects
-    return await read_metadata_for(path)

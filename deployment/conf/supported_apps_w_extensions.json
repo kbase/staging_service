@@ -1,6 +1,7 @@
 {
   "apps": {
-    "sra_reads": {
+    "SRA Reads": {
+      "id": "sra_reads",
       "title": "SRA Reads",
       "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
       "output_type": [
@@ -10,9 +11,10 @@
       "extensions": [
         "sra"
       ],
-      "id": 0
+      "_id": 0
     },
-    "fastq_reads_interleaved": {
+    "FastQ Reads Interleaved": {
+      "id": "fastq_reads",
       "title": "FastQ Reads Interleaved",
       "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
       "output_type": [
@@ -23,9 +25,10 @@
         "fq",
         "fastq"
       ],
-      "id": 1
+      "_id": 1
     },
-    "fastq_reads_uninterleaved": {
+    "FastQ Reads UnInterleaved": {
+      "id": "fastq_reads",
       "title": "FastQ Reads UnInterleaved",
       "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
       "output_type": [
@@ -36,9 +39,10 @@
         "fq",
         "fastq"
       ],
-      "id": 2
+      "_id": 2
     },
-    "assembly": {
+    "Assembly": {
+      "id": "assembly",
       "title": "Assembly",
       "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
       "output_type": [
@@ -51,9 +55,10 @@
         "fsa",
         "fasta"
       ],
-      "id": 3
+      "_id": 3
     },
-    "gff/fasta_genome": {
+    "GFF/FASTA Genome": {
+      "id": "gff_genome",
       "title": "GFF/FASTA Genome",
       "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
       "output_type": [
@@ -69,9 +74,10 @@
         "gff2",
         "gff3"
       ],
-      "id": 4
+      "_id": 4
     },
-    "gff/fasta_metagenome": {
+    "GFF/FASTA MetaGenome": {
+      "id": "gff_metagenome",
       "title": "GFF/FASTA MetaGenome",
       "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
       "output_type": [
@@ -87,9 +93,10 @@
         "gff2",
         "gff3"
       ],
-      "id": 5
+      "_id": 5
     },
-    "genbank_genome": {
+    "Genbank Genome": {
+      "id": "genbank_genome",
       "title": "Genbank Genome",
       "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
       "output_type": [
@@ -99,9 +106,10 @@
         "gbk",
         "genbank"
       ],
-      "id": 6
+      "_id": 6
     },
-    "decompress/unpack": {
+    "Decompress/Unpack": {
+      "id": "decompress",
       "title": "Decompress/Unpack",
       "app": "kb_uploadmethods/unpack_staging_file",
       "output_type": [
@@ -117,9 +125,10 @@
         "gzip",
         "rar"
       ],
-      "id": 7
+      "_id": 7
     },
-    "samples": {
+    "Samples": {
+      "id": "sample_set",
       "title": "Samples",
       "app": "sample_uploader/import_samples",
       "output_type": [
@@ -130,9 +139,10 @@
         "xls",
         "xlsx"
       ],
-      "id": 8
+      "_id": 8
     },
-    "media": {
+    "Media": {
+      "id": "media",
       "title": "Media",
       "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
       "output_type": [
@@ -143,9 +153,10 @@
         "xls",
         "xlsx"
       ],
-      "id": 9
+      "_id": 9
     },
-    "expression_matrix": {
+    "Expression Matrix": {
+      "id": "expression_matrix",
       "title": "Expression Matrix",
       "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
       "output_type": [
@@ -154,9 +165,10 @@
       "extensions": [
         "tsv"
       ],
-      "id": 10
+      "_id": 10
     },
-    "metabolic_annotations": {
+    "Metabolic Annotations": {
+      "id": "metabolic_annotation",
       "title": "Metabolic Annotations",
       "app": "MergeMetabolicAnnotations/import_annotations",
       "output_type": [
@@ -165,9 +177,10 @@
       "extensions": [
         "tsv"
       ],
-      "id": 11
+      "_id": 11
     },
-    "bulk_metabolic_annotations": {
+    "Bulk Metabolic Annotations": {
+      "id": "metabolic_annotation_bulk",
       "title": "Bulk Metabolic Annotations",
       "app": "MergeMetabolicAnnotations/import_bulk_annotations",
       "output_type": [
@@ -176,9 +189,10 @@
       "extensions": [
         "tsv"
       ],
-      "id": 12
+      "_id": 12
     },
-    "fba_model": {
+    "FBA Model": {
+      "id": "fba_model",
       "title": "FBA Model",
       "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
       "output_type": [
@@ -190,9 +204,10 @@
         "xlsx",
         "smbl"
       ],
-      "id": 13
+      "_id": 13
     },
-    "phenotype_set": {
+    "Phenotype Set": {
+      "id": "phenotype_set",
       "title": "Phenotype Set",
       "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
       "output_type": [
@@ -201,9 +216,10 @@
       "extensions": [
         "tsv"
       ],
-      "id": 14
+      "_id": 14
     },
-    "attribute_mapping": {
+    "Attribute Mapping": {
+      "id": "attribute_mapping",
       "title": "Attribute Mapping",
       "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
       "output_type": [
@@ -213,9 +229,10 @@
         "xls",
         "xlsx"
       ],
-      "id": 15
+      "_id": 15
     },
-    "eschermap": {
+    "EscherMap": {
+      "id": "escher_map",
       "title": "EscherMap",
       "app": "kb_uploadmethods/import_eschermap_from_staging",
       "output_type": [
@@ -224,326 +241,326 @@
       "extensions": [
         "json"
       ],
-      "id": 16
+      "_id": 16
     }
   },
   "types": {
     "sra": [
       {
-        "id": 0,
-        "title": "sra_reads",
+        "id": "sra_reads",
+        "title": "SRA Reads",
         "app_weight": 1
       }
     ],
     "fq": [
       {
-        "id": 1,
-        "title": "fastq_reads_interleaved",
+        "id": "fastq_reads",
+        "title": "FastQ Reads Interleaved",
         "app_weight": 1
       },
       {
-        "id": 2,
-        "title": "fastq_reads_uninterleaved",
+        "id": "fastq_reads",
+        "title": "FastQ Reads UnInterleaved",
         "app_weight": 1
       }
     ],
     "fastq": [
       {
-        "id": 1,
-        "title": "fastq_reads_interleaved",
+        "id": "fastq_reads",
+        "title": "FastQ Reads Interleaved",
         "app_weight": 1
       },
       {
-        "id": 2,
-        "title": "fastq_reads_uninterleaved",
+        "id": "fastq_reads",
+        "title": "FastQ Reads UnInterleaved",
         "app_weight": 1
       }
     ],
     "fna": [
       {
-        "id": 3,
-        "title": "assembly",
+        "id": "assembly",
+        "title": "Assembly",
         "app_weight": 1
       },
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "fa": [
       {
-        "id": 3,
-        "title": "assembly",
+        "id": "assembly",
+        "title": "Assembly",
         "app_weight": 1
       },
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "faa": [
       {
-        "id": 3,
-        "title": "assembly",
+        "id": "assembly",
+        "title": "Assembly",
         "app_weight": 1
       },
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "fsa": [
       {
-        "id": 3,
-        "title": "assembly",
+        "id": "assembly",
+        "title": "Assembly",
         "app_weight": 1
       },
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "fasta": [
       {
-        "id": 3,
-        "title": "assembly",
+        "id": "assembly",
+        "title": "Assembly",
         "app_weight": 1
       },
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "gff": [
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "gff2": [
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "gff3": [
       {
-        "id": 4,
-        "title": "gff/fasta_genome",
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
         "app_weight": 1
       },
       {
-        "id": 5,
-        "title": "gff/fasta_metagenome",
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
         "app_weight": 1
       }
     ],
     "gbk": [
       {
-        "id": 6,
-        "title": "genbank_genome",
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
         "app_weight": 1
       }
     ],
     "genbank": [
       {
-        "id": 6,
-        "title": "genbank_genome",
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
         "app_weight": 1
       }
     ],
     "zip": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "tar": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "tgz": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "tar.gz": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "7z": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "gz": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "gzip": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "rar": [
       {
-        "id": 7,
-        "title": "decompress/unpack",
+        "id": "decompress",
+        "title": "Decompress/Unpack",
         "app_weight": 1
       }
     ],
     "csv": [
       {
-        "id": 8,
-        "title": "samples",
+        "id": "sample_set",
+        "title": "Samples",
         "app_weight": 1
       }
     ],
     "xls": [
       {
-        "id": 8,
-        "title": "samples",
+        "id": "sample_set",
+        "title": "Samples",
         "app_weight": 1
       },
       {
-        "id": 9,
-        "title": "media",
+        "id": "media",
+        "title": "Media",
         "app_weight": 1
       },
       {
-        "id": 13,
-        "title": "fba_model",
+        "id": "fba_model",
+        "title": "FBA Model",
         "app_weight": 1
       },
       {
-        "id": 15,
-        "title": "attribute_mapping",
+        "id": "attribute_mapping",
+        "title": "Attribute Mapping",
         "app_weight": 1
       }
     ],
     "xlsx": [
       {
-        "id": 8,
-        "title": "samples",
+        "id": "sample_set",
+        "title": "Samples",
         "app_weight": 1
       },
       {
-        "id": 9,
-        "title": "media",
+        "id": "media",
+        "title": "Media",
         "app_weight": 1
       },
       {
-        "id": 13,
-        "title": "fba_model",
+        "id": "fba_model",
+        "title": "FBA Model",
         "app_weight": 1
       },
       {
-        "id": 15,
-        "title": "attribute_mapping",
+        "id": "attribute_mapping",
+        "title": "Attribute Mapping",
         "app_weight": 1
       }
     ],
     "tsv": [
       {
-        "id": 9,
-        "title": "media",
+        "id": "media",
+        "title": "Media",
         "app_weight": 1
       },
       {
-        "id": 10,
-        "title": "expression_matrix",
+        "id": "expression_matrix",
+        "title": "Expression Matrix",
         "app_weight": 1
       },
       {
-        "id": 11,
-        "title": "metabolic_annotations",
+        "id": "metabolic_annotation",
+        "title": "Metabolic Annotations",
         "app_weight": 1
       },
       {
-        "id": 12,
-        "title": "bulk_metabolic_annotations",
+        "id": "metabolic_annotation_bulk",
+        "title": "Bulk Metabolic Annotations",
         "app_weight": 1
       },
       {
-        "id": 13,
-        "title": "fba_model",
+        "id": "fba_model",
+        "title": "FBA Model",
         "app_weight": 1
       },
       {
-        "id": 14,
-        "title": "phenotype_set",
+        "id": "phenotype_set",
+        "title": "Phenotype Set",
         "app_weight": 1
       }
     ],
     "smbl": [
       {
-        "id": 13,
-        "title": "fba_model",
+        "id": "fba_model",
+        "title": "FBA Model",
         "app_weight": 1
       }
     ],
     "json": [
       {
-        "id": 16,
-        "title": "eschermap",
+        "id": "escher_map",
+        "title": "EscherMap",
         "app_weight": 1
       }
     ]

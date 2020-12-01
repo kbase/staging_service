@@ -72,7 +72,7 @@ def test_sra_mappings():
     """
     sra_file = "test.sra"
     possible_importers = AutoDetectUtils.determine_possible_importers(filename=sra_file)
-    app_title = "sra_reads"
+    app_title = "SRA Reads"
     possible_app = possible_importers[0]["title"]
     mappings = AutoDetectUtils._MAPPINGS
     assert mappings["apps"][possible_app] == mappings["apps"][app_title]
@@ -85,7 +85,7 @@ def test_zip_mappings():
     """
     gz_file = "test.tar.gz"
     possible_importers = AutoDetectUtils.determine_possible_importers(filename=gz_file)
-    app_title = "decompress/unpack"
+    app_title = "Decompress/Unpack"
     possible_app = possible_importers[0]["title"]
     mappings = AutoDetectUtils._MAPPINGS
     assert mappings["apps"][possible_app] == mappings["apps"][app_title]
