@@ -3,6 +3,8 @@
 - Updated endpoint to use GET and query_string
 - Ran black
 - BUGFIX: Change head/tail functionality to return 1024 chars to avoid bad cases with really large one line files
+- Update FASTQ/SRA to use their own APP Uis
+
 
 
 ### Version 1.1.7
