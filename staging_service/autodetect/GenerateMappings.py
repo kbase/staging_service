@@ -34,22 +34,22 @@ mapping[SRA] = [
     {
         "id": sra_reads_id,
         "title": "SRA Reads",
-        "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+        "app": "kb_uploadmethods/import_sra_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     }
 ]
 
 mapping[FASTQ] = [
     {
-        "id": fastq_reads_id,
+        "id": fastq_reads_interleaved_id,
         "title": "FastQ Reads Interleaved",
-        "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+        "app": "kb_uploadmethods/import_fastq_interleaved_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     },
     {
-        "id": fastq_reads_id,
-        "title": "FastQ Reads UnInterleaved",
-        "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+        "id": fastq_reads_noninterleaved_id,
+        "title": "FastQ Reads NonInterleaved",
+        "app": "kb_uploadmethods/import_fastq_noninterleaved_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     },
 ]
