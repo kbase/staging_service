@@ -5,8 +5,6 @@
 - BUGFIX: Change head/tail functionality to return 1024 chars to avoid bad cases with really large one line files
 - Update FASTQ/SRA to use their own APP Uis
 
-
-
 ### Version 1.1.7
 - Add a file name check to void user uploading files with name starting with space
 - Update list endpoint so that it only hide .globus_id file by default
