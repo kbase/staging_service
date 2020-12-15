@@ -79,7 +79,7 @@ class Path(object):
 
     @staticmethod
     def from_full_path(full_path: str):
-        user_path = full_path[len(Path._DATA_DIR) :]
+        user_path = full_path[len(Path._DATA_DIR):]
         if user_path.startswith("/"):
             user_path = user_path[1:]
         metadata_path = os.path.join(Path._META_DIR, user_path)
@@ -269,6 +269,23 @@ class AclManager:
             print(e)
 
         return self._add_acl(user_identity_id, concierge_path)
+
+    def acl_status(self, shared_directory: str):
+        """
+        Inspect ACLS for user and provide instructions
+        :param shared_directory: Directory to get globus ID from
+        :return: Result of status check
+        """
+        user_identity_id = self._get_globus_identity(shared_directory)
+        base_name = "/{}/".format(shared_directory.split("/")[-2])
+        remove_acl = "https://kbase.us/services/staging_service/remove-acl"
+        add_acl = "https://kbase.us/services/staging_service/add-acl"
+        return {"base_name": base_name, "user_identity_id": user_identity_id,
+                "globus_info": f"You must be logged in with {user_identity_id} " +
+                               "in globus to see your directory",
+                "troubleshooting": f"To reset your globus permissions please visit " +
+                                   f"{remove_acl} and then visit {add_acl} "
+                }
 
     def add_acl(self, shared_directory: str):
         """
