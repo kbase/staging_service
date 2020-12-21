@@ -30,7 +30,8 @@ ANNOTATIONS = "ANNOTATIONS"
 MEDIA = "KBaseBiochem.Media"
 
 # These ID mappings should be available in dropdown_order in staging_upload.json in the narrative service
-fastq_reads_id = "fastq_reads"
+fastq_reads_interleaved_id = "fastq_reads_interleaved"
+fastq_reads_noninterleaved_id = "fastq_reads_noninterleaved"
 sra_reads_id = "sra_reads"
 genbank_genome_id = "genbank_genome"
 gff_genome_id = "gff_genome"

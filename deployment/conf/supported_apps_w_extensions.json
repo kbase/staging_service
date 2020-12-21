@@ -3,7 +3,7 @@
     "SRA Reads": {
       "id": "sra_reads",
       "title": "SRA Reads",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+      "app": "kb_uploadmethods/import_sra_as_reads_from_staging",
       "output_type": [
         "KBaseFile.SingleEndLibrary",
         "KBaseFile.PairedEndLibrary"
@@ -14,9 +14,9 @@
       "_id": 0
     },
     "FastQ Reads Interleaved": {
-      "id": "fastq_reads",
+      "id": "fastq_reads_interleaved",
       "title": "FastQ Reads Interleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+      "app": "kb_uploadmethods/import_fastq_interleaved_as_reads_from_staging",
       "output_type": [
         "KBaseFile.SingleEndLibrary",
         "KBaseFile.PairedEndLibrary"
@@ -27,10 +27,10 @@
       ],
       "_id": 1
     },
-    "FastQ Reads UnInterleaved": {
-      "id": "fastq_reads",
-      "title": "FastQ Reads UnInterleaved",
-      "app": "kb_uploadmethods/import_fastq_sra_as_reads_from_staging",
+    "FastQ Reads NonInterleaved": {
+      "id": "fastq_reads_noninterleaved",
+      "title": "FastQ Reads NonInterleaved",
+      "app": "kb_uploadmethods/import_fastq_noninterleaved_as_reads_from_staging",
       "output_type": [
         "KBaseFile.SingleEndLibrary",
         "KBaseFile.PairedEndLibrary"
@@ -254,25 +254,25 @@
     ],
     "fq": [
       {
-        "id": "fastq_reads",
+        "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
         "app_weight": 1
       },
       {
-        "id": "fastq_reads",
-        "title": "FastQ Reads UnInterleaved",
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
         "app_weight": 1
       }
     ],
     "fastq": [
       {
-        "id": "fastq_reads",
+        "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
         "app_weight": 1
       },
       {
-        "id": "fastq_reads",
-        "title": "FastQ Reads UnInterleaved",
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
         "app_weight": 1
       }
     ],
