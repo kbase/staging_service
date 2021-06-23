@@ -103,6 +103,8 @@
         "KBaseGenomes.Genome"
       ],
       "extensions": [
+        "gb",
+        "gbff",
         "gbk",
         "genbank"
       ],
@@ -394,6 +396,20 @@
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gb": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gbff": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
         "app_weight": 1
       }
     ],
