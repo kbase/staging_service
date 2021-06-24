@@ -23,7 +23,11 @@
       ],
       "extensions": [
         "fq",
-        "fastq"
+        "fq.gz",
+        "fq.gzip",
+        "fastq",
+        "fastq.gz",
+        "fastq.gzip"
       ],
       "_id": 1
     },
@@ -37,7 +41,11 @@
       ],
       "extensions": [
         "fq",
-        "fastq"
+        "fq.gz",
+        "fq.gzip",
+        "fastq",
+        "fastq.gz",
+        "fastq.gzip"
       ],
       "_id": 2
     },
@@ -50,10 +58,20 @@
       ],
       "extensions": [
         "fna",
+        "fna.gz",
+        "fna.gzip",
         "fa",
+        "fa.gz",
+        "fa.gzip",
         "faa",
+        "faa.gz",
+        "faa.gzip",
         "fsa",
-        "fasta"
+        "fsa.gz",
+        "fsa.gzip",
+        "fasta",
+        "fasta.gz",
+        "fasta.gzip"
       ],
       "_id": 3
     },
@@ -66,13 +84,29 @@
       ],
       "extensions": [
         "fna",
+        "fna.gz",
+        "fna.gzip",
         "fa",
+        "fa.gz",
+        "fa.gzip",
         "faa",
+        "faa.gz",
+        "faa.gzip",
         "fsa",
+        "fsa.gz",
+        "fsa.gzip",
         "fasta",
+        "fasta.gz",
+        "fasta.gzip",
         "gff",
+        "gff.gz",
+        "gff.gzip",
         "gff2",
-        "gff3"
+        "gff2.gz",
+        "gff2.gzip",
+        "gff3",
+        "gff3.gz",
+        "gff3.gzip"
       ],
       "_id": 4
     },
@@ -85,13 +119,29 @@
       ],
       "extensions": [
         "fna",
+        "fna.gz",
+        "fna.gzip",
         "fa",
+        "fa.gz",
+        "fa.gzip",
         "faa",
+        "faa.gz",
+        "faa.gzip",
         "fsa",
+        "fsa.gz",
+        "fsa.gzip",
         "fasta",
+        "fasta.gz",
+        "fasta.gzip",
         "gff",
+        "gff.gz",
+        "gff.gzip",
         "gff2",
-        "gff3"
+        "gff2.gz",
+        "gff2.gzip",
+        "gff3",
+        "gff3.gz",
+        "gff3.gzip"
       ],
       "_id": 5
     },
@@ -103,8 +153,18 @@
         "KBaseGenomes.Genome"
       ],
       "extensions": [
+        "gb",
+        "gb.gz",
+        "gb.gzip",
+        "gbff",
+        "gbff.gz",
+        "gbff.gzip",
         "gbk",
-        "genbank"
+        "gbk.gz",
+        "gbk.gzip",
+        "genbank",
+        "genbank.gz",
+        "genbank.gzip"
       ],
       "_id": 6
     },
@@ -264,6 +324,30 @@
         "app_weight": 1
       }
     ],
+    "fq.gz": [
+      {
+        "id": "fastq_reads_interleaved",
+        "title": "FastQ Reads Interleaved",
+        "app_weight": 1
+      },
+      {
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
+        "app_weight": 1
+      }
+    ],
+    "fq.gzip": [
+      {
+        "id": "fastq_reads_interleaved",
+        "title": "FastQ Reads Interleaved",
+        "app_weight": 1
+      },
+      {
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
+        "app_weight": 1
+      }
+    ],
     "fastq": [
       {
         "id": "fastq_reads_interleaved",
@@ -276,7 +360,65 @@
         "app_weight": 1
       }
     ],
+    "fastq.gz": [
+      {
+        "id": "fastq_reads_interleaved",
+        "title": "FastQ Reads Interleaved",
+        "app_weight": 1
+      },
+      {
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
+        "app_weight": 1
+      }
+    ],
+    "fastq.gzip": [
+      {
+        "id": "fastq_reads_interleaved",
+        "title": "FastQ Reads Interleaved",
+        "app_weight": 1
+      },
+      {
+        "id": "fastq_reads_noninterleaved",
+        "title": "FastQ Reads NonInterleaved",
+        "app_weight": 1
+      }
+    ],
     "fna": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fna.gz": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fna.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
@@ -310,7 +452,75 @@
         "app_weight": 1
       }
     ],
+    "fa.gz": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fa.gzip": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
     "faa": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "faa.gz": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "faa.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
@@ -344,7 +554,75 @@
         "app_weight": 1
       }
     ],
+    "fsa.gz": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fsa.gzip": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
     "fasta": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fasta.gz": [
+      {
+        "id": "assembly",
+        "title": "Assembly",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "fasta.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
@@ -373,7 +651,55 @@
         "app_weight": 1
       }
     ],
+    "gff.gz": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gff.gzip": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
     "gff2": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gff2.gz": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gff2.gzip": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
@@ -397,6 +723,72 @@
         "app_weight": 1
       }
     ],
+    "gff3.gz": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gff3.gzip": [
+      {
+        "id": "gff_genome",
+        "title": "GFF/FASTA Genome",
+        "app_weight": 1
+      },
+      {
+        "id": "gff_metagenome",
+        "title": "GFF/FASTA MetaGenome",
+        "app_weight": 1
+      }
+    ],
+    "gb": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gb.gz": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gb.gzip": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gbff": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gbff.gz": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gbff.gzip": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
     "gbk": [
       {
         "id": "genbank_genome",
@@ -404,7 +796,35 @@
         "app_weight": 1
       }
     ],
+    "gbk.gz": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "gbk.gzip": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
     "genbank": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "genbank.gz": [
+      {
+        "id": "genbank_genome",
+        "title": "Genbank Genome",
+        "app_weight": 1
+      }
+    ],
+    "genbank.gzip": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",

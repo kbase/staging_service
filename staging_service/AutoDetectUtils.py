@@ -12,15 +12,19 @@ class AutoDetectUtils:
     @staticmethod
     def determine_possible_importers(filename: str) -> Optional[list]:
         """
-        Given a filename, come up with a reference to all possible apps
+        Given a filename, come up with a reference to all possible apps.
         :param filename: The filename to find applicable apps for
         :return: A list of mapping references, or None if not found
         """
-        if "." in filename:
-            suffix = filename.split(".")[-1].lower()
-            return AutoDetectUtils._MAPPINGS["types"].get(suffix)
-        else:
-            return None
+        dotcount = filename.count(".")
+        if dotcount:
+            # preferentially choose the most specific suffix (e.g. longest)
+            # to get file type mappings
+            for i in range(1, dotcount + 1):
+                suffix = filename.split(".", i)[-1].lower()
+                if suffix in AutoDetectUtils._MAPPINGS["types"]:
+                    return AutoDetectUtils._MAPPINGS["types"][suffix]
+        return None
 
     @staticmethod
     def get_mappings(file_list: list) -> dict:

@@ -1,3 +1,7 @@
+### Version 1.1.9
+- Added support for Genbank *.gb and *.gbff extensions
+- Added support for gzipped Reads, Assemblies, Genbank Files, and GFF files.
+
 ### Version 1.1.8
 - Added new endpoint `importer-mappings/` for getting a mapping of importers for file names
 - Updated endpoint to use GET and query_string
