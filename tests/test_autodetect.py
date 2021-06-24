@@ -47,9 +47,9 @@ def test_reasonable_filenames():
     for heading in type_to_extension_mapping.keys():
         extensions = type_to_extension_mapping[heading]
         for extension in extensions:
-            good_filenames.append(f"{heading}.{extension}")
+            good_filenames.append((f"{heading}.{extension}", heading.count(".")))
 
-    for filename in good_filenames:
+    for filename, heading_dotcount in good_filenames:
         for filename_variant in [
             filename,
             filename.upper(),
@@ -61,8 +61,38 @@ def test_reasonable_filenames():
             )
             print("Testing", filename_variant, possible_importers)
             assert possible_importers is not None
-            suffix = filename_variant.split(".")[-1].lower()
-            assert possible_importers == AutoDetectUtils._MAPPINGS["types"].get(suffix)
+            suffix = filename_variant.split(".", heading_dotcount + 1)[-1].lower()
+            assert possible_importers == AutoDetectUtils._MAPPINGS["types"].get(suffix), (
+                suffix, filename_variant)
+
+
+def test_specific_filenames():
+    """
+    Test some made up filenames to check that multi-dot extensions are handled correctly
+    """
+    test_data = [
+        ("filename", None),
+        ("file.name", None),
+        ("fil.en.ame", None),
+        ("file.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+         ),
+        ("file.name.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+         ),
+        ("oscar_the_grouch_does_meth.FaStA.gz", [
+            {'app_weight': 1, 'id': 'assembly', 'title': 'Assembly'},
+            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
+            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
+            ]
+         ),
+        ("look.at.all.these.frigging.dots.gff2.gzip", [
+            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
+            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
+            ]
+         )
+    ]
+
+    for filename, importers in test_data:
+        assert AutoDetectUtils.determine_possible_importers(filename) == importers, filename
 
 
 def test_sra_mappings():
