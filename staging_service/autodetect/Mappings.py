@@ -1,3 +1,5 @@
+import itertools
+
 # Regular Formats
 JSON = "JSON"
 TSV = "TSV"
@@ -51,12 +53,7 @@ attribute_mapping_id = "attribute_mapping"
 escher_map_id = "escher_map"
 
 def _flatten(some_list):
-    # you can do this in a 1 line comprehension but it's unreadable
-    flat_list = []
-    for sublist in some_list:
-        for item in sublist:
-            flat_list.append(item)
-    return flat_list
+    return list(itertools.chain.from_iterable(some_list))
 
 _GZIP_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
 
