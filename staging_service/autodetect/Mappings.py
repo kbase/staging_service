@@ -56,7 +56,7 @@ type_to_extension_mapping = {
     GFF: ["gff", "gff2", "gff3"],
     # GTF: ["gtf"],
     SRA: ["sra"],
-    GENBANK: ["gbk", "genbank"],
+    GENBANK: ["gb", "gbff", "gbk", "genbank"],
     # SAM: ["sam"],
     # VCF: ["vcf"],
     # MSA: [
