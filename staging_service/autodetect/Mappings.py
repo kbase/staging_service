@@ -50,13 +50,27 @@ metabolic_annotations_bulk_id = "metabolic_annotation_bulk"
 attribute_mapping_id = "attribute_mapping"
 escher_map_id = "escher_map"
 
+def _flatten(some_list):
+    # you can do this in a 1 line comprehension but it's unreadable
+    flat_list = []
+    for sublist in some_list:
+        for item in sublist:
+            flat_list.append(item)
+    return flat_list
+
+_GZIP_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+
+# longer term there's probably a better way to do this but this is quick
+def _add_gzip(extension_list):
+    return _flatten([[ext + gz for gz in _GZIP_EXT] for ext in extension_list])
+
 type_to_extension_mapping = {
-    FASTA: ["fna", "fa", "faa", "fsa", "fasta"],
-    FASTQ: ["fq", "fastq"],
-    GFF: ["gff", "gff2", "gff3"],
+    FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),
+    FASTQ: _add_gzip(["fq", "fastq"]),
+    GFF: _add_gzip(["gff", "gff2", "gff3"]),
     # GTF: ["gtf"],
-    SRA: ["sra"],
-    GENBANK: ["gb", "gbff", "gbk", "genbank"],
+    SRA: ["sra"],  # SRA files are already compressed
+    GENBANK: _add_gzip(["gb", "gbff", "gbk", "genbank"]),
     # SAM: ["sam"],
     # VCF: ["vcf"],
     # MSA: [
