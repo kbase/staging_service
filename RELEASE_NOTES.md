@@ -1,3 +1,6 @@
+### Version 1.1.10
+- added a `file_type` field to the file extension mappings.
+
 ### Version 1.1.9
 - Added support for Genbank *.gb and *.gbff extensions
 - Added support for gzipped Reads, Assemblies, Genbank Files, and GFF files.
