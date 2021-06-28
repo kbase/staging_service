@@ -55,11 +55,11 @@ escher_map_id = "escher_map"
 def _flatten(some_list):
     return list(itertools.chain.from_iterable(some_list))
 
-_COMP_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+_COMPRESSION_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
 
 # longer term there's probably a better way to do this but this is quick
 def _add_gzip(extension_list):
-    return _flatten([[ext + comp for comp in _COMP_EXT] for ext in extension_list])
+    return _flatten([[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list])
 
 type_to_extension_mapping = {
     FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),
