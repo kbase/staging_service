@@ -772,10 +772,10 @@ Response:
 			"app": "kb_uploadmethods/unpack_staging_file",
 			"output_type": [null],
 			"extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
-			"id": 7
+			"id": "decompress"
 		},
 	"mappings": [null, [{
-		"id": 7,
+		"id": "decompress",
 		"title": "decompress/unpack",
 		"app_weight": 1
 	}]]

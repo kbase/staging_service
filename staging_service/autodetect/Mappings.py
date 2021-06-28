@@ -9,7 +9,7 @@ ZIP = "CompressedFileFormatArchive"
 
 # BIOINFORMATICS FORMATS
 FASTA = "FASTA"
-FASTQ = "FASTQ Reads"
+FASTQ = "FASTQ"
 GFF = "GFF"
 GTF = "GTF"
 SRA = "SRA"
@@ -19,9 +19,9 @@ GENBANK = "GENBANK"
 VCF = "VCF"
 FBA = "FBAModel"
 SBML = "SBML"
+MSA = "MSA"
 
 # KBASE SPECIFIC FORMATS
-MSA = "MultipleSequenceAlignment"
 PHENOTYPE = "PHENOTYPE"  # "KBasePhenotypes.PhenotypeSet"
 ESCHER = "ESCHER"
 ANNOTATIONS = "ANNOTATIONS"
@@ -55,11 +55,11 @@ escher_map_id = "escher_map"
 def _flatten(some_list):
     return list(itertools.chain.from_iterable(some_list))
 
-_GZIP_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+_COMP_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
 
 # longer term there's probably a better way to do this but this is quick
 def _add_gzip(extension_list):
-    return _flatten([[ext + gz for gz in _GZIP_EXT] for ext in extension_list])
+    return _flatten([[ext + comp for comp in _COMP_EXT] for ext in extension_list])
 
 type_to_extension_mapping = {
     FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),

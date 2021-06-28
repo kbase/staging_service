@@ -281,7 +281,6 @@ Add a unique id, such as 1,2,3
 """
 
 new_apps = OrderedDict()
-extensions_flat = []
 counter = 0
 for category in mapping:
     apps = mapping[category]
@@ -296,14 +295,10 @@ for category in mapping:
             counter += 1
             new_apps[title] = copy.copy(app)
         # Then for the current app we are looking at,
-        # find the appropriate category and append its extensions list
-        # to the apps list of extensions
-        for extension in type_to_extension_mapping:
-            if extension == category:
-                new_apps[title]["extensions"].extend(
-                    type_to_extension_mapping[extension]
-                )
-                extensions_flat.extend(type_to_extension_mapping[extension])
+        # add appropriate file extensions
+        new_apps[title]["extensions"].extend(
+            type_to_extension_mapping[category]
+        )
 
 # Then create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of 6
@@ -312,14 +307,14 @@ for category in mapping:
 """
     "gbk": [
       {
-        "id": 6,
+        "id": "genbank_genome",
         "title": "genbank_genome",
         "app_weight": 1
       }
     ],
 """
 
-# with 6 being the id of the matched app
+# with "genbank_genome" being the id of the matched app
 # and 1 being a perfect weight score of 100%
 extensions_mapping = defaultdict(list)
 for app_title in new_apps:
