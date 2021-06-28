@@ -91,10 +91,12 @@ type_to_extension_mapping = {
     EXCEL: ["xls", "xlsx"],
     ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
     SBML: ["smbl"],
-    # Custom File Types?
-    MEDIA: ["tsv", "xls", "xlsx"],
-    PHENOTYPE: ["tsv"],
-    ESCHER: ["json"],
-    ANNOTATIONS: ["tsv"],
-    FBA: ["tsv", "xls", "xlsx", "smbl"],
 }
+
+extension_to_type_mapping = {}
+for type_, extensions in type_to_extension_mapping.items():
+    for ext in extensions:
+        if ext in extension_to_type_mapping:
+            type2 = extension_to_type_mapping[ext]
+            raise ValueError(f"Duplicate entry for extension {ext} in {type_} and {type2}")
+        extension_to_type_mapping[ext] = type_
