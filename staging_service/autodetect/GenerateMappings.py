@@ -301,7 +301,7 @@ for category in mapping:
         )
 
 # Then create the mapping between file extensions and apps
-# For example, the .gbk and .genkbank extensions map to app with id of 6
+# For example, the .gbk and .genkbank extensions map to app with id of "genbank_genome"
 # so the mapping would look like
 # mapping['gbk'] =
 """
