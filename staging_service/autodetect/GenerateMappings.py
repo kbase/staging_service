@@ -159,7 +159,7 @@ to
 """
 
 """
-For each category in mapping (current SMBl/JSOn/FASTQ/FASTA/ etc), get an "App"
+For each category in mapping (current SMBl/JSON/FASTQ/FASTA/ etc), get an "App"
 Create the app in a list of  using the title as the primary hashing key
 Add a list of extensions, such as .fa, fasta
 Add a unique id, such as 1,2,3
@@ -211,7 +211,16 @@ for app_title in new_apps:
     perfect_match_weight = 1
     for extension in extensions:
         extensions_mapping[extension].append(
-            {"id": app_id, "title": app_title, "app_weight": perfect_match_weight}
+            {
+                "id": app_id,
+                "title": app_title,
+                "app_weight": perfect_match_weight,
+                # make a list to allow for expansion in the future - for example it could
+                # include whether reads are forward or reverse if we get smarter about name
+                # detection. For backwards compatibilily, we'd leave the current FASTQ type and
+                # add a FASTQ-FWD or FWD type or something.
+                "file_type": [extension_to_file_format_mapping[extension]],
+            }
         )
 
 if __name__ == "__main__":

@@ -74,19 +74,47 @@ def test_specific_filenames():
         ("filename", None),
         ("file.name", None),
         ("fil.en.ame", None),
-        ("file.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+        ("file.gZ", [{
+            'app_weight': 1,
+            'id': 'decompress',
+            'title': 'Decompress/Unpack',
+            'file_type': ['CompressedFileFormatArchive'],
+            }]
          ),
-        ("file.name.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+        ("file.name.gZ", [{
+            'app_weight': 1,
+            'id': 'decompress',
+            'title': 'Decompress/Unpack',
+            'file_type': ['CompressedFileFormatArchive'],
+            }]
          ),
         ("oscar_the_grouch_does_meth.FaStA.gz", [
-            {'app_weight': 1, 'id': 'assembly', 'title': 'Assembly'},
-            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
-            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
+            {'app_weight': 1,
+             'id': 'assembly',
+             'title': 'Assembly',
+             'file_type': ['FASTA']
+             },
+            {'app_weight': 1,
+             'id': 'gff_genome',
+             'title': 'GFF/FASTA Genome',
+             'file_type': ['FASTA']
+             },
+            {'app_weight': 1,
+             'id': 'gff_metagenome',
+             'title': 'GFF/FASTA MetaGenome',
+             'file_type': ['FASTA']
+             }
             ]
          ),
         ("look.at.all.these.frigging.dots.gff2.gzip", [
-            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
-            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
+            {'app_weight': 1,
+             'id': 'gff_genome',
+             'title': 'GFF/FASTA Genome',
+             'file_type': ['GFF']},
+            {'app_weight': 1,
+             'id': 'gff_metagenome',
+             'title': 'GFF/FASTA MetaGenome',
+             'file_type': ['GFF']}
             ]
          )
     ]
