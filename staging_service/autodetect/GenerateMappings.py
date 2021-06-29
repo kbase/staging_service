@@ -29,8 +29,7 @@ from collections import defaultdict, OrderedDict
 from staging_service.autodetect.Mappings import *
 
 # Note that some upload apps are not included - in particular batch apps, which are now
-# redundant, and MSAs because they're out of scope at the current time and don't conform to
-# standards (what does this mean?).
+# redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
 apps = {
     sra_reads_id: {
@@ -109,11 +108,6 @@ apps = {
         "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
         "output_type": ["KBasePhenotypes.PhenotypeSet"],
     },
-    attribute_mapping_id: {
-        "title": "Attribute Mapping",
-        "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-        "output_type": ["KBaseExperiments.AttributeMapping"],
-    },
     escher_map_id: {
         "title": "EscherMap",
         "app": "kb_uploadmethods/import_eschermap_from_staging",
@@ -122,20 +116,20 @@ apps = {
 
 }
 
-mapping = {}
+file_format_to_app_mapping = {}
 
-mapping[SRA] = [sra_reads_id]
-mapping[FASTQ] = [fastq_reads_interleaved_id, fastq_reads_noninterleaved_id]
-mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_id]
-mapping[GENBANK] = [genbank_genome_id]
-mapping[GFF] = [gff_genome_id, gff_metagenome_id]
-mapping[ZIP] = [decompress_id]
-mapping[CSV] = [sample_set_id]
-mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id,
+file_format_to_app_mapping[SRA] = [sra_reads_id]
+file_format_to_app_mapping[FASTQ] = [fastq_reads_interleaved_id, fastq_reads_noninterleaved_id]
+file_format_to_app_mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_id]
+file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
+file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
+file_format_to_app_mapping[ZIP] = [decompress_id]
+file_format_to_app_mapping[CSV] = [sample_set_id]
+file_format_to_app_mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id,
                 metabolic_annotations_bulk_id, fba_model_id, phenotype_set_id]
-mapping[EXCEL] = [sample_set_id, media_id, attribute_mapping_id, fba_model_id]
-mapping[JSON] = [escher_map_id]
-mapping[SBML] = [fba_model_id]
+file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id]
+file_format_to_app_mapping[JSON] = [escher_map_id]
+file_format_to_app_mapping[SBML] = [fba_model_id]
 
 """
 This turns an app from this
@@ -173,8 +167,8 @@ Add a unique id, such as 1,2,3
 
 new_apps = OrderedDict()
 counter = 0
-for category in mapping:
-    for app_id in mapping[category]:
+for category in file_format_to_app_mapping:
+    for app_id in file_format_to_app_mapping[category]:
         app = apps[app_id]
         # print("looking at", app)
         title = app["title"]
@@ -189,7 +183,7 @@ for category in mapping:
             new_apps[title] = new_app
         # Then for the current app we are looking at,
         # add appropriate file extensions
-        new_apps[title]["extensions"].extend(type_to_extension_mapping[category])
+        new_apps[title]["extensions"].extend(file_format_to_extension_mapping[category])
 
 # Then create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of "genbank_genome"

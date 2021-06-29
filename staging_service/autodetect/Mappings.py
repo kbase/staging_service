@@ -61,7 +61,7 @@ _COMPRESSION_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed
 def _add_gzip(extension_list):
     return _flatten([[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list])
 
-type_to_extension_mapping = {
+file_format_to_extension_mapping = {
     FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),
     FASTQ: _add_gzip(["fq", "fastq"]),
     GFF: _add_gzip(["gff", "gff2", "gff3"]),
@@ -93,10 +93,10 @@ type_to_extension_mapping = {
     SBML: ["smbl"],
 }
 
-extension_to_type_mapping = {}
-for type_, extensions in type_to_extension_mapping.items():
+extension_to_file_format_mapping = {}
+for type_, extensions in file_format_to_extension_mapping.items():
     for ext in extensions:
-        if ext in extension_to_type_mapping:
-            type2 = extension_to_type_mapping[ext]
+        if ext in extension_to_file_format_mapping:
+            type2 = extension_to_file_format_mapping[ext]
             raise ValueError(f"Duplicate entry for extension {ext} in {type_} and {type2}")
-        extension_to_type_mapping[ext] = type_
+        extension_to_file_format_mapping[ext] = type_

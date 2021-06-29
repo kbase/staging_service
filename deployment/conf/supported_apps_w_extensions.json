@@ -278,19 +278,6 @@
       ],
       "_id": 14
     },
-    "Attribute Mapping": {
-      "title": "Attribute Mapping",
-      "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-      "output_type": [
-        "KBaseExperiments.AttributeMapping"
-      ],
-      "id": "attribute_mapping",
-      "extensions": [
-        "xls",
-        "xlsx"
-      ],
-      "_id": 15
-    },
     "EscherMap": {
       "title": "EscherMap",
       "app": "kb_uploadmethods/import_eschermap_from_staging",
@@ -301,7 +288,7 @@
       "extensions": [
         "json"
       ],
-      "_id": 16
+      "_id": 15
     }
   },
   "types": {
@@ -909,11 +896,6 @@
         "id": "fba_model",
         "title": "FBA Model",
         "app_weight": 1
-      },
-      {
-        "id": "attribute_mapping",
-        "title": "Attribute Mapping",
-        "app_weight": 1
       }
     ],
     "xlsx": [
@@ -930,11 +912,6 @@
       {
         "id": "fba_model",
         "title": "FBA Model",
-        "app_weight": 1
-      },
-      {
-        "id": "attribute_mapping",
-        "title": "Attribute Mapping",
         "app_weight": 1
       }
     ],
