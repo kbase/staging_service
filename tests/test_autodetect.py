@@ -1,5 +1,5 @@
 import pytest
-from staging_service.autodetect.GenerateMappings import type_to_extension_mapping
+from staging_service.autodetect.GenerateMappings import file_format_to_extension_mapping
 from staging_service.AutoDetectUtils import AutoDetectUtils
 from staging_service.app import inject_config_dependencies
 from tests.test_utils import bootstrap_config
@@ -44,8 +44,8 @@ def test_reasonable_filenames():
     """
 
     good_filenames = []
-    for heading in type_to_extension_mapping.keys():
-        extensions = type_to_extension_mapping[heading]
+    for heading in file_format_to_extension_mapping.keys():
+        extensions = file_format_to_extension_mapping[heading]
         for extension in extensions:
             good_filenames.append((f"{heading}.{extension}", heading.count(".")))
 
