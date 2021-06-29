@@ -778,7 +778,7 @@ Response:
 		"id": "decompress",
 		"title": "decompress/unpack",
 		"app_weight": 1,
-        "file_type": "CompressedFileFormatArchive",
+		"file_type": "CompressedFileFormatArchive",
 	}]]
 }
 ```
