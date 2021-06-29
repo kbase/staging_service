@@ -28,223 +28,108 @@ from collections import defaultdict, OrderedDict
 
 from staging_service.autodetect.Mappings import *
 
-mapping = defaultdict(list)
+# Note that some upload apps are not included - in particular batch apps, which are now
+# redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
-mapping[SRA] = [
-    {
-        "id": sra_reads_id,
+apps = {
+    sra_reads_id: {
         "title": "SRA Reads",
         "app": "kb_uploadmethods/import_sra_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
-    }
-]
-
-mapping[FASTQ] = [
-    {
-        "id": fastq_reads_interleaved_id,
+    },
+    fastq_reads_interleaved_id: {
         "title": "FastQ Reads Interleaved",
         "app": "kb_uploadmethods/import_fastq_interleaved_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     },
-    {
-        "id": fastq_reads_noninterleaved_id,
+    fastq_reads_noninterleaved_id: {
         "title": "FastQ Reads NonInterleaved",
         "app": "kb_uploadmethods/import_fastq_noninterleaved_as_reads_from_staging",
         "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
     },
-]
-
-mapping[FASTA] = [
-    {
-        "id": assembly_id,
+    assembly_id: {
         "title": "Assembly",
         "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
         "output_type": ["KBaseGenomeAnnotations.Assembly"],
     },
-    # Commented out because: Batch App
-    # {
-    #     "title": "Assembly Set",
-    #     "app": "kb_uploadmethods/batch_import_assembly_from_staging",
-    #     "output_type": ["KBaseSets.AssemblySet"],
-    # },
-    {
-        "id": gff_genome_id,
+    gff_genome_id: {
         "title": "GFF/FASTA Genome",
         "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
     },
-    {
-        "id": gff_metagenome_id,
+    gff_metagenome_id: {
         "title": "GFF/FASTA MetaGenome",
         "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
         "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
     },
-    # Commented out because: Batch App
-    # {
-    #     "title": "GFF/FASTA Genome Set",
-    #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
-    #     "output_type": ["KBaseSearch.GenomeSet"],
-    #     "comment" : "To use: select a directory from the narrative"
-    # },
-    # Commented out because: It doesn't conform to standards and is out of scope right now
-    # {
-    #     "title": "Multiple Sequence Alignment",
-    #     "app": "MSAUtils/import_msa_file",
-    #     "output_type": ["KBaseTrees.MSA"],
-    # },
-]
-# Commented out because: It doesn't conform to standards and is out of scope right now
-# mapping[MSA] = [
-# {
-#     "title": "Multiple Sequence Alignment",
-#     "app": "MSAUtils/import_msa_file",
-#     "output_type": ["KBaseTrees.MSA"],
-# }
-# ]
-
-mapping[GENBANK] = [
-    {
-        "id": genbank_genome_id,
+    genbank_genome_id: {
         "title": "Genbank Genome",
         "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
         "output_type": ["KBaseGenomes.Genome"],
     },
-    # Commented out because: Batch App
-    # {
-    #     "title": "Genbank Genome Set",
-    #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
-    #     "output_type": ["KBaseSearch.GenomeSet"],
-    #     "hidden" : True
-    # },
-]
-
-mapping[GFF] = [
-    {
-        "id": gff_genome_id,
-        "title": "GFF/FASTA Genome",
-        "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-        "output_type": ["KBaseGenomes.Genome"],
-    },
-    {
-        "id": gff_metagenome_id,
-        "title": "GFF/FASTA MetaGenome",
-        "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-        "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
-    },
-    # Commented out because: Batch App
-    # {
-    #     "title": "GFF/FASTA Genome Set",
-    #     "app": "kb_uploadmethods/batch_import_genome_from_staging",
-    #     "output_type": ["KBaseSearch.GenomeSet"],
-    #     "hidden": True
-    # },
-]
-
-mapping[ZIP] = [
-    {
-        "id": decompress_id,
+    decompress_id: {
         "title": "Decompress/Unpack",
         "app": "kb_uploadmethods/unpack_staging_file",
         "output_type": [None],
-    }
-]
-mapping[CSV] = [
-    {
+    },
+    sample_set_id: {
         "id": sample_set_id,
         "title": "Samples",
         "app": "sample_uploader/import_samples",
         "output_type": ["KBaseSets.SampleSet"],
-    }
-]
-
-mapping[TSV] = [
-    {
-        "id": media_id,
+    },
+    media_id: {
         "title": "Media",
         "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
         "output_type": ["KBaseBiochem.Media"],
     },
-    # Commented out because: Not in scope and requires an object
-    # {
-    #     "title": "Attribute Mapping",
-    #     "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-    #     "output_type": ["KBaseExperiments.AttributeMapping"],
-    # },
-    {
-        "id": expression_matrix_id,
+    expression_matrix_id: {
         "title": "Expression Matrix",
         "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
         "output_type": ["KBaseFeatureValues.ExpressionMatrix"],
     },
-    {
-        "id": metabolic_annotations_id,
+    metabolic_annotations_id: {
         "title": "Metabolic Annotations",
         "app": "MergeMetabolicAnnotations/import_annotations",
         "output_type": ["KBaseGenomes.Genome"],
     },
-    {
-        "id": metabolic_annotations_bulk_id,
+    metabolic_annotations_bulk_id: {
         "title": "Bulk Metabolic Annotations",
         "app": "MergeMetabolicAnnotations/import_bulk_annotations",
         "output_type": ["KBaseGenomes.Genome"],
     },
-    {
-        "id": fba_model_id,
+    fba_model_id: {
         "title": "FBA Model",
         "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
         "output_type": ["KBaseFBA.FBAModel"],
     },
-    {
-        "id": phenotype_set_id,
+    phenotype_set_id: {
         "title": "Phenotype Set",
         "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
         "output_type": ["KBasePhenotypes.PhenotypeSet"],
     },
-]
-
-mapping[EXCEL] = [
-    {
-        "id": sample_set_id,
-        "title": "Samples",
-        "app": "sample_uploader/import_samples",
-        "output_type": ["KBaseSets.SampleSet"],
-    },
-    {
-        "id": media_id,
-        "title": "Media",
-        "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
-        "output_type": ["KBaseBiochem.Media"],
-    },
-    {
-        "id": attribute_mapping_id,
-        "title": "Attribute Mapping",
-        "app": "kb_uploadmethods/import_attribute_mapping_from_staging",
-        "output_type": ["KBaseExperiments.AttributeMapping"],
-    },
-    {
-        "id": fba_model_id,
-        "title": "FBA Model",
-        "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-        "output_type": ["KBaseFBA.FBAModel"],
-    },
-]
-mapping[JSON] = [
-    {
-        "id": escher_map_id,
+    escher_map_id: {
         "title": "EscherMap",
         "app": "kb_uploadmethods/import_eschermap_from_staging",
         "output_type": ["KBaseFBA.EscherMap"],
-    }
-]
+    },
 
-mapping[SBML] = [
-    {
-        "id": fba_model_id,
-        "title": "FBA Model",
-        "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-        "output_type": ["KBaseFBA.FBAModel"],
-    }
-]
+}
+
+file_format_to_app_mapping = {}
+
+file_format_to_app_mapping[SRA] = [sra_reads_id]
+file_format_to_app_mapping[FASTQ] = [fastq_reads_interleaved_id, fastq_reads_noninterleaved_id]
+file_format_to_app_mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_id]
+file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
+file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
+file_format_to_app_mapping[ZIP] = [decompress_id]
+file_format_to_app_mapping[CSV] = [sample_set_id]
+file_format_to_app_mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id,
+                metabolic_annotations_bulk_id, fba_model_id, phenotype_set_id]
+file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id]
+file_format_to_app_mapping[JSON] = [escher_map_id]
+file_format_to_app_mapping[SBML] = [fba_model_id]
 
 """
 This turns an app from this
@@ -268,7 +153,7 @@ to
         "gbk",
         "genbank"
       ],
-      "id": 6
+      "id": "genbank"
     },
 
 """
@@ -282,23 +167,23 @@ Add a unique id, such as 1,2,3
 
 new_apps = OrderedDict()
 counter = 0
-for category in mapping:
-    apps = mapping[category]
-    for app in apps:
+for category in file_format_to_app_mapping:
+    for app_id in file_format_to_app_mapping[category]:
+        app = apps[app_id]
         # print("looking at", app)
         title = app["title"]
 
         if title not in new_apps:
+            new_app = copy.copy(app)
             # Create a new entry for extensions and id in the app
-            app["extensions"] = []
-            app["_id"] = counter
+            new_app["id"] = app_id
+            new_app["extensions"] = []
+            new_app["_id"] = counter
             counter += 1
-            new_apps[title] = copy.copy(app)
+            new_apps[title] = new_app
         # Then for the current app we are looking at,
         # add appropriate file extensions
-        new_apps[title]["extensions"].extend(
-            type_to_extension_mapping[category]
-        )
+        new_apps[title]["extensions"].extend(file_format_to_extension_mapping[category])
 
 # Then create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of "genbank_genome"
