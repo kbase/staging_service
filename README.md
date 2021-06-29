@@ -811,7 +811,6 @@ phenotype_set
 sample_set
 metabolic_annotation
 metabolic_annotation_bulk
-attribute_mapping
 escher_map
 decompress
 ```
