@@ -296,669 +296,1002 @@
       {
         "id": "sra_reads",
         "title": "SRA Reads",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "SRA"
+        ]
       }
     ],
     "fq": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fq.gz": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fq.gzip": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fastq": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fastq.gz": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fastq.gzip": [
       {
         "id": "fastq_reads_interleaved",
         "title": "FastQ Reads Interleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       },
       {
         "id": "fastq_reads_noninterleaved",
         "title": "FastQ Reads NonInterleaved",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTQ"
+        ]
       }
     ],
     "fna": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fna.gz": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fna.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fa": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fa.gz": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fa.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "faa": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "faa.gz": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "faa.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fsa": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fsa.gz": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fsa.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fasta": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fasta.gz": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "fasta.gzip": [
       {
         "id": "assembly",
         "title": "Assembly",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "FASTA"
+        ]
       }
     ],
     "gff": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff.gz": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff.gzip": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff2": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff2.gz": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff2.gzip": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff3": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff3.gz": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gff3.gzip": [
       {
         "id": "gff_genome",
         "title": "GFF/FASTA Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       },
       {
         "id": "gff_metagenome",
         "title": "GFF/FASTA MetaGenome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GFF"
+        ]
       }
     ],
     "gb": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gb.gz": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gb.gzip": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbff": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbff.gz": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbff.gzip": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbk": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbk.gz": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "gbk.gzip": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "genbank": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "genbank.gz": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "genbank.gzip": [
       {
         "id": "genbank_genome",
         "title": "Genbank Genome",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "GENBANK"
+        ]
       }
     ],
     "zip": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "tar": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "tgz": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "tar.gz": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "7z": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "gz": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "gzip": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "rar": [
       {
         "id": "decompress",
         "title": "Decompress/Unpack",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CompressedFileFormatArchive"
+        ]
       }
     ],
     "csv": [
       {
         "id": "sample_set",
         "title": "Samples",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "CSV"
+        ]
       }
     ],
     "xls": [
       {
         "id": "sample_set",
         "title": "Samples",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       },
       {
         "id": "media",
         "title": "Media",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       },
       {
         "id": "fba_model",
         "title": "FBA Model",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       }
     ],
     "xlsx": [
       {
         "id": "sample_set",
         "title": "Samples",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       },
       {
         "id": "media",
         "title": "Media",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       },
       {
         "id": "fba_model",
         "title": "FBA Model",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "EXCEL"
+        ]
       }
     ],
     "tsv": [
       {
         "id": "media",
         "title": "Media",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       },
       {
         "id": "expression_matrix",
         "title": "Expression Matrix",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       },
       {
         "id": "metabolic_annotation",
         "title": "Metabolic Annotations",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       },
       {
         "id": "metabolic_annotation_bulk",
         "title": "Bulk Metabolic Annotations",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       },
       {
         "id": "fba_model",
         "title": "FBA Model",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       },
       {
         "id": "phenotype_set",
         "title": "Phenotype Set",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "TSV"
+        ]
       }
     ],
     "smbl": [
       {
         "id": "fba_model",
         "title": "FBA Model",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "SBML"
+        ]
       }
     ],
     "json": [
       {
         "id": "escher_map",
         "title": "EscherMap",
-        "app_weight": 1
+        "app_weight": 1,
+        "file_type": [
+          "JSON"
+        ]
       }
     ]
   }

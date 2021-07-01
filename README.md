@@ -777,7 +777,8 @@ Response:
 	"mappings": [null, [{
 		"id": "decompress",
 		"title": "decompress/unpack",
-		"app_weight": 1
+		"app_weight": 1,
+		"file_type": "CompressedFileFormatArchive",
 	}]]
 }
 ```
@@ -789,3 +790,49 @@ Response:
 must provide file_list field 
 ```
 
+# Autodetect App and File Type IDs
+
+## App type IDs
+
+These are the currently supported upload app type IDs:
+
+```
+fastq_reads_interleaved
+fastq_reads_noninterleaved
+sra_reads
+genbank_genome
+gff_genome
+gff_metagenome
+expression_matrix
+media
+fba_model
+assembly
+phenotype_set
+sample_set
+metabolic_annotation
+metabolic_annotation_bulk
+escher_map
+decompress
+```
+
+Note that decompress is only returned when no other file type can be detected from the file
+extension.
+
+## File type IDs
+
+These are the currently supported file type IDs. These are primarily useful for apps that take
+two different file types, like GFF/FASTA genomes.
+
+```
+FASTA
+FASTQ
+SRA
+GFF
+GENBANK
+SBML
+JSON
+TSV
+CSV
+EXCEL
+CompressedFileFormatArchive
+```
