@@ -2,7 +2,7 @@
 This class is in charge of determining possible importers by determining the suffix of the filepath pulled in,
 and by looking up the appropriate mappings in the supported_apps_w_extensions.json file
 """
-from typing import Optional
+from typing import Optional, Tuple
 
 
 class AutoDetectUtils:
@@ -10,11 +10,14 @@ class AutoDetectUtils:
     _MAPPINGS = None  # expects to be set by config
 
     @staticmethod
-    def determine_possible_importers(filename: str) -> Optional[list]:
+    def determine_possible_importers(filename: str) -> Tuple[Optional[list], str, str]:
         """
         Given a filename, come up with a reference to all possible apps.
         :param filename: The filename to find applicable apps for
-        :return: A list of mapping references, or None if not found
+        :return: A tuple containing:
+            a list of mapping references, or None if not found
+            the file prefix
+            the file suffix, if a suffix matched a mapping
         """
         dotcount = filename.count(".")
         if dotcount:
@@ -33,7 +36,9 @@ class AutoDetectUtils:
         """
         Given a list of files, get their mappings if they exist
         :param file_list: A list of files
-        :return: return a listing of apps and a listing of extension_mappings for each filename
+        :return: return a listing of apps, a listing of extension_mappings for each filename,
+            and information about each file, currently the file prefix and the suffix used to
+            determine the mappings
         """
         mappings = []
         fileinfo = []
