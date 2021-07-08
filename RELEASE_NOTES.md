@@ -1,5 +1,7 @@
 ### Version 1.1.10
 - added a `file_type` field to the file extension mappings.
+- added a `fileinfo` field to the return of the importer mappings endpoint that includes the
+  file prefix and suffix.
 
 ### Version 1.1.9
 - Added support for Genbank *.gb and *.gbff extensions

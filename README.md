@@ -730,8 +730,12 @@ Error Connecting to auth service ...
 
 ## Get Importer Mappings
 
-This endpoint returns a list of available staging importer apps that have been marked as supported. This endpoint also
-returns a mapping between a list of files and predicted importer app.
+This endpoint returns:
+1) a list of available staging importer apps that have been marked as supported,
+2) a mapping between a list of files and predicted importer app, and
+3) the input file names split between the file prefix and the the file suffix, if any, that was
+   used to determine the file -> importer mapping. If a file has a suffix that does not match
+   any mapping (e.g. `.sys`), the suffix will be `null` and the prefix the entire file name.
 
 For example,
  * if we pass in nothing we get a response with a list of apps, and no mappings
@@ -779,7 +783,11 @@ Response:
 		"title": "decompress/unpack",
 		"app_weight": 1,
 		"file_type": "CompressedFileFormatArchive",
-	}]]
+	}]],
+    "fileinfo": [
+        {"prefix": "file1.txt", "suffix": null},
+        {"prefix": "file", "suffix": "zip"}
+    ]
 }
 ```
 ## Error Response
