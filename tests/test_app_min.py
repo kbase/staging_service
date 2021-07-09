@@ -6,8 +6,6 @@ from aiohttp import test_utils
 
 import gdi.app_min as app
 
-DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), './data/bulk/'))
-
 class AppClient:
     def __init__(self):
         self.server = test_utils.TestServer(app.app_factory())
@@ -26,11 +24,11 @@ async def test_upload():
     testdir = os.path.normpath(os.path.join(os.getcwd(), './temptest/'))
     os.makedirs(testdir, exist_ok=True)
     async with AppClient() as cli:
-        await do_thing(cli, testdir, "test_file_1")
-        await do_thing(cli, testdir, "test_file_2")
+        await _do_thing(cli, testdir, "test_file_1")
+        await _do_thing(cli, testdir, "test_file_2")
 
 
-async def do_thing(cli, testdir, filename):
+async def _do_thing(cli, testdir, filename):
     path = os.path.join(testdir, filename)
     with open(path, encoding="utf-8", mode="w") as f:
         f.write("testtext")
@@ -42,7 +40,6 @@ async def do_thing(cli, testdir, filename):
     )
 
     print(f'\n*** res for {filename} ***')
-    t = await(res.text())
-    print(t)
+    print(await(res.text()))
     print(f"***")
     assert res.status == 200
