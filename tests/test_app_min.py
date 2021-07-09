@@ -4,7 +4,7 @@ import shutil
 
 from aiohttp import test_utils
 
-import staging_service.app_min as app
+import gdi.app_min as app
 
 DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), './data/bulk/'))
 
@@ -51,72 +51,24 @@ class FileUtil:
 
 
 async def test_upload():
-    txt = "testing text\n"
-    username = "testuser"
     async with AppClient() as cli:
 
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            d = fs.make_dir(os.path.join("test"))
+            await do_thing(fs, cli, "test_file_1")
+            await do_thing(fs, cli, "test_file_2")
 
-            files = {"uploads": open(f, "rb")}
+async def do_thing(fs, cli, filename):
+    f = fs.make_file(os.path.join("test", filename), "testtext")
 
-            res2 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
+    files = {"uploads": open(f, "rb")}
 
-            print(res2)
-            assert res2.status == 200
+    res = await cli.post(
+        os.path.join("upload"), headers={"Authorization": ""}, data=files
+    )
 
-            # test upload file with leading .
-            f3 = fs.make_file(os.path.join(username, "test", "test_file_2"), txt)
-
-            files = {"uploads": open(f3, "rb")}
-
-            res4 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
-
-            assert res4.status == 200
-            print('****** res4 *****')
-            print(res4)
-
-            # test upload file with leading space
-            f2 = fs.make_file(os.path.join(username, "test", " test_file_1"), txt)
-
-            files = {"uploads": open(f2, "rb")}
-
-            res3 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
-
-            assert res3.status == 403
-            print('****** res3 *****')
-            print(res3)
-
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
-
-            files = {"uploads": open(f, "rb")}
-
-            res2 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
-
-            assert res2.status == 400
-            print('****** res2 *****')
-            print(res2)
-
-
-            # test upload file with leading .
-            f4 = fs.make_file(os.path.join(username, "test", "test_file_3"), txt)
-
-            files = {"uploads": open(f4, "rb")}
-
-            res5 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
-
-            assert res5.status == 403
-            print('****** res5 *****')
-            print(res5)
-
+    print(f'\n*** res for {filename} ***')
+    t = await(res.text())
+    print(t)
+    print(f"***")
+    assert res.status == 200
