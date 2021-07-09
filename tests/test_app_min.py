@@ -1,6 +1,5 @@
 import asyncio
 import os
-import shutil
 
 from aiohttp import test_utils
 
@@ -33,12 +32,8 @@ async def _do_thing(cli, testdir, filename):
     with open(path, encoding="utf-8", mode="w") as f:
         f.write("testtext")
 
-    files = {"uploads": open(path, "rb")}
-
-    res = await cli.post(
-        os.path.join("upload"), headers={"Authorization": ""}, data=files
-    )
-
+    with open(path, "rb") as f:
+        res = await cli.post("thing", data={"uploads": f})
     print(f'\n*** res for {filename} ***')
     print(await(res.text()))
     print(f"***")

@@ -3,15 +3,10 @@ from aiohttp import web
 routes = web.RouteTableDef()
 
 
-@routes.post("/upload")
-async def upload(request: web.Request):
-    reader = await request.multipart()
-    user_file = await reader.next()
-
-    filename: str = user_file.filename
-    user_file.release()
-    reader.release()
-    return web.json_response({"filename": filename})
+@routes.post("/thing")
+async def thing(request: web.Request):
+    await request.release()
+    return web.json_response({"hey": "there"})
 
 
 def app_factory():
