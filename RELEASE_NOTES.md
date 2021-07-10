@@ -1,5 +1,7 @@
 ### Version 1.1.10
 - added a `file_type` field to the file extension mappings.
+- reverted change to expose dotfiles in the api by default
+- attempting to upload a dotfile will now cause an error
 
 ### Version 1.1.9
 - Added support for Genbank *.gb and *.gbff extensions
