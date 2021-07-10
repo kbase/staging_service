@@ -5,7 +5,7 @@ routes = web.RouteTableDef()
 
 @routes.post("/thing")
 async def thing(request: web.Request):
-    await request.release()
+    # await request.release()
     return web.json_response({"hey": "there"})
 
 

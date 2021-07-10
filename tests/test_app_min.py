@@ -32,6 +32,8 @@ async def _do_thing(cli, testdir, filename):
     with open(path, encoding="utf-8", mode="w") as f:
         f.write("testtext")
 
+    # failure only occurs with file upload & no await request.release() in app
+    # data={"uploads": "stuff"} is ok
     with open(path, "rb") as f:
         res = await cli.post("thing", data={"uploads": f})
     print(f'\n*** res for {filename} ***')
