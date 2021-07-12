@@ -371,6 +371,8 @@ second element in request body should be multipart file data
 
 uploads: {multipart file}
 
+Files starting with whitespace or a '.' are not allowed
+
 ## Success Response
 
 **Code** : `200 OK`

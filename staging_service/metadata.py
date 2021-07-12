@@ -122,7 +122,9 @@ async def dir_info(
     response = []
     for entry in os.scandir(path.full_path):
         specific_path = Path.from_full_path(entry.path)
-        if not show_hidden and ".globus_id" in entry.name:
+        # maybe should never show the special .globus_id file ever?
+        # or moving it somewhere outside the user directory would be better
+        if not show_hidden and entry.name.startswith('.'):
             continue
         if entry.is_dir():
             if query == "" or specific_path.user_path.find(query) != -1:
