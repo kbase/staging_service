@@ -274,8 +274,14 @@ async def upload_files_chunked(request: web.Request):
 
     filename: str = user_file.filename
     if filename.lstrip() != filename:
-        raise web.HTTPForbidden(
+        raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
             text="cannot upload file with name beginning with space"
+        )
+    # may want to make this configurable if we ever decide to add a hidden files toggle to
+    # the staging area UI
+    if filename.startswith("."):
+        raise web.HTTPForbidden(  # for consistency we use 403 again
+            text="cannot upload file with name beginning with '.'"
         )
 
     size = 0

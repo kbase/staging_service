@@ -7,9 +7,10 @@ import string
 import time
 from json import JSONDecoder
 from urllib.parse import urlencode,unquote
+from io import BytesIO
 
 
-from aiohttp import test_utils
+from aiohttp import test_utils, FormData
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -611,9 +612,9 @@ async def test_list():
             file_names = [
                 file_json["name"] for file_json in json if not file_json["isFolder"]
             ]
-            assert ".test_file_1" in file_names
+            assert ".test_file_1" not in file_names
             assert ".globus_id" not in file_names
-            assert len(file_names) == 3
+            assert len(file_names) == 2
 
             # testing list showHidden option
             res7 = await cli.get(
@@ -798,7 +799,7 @@ async def test_upload():
     txt = "testing text\n"
     username = "testuser"
     async with AppClient(config, username) as cli:
-        # tesging missing body
+        # testing missing body
         res1 = await cli.post("upload", headers={"Authorization": ""})
         assert res1.status == 400
 
@@ -824,6 +825,24 @@ async def test_upload():
             )
 
             assert res3.status == 403
+            assert await res3.text() == "cannot upload file with name beginning with space"
+
+
+async def test_upload_fail_dotfile():
+    # this test is split from the prior test because two file uploads in a row causes a test error:
+    # https://github.com/aio-libs/aiohttp/issues/3968
+    async with AppClient(config, "fake") as cli:
+
+        formdata = FormData()
+        formdata.add_field("destPath", "/")
+        formdata.add_field("uploads", BytesIO(b"sometext"), filename=".test_file")
+
+        res = await cli.post(
+            os.path.join("upload"), headers={"Authorization": ""}, data=formdata
+        )
+
+        assert await res.text() == "cannot upload file with name beginning with '.'"
+        assert res.status == 403
 
 
 @settings(deadline=None)
