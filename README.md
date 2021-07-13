@@ -763,7 +763,7 @@ For example,
 **Content example**
 
 ```
-data = {"file_list": ["file1.txt", "file.zip"]}
+data = {"file_list": ["file1.txt", "file2.zip", "file3.gff3.gz"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
             "importer_mappings/", data=data
@@ -772,23 +772,40 @@ data = {"file_list": ["file1.txt", "file.zip"]}
 Response:
 ```
 {
-	"apps": {
-		"decompress/unpack": {
-			"title": "Decompress/Unpack",
-			"app": "kb_uploadmethods/unpack_staging_file",
-			"output_type": [null],
-			"extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
-			"id": "decompress"
-		},
-	"mappings": [null, [{
-		"id": "decompress",
-		"title": "decompress/unpack",
-		"app_weight": 1,
-		"file_type": "CompressedFileFormatArchive",
-	}]],
+    "apps": {
+        "decompress/unpack": {
+            "title": "Decompress/Unpack",
+            "app": "kb_uploadmethods/unpack_staging_file",
+            "output_type": [null],
+            "extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
+            "id": "decompress"
+        }
+        *snip*
+    },
+    "mappings": [
+        null,
+        [{
+            "id": "decompress",
+            "title": "decompress/unpack",
+            "app_weight": 1,
+            "file_type": "CompressedFileFormatArchive",
+        }],
+        [{
+            'app_weight': 1,
+            'id': 'gff_genome',
+            'title': 'GFF/FASTA Genome',
+            'file_type': ['GFF']},
+         {
+            'app_weight': 1,
+            'id': 'gff_metagenome',
+            'title': 'GFF/FASTA MetaGenome',
+            'file_type': ['GFF']
+        }]
+    ],
     "fileinfo": [
         {"prefix": "file1.txt", "suffix": null},
-        {"prefix": "file", "suffix": "zip"}
+        {"prefix": "file2", "suffix": "zip"},
+        {"prefix": "file3", "suffix": "gff3.gz"}
     ]
 }
 ```
