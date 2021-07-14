@@ -734,7 +734,7 @@ Error Connecting to auth service ...
 
 This endpoint returns:
 1) a mapping between a list of files and predicted importer apps, and
-1) the input file names split between the file prefix and the the file suffix, if any, that was
+2) the input file names split between the file prefix and the the file suffix, if any, that was
    used to determine the file -> importer mapping. If a file has a suffix that does not match
    any mapping (e.g. `.sys`), the suffix will be `null` and the prefix the entire file name.
 

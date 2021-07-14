@@ -15,7 +15,7 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
-VERSION = "1.1.10"
+VERSION = "1.2.0"
 
 
 @routes.get("/importer_mappings/{query:.*}")
