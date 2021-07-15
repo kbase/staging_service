@@ -46,7 +46,7 @@ class AutoDetectUtils:
         :param file_list: A list of files
         :return: return a listing of apps, a listing of extension_mappings for each filename,
             and information about each file, currently the file prefix and the suffix used to
-            determine the mappings
+            determine the mappings and a list of file types.
         """
         mappings = []
         fileinfo = []
