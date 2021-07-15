@@ -1,4 +1,149 @@
 {
+  "app_to_ext": {
+    "sra_reads": [
+      "sra"
+    ],
+    "fastq_reads_interleaved": [
+      "fq",
+      "fq.gz",
+      "fq.gzip",
+      "fastq",
+      "fastq.gz",
+      "fastq.gzip"
+    ],
+    "fastq_reads_noninterleaved": [
+      "fq",
+      "fq.gz",
+      "fq.gzip",
+      "fastq",
+      "fastq.gz",
+      "fastq.gzip"
+    ],
+    "assembly": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip"
+    ],
+    "gff_genome": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip",
+      "gff",
+      "gff.gz",
+      "gff.gzip",
+      "gff2",
+      "gff2.gz",
+      "gff2.gzip",
+      "gff3",
+      "gff3.gz",
+      "gff3.gzip"
+    ],
+    "gff_metagenome": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip",
+      "gff",
+      "gff.gz",
+      "gff.gzip",
+      "gff2",
+      "gff2.gz",
+      "gff2.gzip",
+      "gff3",
+      "gff3.gz",
+      "gff3.gzip"
+    ],
+    "genbank_genome": [
+      "gb",
+      "gb.gz",
+      "gb.gzip",
+      "gbff",
+      "gbff.gz",
+      "gbff.gzip",
+      "gbk",
+      "gbk.gz",
+      "gbk.gzip",
+      "genbank",
+      "genbank.gz",
+      "genbank.gzip"
+    ],
+    "decompress": [
+      "zip",
+      "tar",
+      "tgz",
+      "tar.gz",
+      "7z",
+      "gz",
+      "gzip",
+      "rar"
+    ],
+    "sample_set": [
+      "csv",
+      "xls",
+      "xlsx"
+    ],
+    "media": [
+      "tsv",
+      "xls",
+      "xlsx"
+    ],
+    "expression_matrix": [
+      "tsv"
+    ],
+    "metabolic_annotation": [
+      "tsv"
+    ],
+    "metabolic_annotation_bulk": [
+      "tsv"
+    ],
+    "fba_model": [
+      "tsv",
+      "xls",
+      "xlsx",
+      "smbl"
+    ],
+    "phenotype_set": [
+      "tsv"
+    ],
+    "escher_map": [
+      "json"
+    ]
+  },
   "types": {
     "sra": [
       {

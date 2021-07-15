@@ -106,6 +106,10 @@ if __name__ == "__main__":
     import json
 
     print("About to generate supported apps with extensions")
-    data = {"types": extensions_mapping}
+    data = {
+        # this is currently unused by the code base, but we include it to make it easy to
+        # see what file extensions are registered for each app
+        "app_to_ext": app_id_to_extensions,
+        "types": extensions_mapping}
     with open("supported_apps_w_extensions.json", "w") as f:
         json.dump(obj=data, fp=f, indent=2)
