@@ -40,7 +40,7 @@ in the docker container all of these should be available
 
 all paths should be specified treating the user's home directory as root
 
-### Test Service
+## Test Service
 
 **URL** : `ci.kbase.us/services/staging_service/test-service`
 
@@ -48,7 +48,7 @@ all paths should be specified treating the user's home directory as root
 
 **Method** : `GET`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -57,7 +57,7 @@ all paths should be specified treating the user's home directory as root
 ```
 This is just a test. This is only a test.
 ```
-### Test Auth
+## Test Auth
 
 **URL** : `ci.kbase.us/services/staging_service/test-auth`
 
@@ -67,7 +67,7 @@ This is just a test. This is only a test.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -77,7 +77,7 @@ This is just a test. This is only a test.
 I'm authenticated as <username>
 ```
 
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -94,13 +94,13 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### File Lifetime
+## File Lifetime
 **URL** : `ci.kbase.us/services/staging_service/file-lifetime`
 **local URL** : `localhost:3000/file-lifetime`
 
 **Method** : `GET`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -112,7 +112,7 @@ this is not actually handled by the server but is expected to be performed by a 
 90
 ```
 
-### List Directory
+## List Directory
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/list/{path to directory}`
@@ -127,7 +127,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -151,7 +151,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -175,7 +175,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Download file
+## Download file
 
 **URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
 
@@ -189,12 +189,12 @@ path <username>/<incorrect path> does not exist
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 **Content** : `<file content>`
 
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -225,7 +225,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Search files and folders
+## Search files and folders
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/search/{search query}`
@@ -240,7 +240,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -271,7 +271,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -288,7 +288,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### File and Folder Metadata
+## File and Folder Metadata
 
 **URL** : `ci.kbase.us/services/staging_service/metadata/{path to file or folder}`
 
@@ -298,7 +298,7 @@ Must supply token
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -327,7 +327,7 @@ Must supply token
     "isFolder": false
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -351,7 +351,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Upload File
+## Upload File
 
 **URL** : `ci.kbase.us/services/staging_service/upload`
 
@@ -373,7 +373,7 @@ uploads: {multipart file}
 
 Files starting with whitespace or a '.' are not allowed
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -390,7 +390,7 @@ Files starting with whitespace or a '.' are not allowed
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -407,7 +407,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### Define/Create UPA for file which has been imported
+## Define/Create UPA for file which has been imported
 
 **URL** : `ci.kbase.us/services/staging_service/define-upa/{path to imported file}`
 
@@ -423,7 +423,7 @@ first element in request body should be
 
 UPA: {the actual UPA of imported file}
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -432,7 +432,7 @@ UPA: {the actual UPA of imported file}
 ```
 successfully update UPA <UPA> for file <Path>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -457,7 +457,7 @@ must provide UPA field in body
 ```
 
 
-### Delete file or folder (will delete things contained in folder)
+## Delete file or folder (will delete things contained in folder)
 
 **URL** : `ci.kbase.us/services/staging_service/delete/{path to file or folder}`
 
@@ -467,7 +467,7 @@ must provide UPA field in body
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -476,7 +476,7 @@ must provide UPA field in body
 ```
 successfully deleted UPA <Path>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -510,7 +510,7 @@ cannot delete home directory
 cannot delete protected file
 ```
 
-### Move/rename a file or folder
+## Move/rename a file or folder
 
 **URL** : `ci.kbase.us/services/staging_service/mv/{path to file or folder}`
 
@@ -526,7 +526,7 @@ first element in request body should be
 
 newPath : {the new location/name for file or folder}
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -535,7 +535,7 @@ newPath : {the new location/name for file or folder}
 ```
 successfully moved <path> to <newPath>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -575,7 +575,7 @@ cannot rename or move protected file
 <newPath> allready exists
 ```
 
-### Decompress various archive formats
+## Decompress various archive formats
 supported archive formats are:
 .zip, .ZIP, .tar.gz, .tgz, .tar.bz, .tar.bz2, .tar, .gz, .bz2, .bzip2
 **URL** : `ci.kbase.us/services/staging_service/decompress/{path to archive`
@@ -586,7 +586,7 @@ supported archive formats are:
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -595,7 +595,7 @@ supported archive formats are:
 ```
 successfully decompressed <path to archive>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -620,7 +620,7 @@ cannot decompress a <file extension> file
 ```
 
 
-### Add Globus ACL
+## Add Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -633,7 +633,7 @@ linking to globus.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -647,7 +647,7 @@ linking to globus.
     "permissions": "rw"
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -675,7 +675,7 @@ Error Connecting to auth service ...
 
 
 
-### Remove Globus ACL
+## Remove Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -688,7 +688,7 @@ linking to globus.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -702,7 +702,7 @@ linking to globus.
     "Success": true
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -726,9 +726,6 @@ Error Connecting to auth service ...
     'error_code': 'Exists', 'shared_directory_basename': '/username/'
 }
 ```
-
-
-
 
 ## Get Importer Mappings
 
@@ -754,7 +751,7 @@ For example,
 
 **Headers** : Not Required
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -798,7 +795,7 @@ Response:
     ]
 }
 ```
-## Error Response
+### Error Response
 **Code** : `400 Bad Request`
 
 **Content**

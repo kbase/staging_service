@@ -495,16 +495,6 @@ def inject_config_dependencies(config):
         with open(FILE_EXTENSION_MAPPINGS) as f:
             AutoDetectUtils._MAPPINGS = json.load(f)
 
-    pprint(
-        [
-            "Setting META_DIR, DATA_DIR , CONCIERGE_PATH, FILE_EXTENSION_MAPPINGS, to",
-            DATA_DIR,
-            META_DIR,
-            CONCIERGE_PATH,
-            FILE_EXTENSION_MAPPINGS,
-        ]
-    )
-
 
 def app_factory(config):
     app = web.Application()
