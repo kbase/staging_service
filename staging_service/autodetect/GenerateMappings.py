@@ -29,6 +29,26 @@ from staging_service.autodetect.Mappings import *
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
+app_id_to_title = {
+    sra_reads_id: "SRA Reads",
+    fastq_reads_interleaved_id: "FastQ Reads Interleaved",
+    fastq_reads_noninterleaved_id: "FastQ Reads NonInterleaved",
+    assembly_id: "Assembly",
+    gff_genome_id: "GFF/FASTA Genome",
+    gff_metagenome_id: "GFF/FASTA MetaGenome",
+    genbank_genome_id: "Genbank Genome",
+    decompress_id: "Decompress/Unpack",
+    sample_set_id: "Samples",
+    media_id: "Media",
+    expression_matrix_id: "Expression Matrix",
+    metabolic_annotations_id: "Metabolic Annotations",
+    metabolic_annotations_bulk_id: "Bulk Metabolic Annotations",
+    fba_model_id: "FBA Model",
+    phenotype_set_id: "Phenotype Set",
+    escher_map_id: "EscherMap",
+}
+
+
 file_format_to_app_mapping = {}
 
 file_format_to_app_mapping[SRA] = [sra_reads_id]
@@ -72,6 +92,7 @@ for app_id in app_id_to_extensions:
         extensions_mapping[extension].append(
             {
                 "id": app_id,
+                "title": app_id_to_title[app_id],
                 "app_weight": perfect_match_weight,
                 # make a list to allow for expansion in the future - for example it could
                 # include whether reads are forward or reverse if we get smarter about name

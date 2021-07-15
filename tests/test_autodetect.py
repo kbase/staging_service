@@ -80,6 +80,7 @@ def test_specific_filenames():
             [{
                 'app_weight': 1,
                 'id': 'decompress',
+                'title': 'Decompress/Unpack',
                 'file_type': ['CompressedFileFormatArchive'],
             }],
             "file",
@@ -90,6 +91,7 @@ def test_specific_filenames():
             [{
                 'app_weight': 1,
                 'id': 'decompress',
+                'title': 'Decompress/Unpack',
                 'file_type': ['CompressedFileFormatArchive'],
             }],
             "file.name",
@@ -100,14 +102,17 @@ def test_specific_filenames():
             [
                 {'app_weight': 1,
                  'id': 'assembly',
+                 'title': 'Assembly',
                  'file_type': ['FASTA']
                 },
                 {'app_weight': 1,
                  'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
                  'file_type': ['FASTA']
                 },
                 {'app_weight': 1,
                  'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
                  'file_type': ['FASTA']
                 }
             ],
@@ -119,9 +124,11 @@ def test_specific_filenames():
             [
                 {'app_weight': 1,
                  'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
                  'file_type': ['GFF']},
                 {'app_weight': 1,
                  'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
                  'file_type': ['GFF']
                 }
             ],
@@ -143,7 +150,11 @@ def test_sra_mappings():
     sra_file = "test.sra"
     possible_importers, prefix, suffix = AutoDetectUtils.determine_possible_importers(
         filename=sra_file)
-    assert possible_importers == [{'id': 'sra_reads', 'app_weight': 1, 'file_type': ['SRA']}]
+    assert possible_importers == [{
+        'id': 'sra_reads',
+        'app_weight': 1,
+        'title': 'SRA Reads',
+        'file_type': ['SRA']}]
     assert prefix == "test"
     assert suffix == "sra"
 
@@ -159,6 +170,7 @@ def test_zip_mappings():
     assert possible_importers == [{
         'id': 'decompress',
         'app_weight': 1,
+        'title': 'Decompress/Unpack',
         'file_type': ['CompressedFileFormatArchive']
     }]
     assert prefix == "test"
@@ -176,14 +188,17 @@ def test_get_mappings():
             [{
                 'app_weight': 1,
                 'id': 'decompress',
+                'title': 'Decompress/Unpack',
                 'file_type': ['CompressedFileFormatArchive'],
             }],
             [
                 {'app_weight': 1,
                  'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
                  'file_type': ['GFF']},
                 {'app_weight': 1,
                  'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
                  'file_type': ['GFF']
                 }
             ],

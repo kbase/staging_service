@@ -774,17 +774,20 @@ Response:
         null,
         [{
             "id": "decompress",
+            "title": "decompress/unpack",
             "app_weight": 1,
             "file_type": "CompressedFileFormatArchive",
         }],
         [{
             'app_weight': 1,
             'id': 'gff_genome',
+            'title': 'GFF/FASTA Genome',
             'file_type': ['GFF']
           },
          {
             'app_weight': 1,
             'id': 'gff_metagenome',
+            'title': 'GFF/FASTA MetaGenome',
             'file_type': ['GFF']
         }]
     ],
