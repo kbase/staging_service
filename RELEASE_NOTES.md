@@ -1,4 +1,5 @@
-### Version 1.1.10
+### Version 1.2.0
+- BACKWARDS INCOMPATIBILITY: remove the unused `apps` key from the importer mappings endpoint.
 - added a `file_type` field to the file extension mappings.
 - added a `fileinfo` field to the return of the importer mappings endpoint that includes the
   file prefix and suffix.

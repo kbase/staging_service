@@ -730,19 +730,17 @@ Error Connecting to auth service ...
 ## Get Importer Mappings
 
 This endpoint returns:
-1) a list of available staging importer apps that have been marked as supported,
-2) a mapping between a list of files and predicted importer app, and
-3) the input file names split between the file prefix and the the file suffix, if any, that was
+1) a mapping between a list of files and predicted importer apps, and
+2) the input file names split between the file prefix and the the file suffix, if any, that was
    used to determine the file -> importer mapping. If a file has a suffix that does not match
    any mapping (e.g. `.sys`), the suffix will be `null` and the prefix the entire file name.
 
 For example,
- * if we pass in nothing we get a response with a list of apps, and no mappings
+ * if we pass in nothing we get a response with no mappings
  * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a response
  that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
  which represents the probability that this is the correct importer for you.
  * for files for which there is no predicted app, the return is a null value
- * output type is not currently used for anything
  * this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
 **URL** : `ci.kbase.us/services/staging_service/importer_mappings`
@@ -769,16 +767,6 @@ data = {"file_list": ["file1.txt", "file2.zip", "file3.gff3.gz"]}
 Response:
 ```
 {
-    "apps": {
-        "decompress/unpack": {
-            "title": "Decompress/Unpack",
-            "app": "kb_uploadmethods/unpack_staging_file",
-            "output_type": [null],
-            "extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
-            "id": "decompress"
-        }
-        *snip*
-    },
     "mappings": [
         null,
         [{
@@ -791,7 +779,8 @@ Response:
             'app_weight': 1,
             'id': 'gff_genome',
             'title': 'GFF/FASTA Genome',
-            'file_type': ['GFF']},
+            'file_type': ['GFF']
+          },
          {
             'app_weight': 1,
             'id': 'gff_metagenome',

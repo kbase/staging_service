@@ -1,295 +1,148 @@
 {
-  "apps": {
-    "SRA Reads": {
-      "title": "SRA Reads",
-      "app": "kb_uploadmethods/import_sra_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": "sra_reads",
-      "extensions": [
-        "sra"
-      ],
-      "_id": 0
-    },
-    "FastQ Reads Interleaved": {
-      "title": "FastQ Reads Interleaved",
-      "app": "kb_uploadmethods/import_fastq_interleaved_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": "fastq_reads_interleaved",
-      "extensions": [
-        "fq",
-        "fq.gz",
-        "fq.gzip",
-        "fastq",
-        "fastq.gz",
-        "fastq.gzip"
-      ],
-      "_id": 1
-    },
-    "FastQ Reads NonInterleaved": {
-      "title": "FastQ Reads NonInterleaved",
-      "app": "kb_uploadmethods/import_fastq_noninterleaved_as_reads_from_staging",
-      "output_type": [
-        "KBaseFile.SingleEndLibrary",
-        "KBaseFile.PairedEndLibrary"
-      ],
-      "id": "fastq_reads_noninterleaved",
-      "extensions": [
-        "fq",
-        "fq.gz",
-        "fq.gzip",
-        "fastq",
-        "fastq.gz",
-        "fastq.gzip"
-      ],
-      "_id": 2
-    },
-    "Assembly": {
-      "title": "Assembly",
-      "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-      "output_type": [
-        "KBaseGenomeAnnotations.Assembly"
-      ],
-      "id": "assembly",
-      "extensions": [
-        "fna",
-        "fna.gz",
-        "fna.gzip",
-        "fa",
-        "fa.gz",
-        "fa.gzip",
-        "faa",
-        "faa.gz",
-        "faa.gzip",
-        "fsa",
-        "fsa.gz",
-        "fsa.gzip",
-        "fasta",
-        "fasta.gz",
-        "fasta.gzip"
-      ],
-      "_id": 3
-    },
-    "GFF/FASTA Genome": {
-      "title": "GFF/FASTA Genome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": "gff_genome",
-      "extensions": [
-        "fna",
-        "fna.gz",
-        "fna.gzip",
-        "fa",
-        "fa.gz",
-        "fa.gzip",
-        "faa",
-        "faa.gz",
-        "faa.gzip",
-        "fsa",
-        "fsa.gz",
-        "fsa.gzip",
-        "fasta",
-        "fasta.gz",
-        "fasta.gzip",
-        "gff",
-        "gff.gz",
-        "gff.gzip",
-        "gff2",
-        "gff2.gz",
-        "gff2.gzip",
-        "gff3",
-        "gff3.gz",
-        "gff3.gzip"
-      ],
-      "_id": 4
-    },
-    "GFF/FASTA MetaGenome": {
-      "title": "GFF/FASTA MetaGenome",
-      "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-      "output_type": [
-        "KBaseMetagenomes.AnnotatedMetagenomeAssembly"
-      ],
-      "id": "gff_metagenome",
-      "extensions": [
-        "fna",
-        "fna.gz",
-        "fna.gzip",
-        "fa",
-        "fa.gz",
-        "fa.gzip",
-        "faa",
-        "faa.gz",
-        "faa.gzip",
-        "fsa",
-        "fsa.gz",
-        "fsa.gzip",
-        "fasta",
-        "fasta.gz",
-        "fasta.gzip",
-        "gff",
-        "gff.gz",
-        "gff.gzip",
-        "gff2",
-        "gff2.gz",
-        "gff2.gzip",
-        "gff3",
-        "gff3.gz",
-        "gff3.gzip"
-      ],
-      "_id": 5
-    },
-    "Genbank Genome": {
-      "title": "Genbank Genome",
-      "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": "genbank_genome",
-      "extensions": [
-        "gb",
-        "gb.gz",
-        "gb.gzip",
-        "gbff",
-        "gbff.gz",
-        "gbff.gzip",
-        "gbk",
-        "gbk.gz",
-        "gbk.gzip",
-        "genbank",
-        "genbank.gz",
-        "genbank.gzip"
-      ],
-      "_id": 6
-    },
-    "Decompress/Unpack": {
-      "title": "Decompress/Unpack",
-      "app": "kb_uploadmethods/unpack_staging_file",
-      "output_type": [
-        null
-      ],
-      "id": "decompress",
-      "extensions": [
-        "zip",
-        "tar",
-        "tgz",
-        "tar.gz",
-        "7z",
-        "gz",
-        "gzip",
-        "rar"
-      ],
-      "_id": 7
-    },
-    "Samples": {
-      "id": "sample_set",
-      "title": "Samples",
-      "app": "sample_uploader/import_samples",
-      "output_type": [
-        "KBaseSets.SampleSet"
-      ],
-      "extensions": [
-        "csv",
-        "xls",
-        "xlsx"
-      ],
-      "_id": 8
-    },
-    "Media": {
-      "title": "Media",
-      "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
-      "output_type": [
-        "KBaseBiochem.Media"
-      ],
-      "id": "media",
-      "extensions": [
-        "tsv",
-        "xls",
-        "xlsx"
-      ],
-      "_id": 9
-    },
-    "Expression Matrix": {
-      "title": "Expression Matrix",
-      "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
-      "output_type": [
-        "KBaseFeatureValues.ExpressionMatrix"
-      ],
-      "id": "expression_matrix",
-      "extensions": [
-        "tsv"
-      ],
-      "_id": 10
-    },
-    "Metabolic Annotations": {
-      "title": "Metabolic Annotations",
-      "app": "MergeMetabolicAnnotations/import_annotations",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": "metabolic_annotation",
-      "extensions": [
-        "tsv"
-      ],
-      "_id": 11
-    },
-    "Bulk Metabolic Annotations": {
-      "title": "Bulk Metabolic Annotations",
-      "app": "MergeMetabolicAnnotations/import_bulk_annotations",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "id": "metabolic_annotation_bulk",
-      "extensions": [
-        "tsv"
-      ],
-      "_id": 12
-    },
-    "FBA Model": {
-      "title": "FBA Model",
-      "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-      "output_type": [
-        "KBaseFBA.FBAModel"
-      ],
-      "id": "fba_model",
-      "extensions": [
-        "tsv",
-        "xls",
-        "xlsx",
-        "smbl"
-      ],
-      "_id": 13
-    },
-    "Phenotype Set": {
-      "title": "Phenotype Set",
-      "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
-      "output_type": [
-        "KBasePhenotypes.PhenotypeSet"
-      ],
-      "id": "phenotype_set",
-      "extensions": [
-        "tsv"
-      ],
-      "_id": 14
-    },
-    "EscherMap": {
-      "title": "EscherMap",
-      "app": "kb_uploadmethods/import_eschermap_from_staging",
-      "output_type": [
-        "KBaseFBA.EscherMap"
-      ],
-      "id": "escher_map",
-      "extensions": [
-        "json"
-      ],
-      "_id": 15
-    }
+  "app_to_ext": {
+    "sra_reads": [
+      "sra"
+    ],
+    "fastq_reads_interleaved": [
+      "fq",
+      "fq.gz",
+      "fq.gzip",
+      "fastq",
+      "fastq.gz",
+      "fastq.gzip"
+    ],
+    "fastq_reads_noninterleaved": [
+      "fq",
+      "fq.gz",
+      "fq.gzip",
+      "fastq",
+      "fastq.gz",
+      "fastq.gzip"
+    ],
+    "assembly": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip"
+    ],
+    "gff_genome": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip",
+      "gff",
+      "gff.gz",
+      "gff.gzip",
+      "gff2",
+      "gff2.gz",
+      "gff2.gzip",
+      "gff3",
+      "gff3.gz",
+      "gff3.gzip"
+    ],
+    "gff_metagenome": [
+      "fna",
+      "fna.gz",
+      "fna.gzip",
+      "fa",
+      "fa.gz",
+      "fa.gzip",
+      "faa",
+      "faa.gz",
+      "faa.gzip",
+      "fsa",
+      "fsa.gz",
+      "fsa.gzip",
+      "fasta",
+      "fasta.gz",
+      "fasta.gzip",
+      "gff",
+      "gff.gz",
+      "gff.gzip",
+      "gff2",
+      "gff2.gz",
+      "gff2.gzip",
+      "gff3",
+      "gff3.gz",
+      "gff3.gzip"
+    ],
+    "genbank_genome": [
+      "gb",
+      "gb.gz",
+      "gb.gzip",
+      "gbff",
+      "gbff.gz",
+      "gbff.gzip",
+      "gbk",
+      "gbk.gz",
+      "gbk.gzip",
+      "genbank",
+      "genbank.gz",
+      "genbank.gzip"
+    ],
+    "decompress": [
+      "zip",
+      "tar",
+      "tgz",
+      "tar.gz",
+      "7z",
+      "gz",
+      "gzip",
+      "rar"
+    ],
+    "sample_set": [
+      "csv",
+      "xls",
+      "xlsx"
+    ],
+    "media": [
+      "tsv",
+      "xls",
+      "xlsx"
+    ],
+    "expression_matrix": [
+      "tsv"
+    ],
+    "metabolic_annotation": [
+      "tsv"
+    ],
+    "metabolic_annotation_bulk": [
+      "tsv"
+    ],
+    "fba_model": [
+      "tsv",
+      "xls",
+      "xlsx",
+      "smbl"
+    ],
+    "phenotype_set": [
+      "tsv"
+    ],
+    "escher_map": [
+      "json"
+    ]
   },
   "types": {
     "sra": [

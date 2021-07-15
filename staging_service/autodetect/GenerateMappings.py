@@ -6,7 +6,6 @@ for the staging service endpoint .
 
 ================================
 # In Scope Importer Apps
-* Note: FastQ Interleaved/Uninterleaved custom UIs not yet implemented
 * Note: MergeMetabolicAnnotations and PredictPhenotypes also require an object in addition to a file
 
 ================================
@@ -23,98 +22,32 @@ Functionality: Running this script will
 * Note: We should serve the generated content from memory
 * Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
-import copy
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 from staging_service.autodetect.Mappings import *
 
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
-apps = {
-    sra_reads_id: {
-        "title": "SRA Reads",
-        "app": "kb_uploadmethods/import_sra_as_reads_from_staging",
-        "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
-    },
-    fastq_reads_interleaved_id: {
-        "title": "FastQ Reads Interleaved",
-        "app": "kb_uploadmethods/import_fastq_interleaved_as_reads_from_staging",
-        "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
-    },
-    fastq_reads_noninterleaved_id: {
-        "title": "FastQ Reads NonInterleaved",
-        "app": "kb_uploadmethods/import_fastq_noninterleaved_as_reads_from_staging",
-        "output_type": ["KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"],
-    },
-    assembly_id: {
-        "title": "Assembly",
-        "app": "kb_uploadmethods/import_fasta_as_assembly_from_staging",
-        "output_type": ["KBaseGenomeAnnotations.Assembly"],
-    },
-    gff_genome_id: {
-        "title": "GFF/FASTA Genome",
-        "app": "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-        "output_type": ["KBaseGenomes.Genome"],
-    },
-    gff_metagenome_id: {
-        "title": "GFF/FASTA MetaGenome",
-        "app": "kb_uploadmethods/import_gff_fasta_as_metagenome_from_staging",
-        "output_type": ["KBaseMetagenomes.AnnotatedMetagenomeAssembly"],
-    },
-    genbank_genome_id: {
-        "title": "Genbank Genome",
-        "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
-        "output_type": ["KBaseGenomes.Genome"],
-    },
-    decompress_id: {
-        "title": "Decompress/Unpack",
-        "app": "kb_uploadmethods/unpack_staging_file",
-        "output_type": [None],
-    },
-    sample_set_id: {
-        "id": sample_set_id,
-        "title": "Samples",
-        "app": "sample_uploader/import_samples",
-        "output_type": ["KBaseSets.SampleSet"],
-    },
-    media_id: {
-        "title": "Media",
-        "app": "kb_uploadmethods/import_tsv_excel_as_media_from_staging",
-        "output_type": ["KBaseBiochem.Media"],
-    },
-    expression_matrix_id: {
-        "title": "Expression Matrix",
-        "app": "kb_uploadmethods/import_tsv_as_expression_matrix_from_staging",
-        "output_type": ["KBaseFeatureValues.ExpressionMatrix"],
-    },
-    metabolic_annotations_id: {
-        "title": "Metabolic Annotations",
-        "app": "MergeMetabolicAnnotations/import_annotations",
-        "output_type": ["KBaseGenomes.Genome"],
-    },
-    metabolic_annotations_bulk_id: {
-        "title": "Bulk Metabolic Annotations",
-        "app": "MergeMetabolicAnnotations/import_bulk_annotations",
-        "output_type": ["KBaseGenomes.Genome"],
-    },
-    fba_model_id: {
-        "title": "FBA Model",
-        "app": "kb_uploadmethods/import_file_as_fba_model_from_staging",
-        "output_type": ["KBaseFBA.FBAModel"],
-    },
-    phenotype_set_id: {
-        "title": "Phenotype Set",
-        "app": "kb_uploadmethods/import_tsv_as_phenotype_set_from_staging",
-        "output_type": ["KBasePhenotypes.PhenotypeSet"],
-    },
-    escher_map_id: {
-        "title": "EscherMap",
-        "app": "kb_uploadmethods/import_eschermap_from_staging",
-        "output_type": ["KBaseFBA.EscherMap"],
-    },
-
+app_id_to_title = {
+    sra_reads_id: "SRA Reads",
+    fastq_reads_interleaved_id: "FastQ Reads Interleaved",
+    fastq_reads_noninterleaved_id: "FastQ Reads NonInterleaved",
+    assembly_id: "Assembly",
+    gff_genome_id: "GFF/FASTA Genome",
+    gff_metagenome_id: "GFF/FASTA MetaGenome",
+    genbank_genome_id: "Genbank Genome",
+    decompress_id: "Decompress/Unpack",
+    sample_set_id: "Samples",
+    media_id: "Media",
+    expression_matrix_id: "Expression Matrix",
+    metabolic_annotations_id: "Metabolic Annotations",
+    metabolic_annotations_bulk_id: "Bulk Metabolic Annotations",
+    fba_model_id: "FBA Model",
+    phenotype_set_id: "Phenotype Set",
+    escher_map_id: "EscherMap",
 }
+
 
 file_format_to_app_mapping = {}
 
@@ -131,61 +64,12 @@ file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id]
 file_format_to_app_mapping[JSON] = [escher_map_id]
 file_format_to_app_mapping[SBML] = [fba_model_id]
 
-"""
-This turns an app from this
+app_id_to_extensions = defaultdict(list)
+for filecat, apps in file_format_to_app_mapping.items():
+    for app_id in apps:
+        app_id_to_extensions[app_id].extend(file_format_to_extension_mapping[filecat])
 
-      "title": "Genbank Genome",
-      "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-
-to
-
-
- "Genbank Genome": {
-      "title": "Genbank Genome",
-      "app": "kb_uploadmethods/import_genbank_as_genome_from_staging",
-      "output_type": [
-        "KBaseGenomes.Genome"
-      ],
-      "extensions": [
-        "gbk",
-        "genbank"
-      ],
-      "id": "genbank"
-    },
-
-"""
-
-"""
-For each category in mapping (current SMBl/JSON/FASTQ/FASTA/ etc), get an "App"
-Create the app in a list of  using the title as the primary hashing key
-Add a list of extensions, such as .fa, fasta
-Add a unique id, such as 1,2,3
-"""
-
-new_apps = OrderedDict()
-counter = 0
-for category in file_format_to_app_mapping:
-    for app_id in file_format_to_app_mapping[category]:
-        app = apps[app_id]
-        # print("looking at", app)
-        title = app["title"]
-
-        if title not in new_apps:
-            new_app = copy.copy(app)
-            # Create a new entry for extensions and id in the app
-            new_app["id"] = app_id
-            new_app["extensions"] = []
-            new_app["_id"] = counter
-            counter += 1
-            new_apps[title] = new_app
-        # Then for the current app we are looking at,
-        # add appropriate file extensions
-        new_apps[title]["extensions"].extend(file_format_to_extension_mapping[category])
-
-# Then create the mapping between file extensions and apps
+# Create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of "genbank_genome"
 # so the mapping would look like
 # mapping['gbk'] =
@@ -193,7 +77,6 @@ for category in file_format_to_app_mapping:
     "gbk": [
       {
         "id": "genbank_genome",
-        "title": "genbank_genome",
         "app_weight": 1
       }
     ],
@@ -202,18 +85,14 @@ for category in file_format_to_app_mapping:
 # with "genbank_genome" being the id of the matched app
 # and 1 being a perfect weight score of 100%
 extensions_mapping = defaultdict(list)
-for app_title in new_apps:
-
-    app = new_apps[app_title]
-    app_id = app["id"]
-    extensions = app["extensions"]
+for app_id in app_id_to_extensions:
 
     perfect_match_weight = 1
-    for extension in extensions:
+    for extension in app_id_to_extensions[app_id]:
         extensions_mapping[extension].append(
             {
                 "id": app_id,
-                "title": app_title,
+                "title": app_id_to_title[app_id],
                 "app_weight": perfect_match_weight,
                 # make a list to allow for expansion in the future - for example it could
                 # include whether reads are forward or reverse if we get smarter about name
@@ -227,6 +106,10 @@ if __name__ == "__main__":
     import json
 
     print("About to generate supported apps with extensions")
-    data = {"apps": new_apps, "types": extensions_mapping}
+    data = {
+        # this is currently unused by the code base, but we include it to make it easy to
+        # see what file extensions are registered for each app
+        "app_to_ext": app_id_to_extensions,
+        "types": extensions_mapping}
     with open("supported_apps_w_extensions.json", "w") as f:
         json.dump(obj=data, fp=f, indent=2)

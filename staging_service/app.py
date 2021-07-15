@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-from pprint import pprint
 from urllib.parse import parse_qs
 
 import aiohttp_cors
@@ -15,7 +14,7 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 
 routes = web.RouteTableDef()
-VERSION = "1.1.10"
+VERSION = "1.2.0"
 
 
 @routes.get("/importer_mappings/{query:.*}")
@@ -479,7 +478,6 @@ def inject_config_dependencies(config):
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
-    AutoDetectUtils._FILE_EXTENSION_MAPPINGS = FILE_EXTENSION_MAPPINGS
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -490,10 +488,10 @@ def inject_config_dependencies(config):
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
 
-    if AutoDetectUtils._FILE_EXTENSION_MAPPINGS is None:
+    if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
     else:
-        with open(AutoDetectUtils._FILE_EXTENSION_MAPPINGS) as f:
+        with open(FILE_EXTENSION_MAPPINGS) as f:
             AutoDetectUtils._MAPPINGS = json.load(f)
 
 

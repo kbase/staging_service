@@ -6,7 +6,6 @@ from typing import Optional, Tuple
 
 
 class AutoDetectUtils:
-    _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
     _MAPPINGS = None  # expects to be set by config
 
     @staticmethod
@@ -47,7 +46,6 @@ class AutoDetectUtils:
             mappings.append(typemaps)
             fileinfo.append({"prefix": prefix, "suffix": suffix})
         rv = {
-            "apps": AutoDetectUtils._MAPPINGS["apps"],
             "mappings": mappings,
             "fileinfo": fileinfo,
         }
