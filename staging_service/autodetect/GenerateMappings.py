@@ -84,21 +84,25 @@ for filecat, apps in file_format_to_app_mapping.items():
 
 # with "genbank_genome" being the id of the matched app
 # and 1 being a perfect weight score of 100%
-extensions_mapping = defaultdict(list)
+extensions_mapping = {}
 for app_id in app_id_to_extensions:
 
     perfect_match_weight = 1
     for extension in app_id_to_extensions[app_id]:
-        extensions_mapping[extension].append(
-            {
-                "id": app_id,
-                "title": app_id_to_title[app_id],
-                "app_weight": perfect_match_weight,
+        if extension not in extensions_mapping:
+            extensions_mapping[extension] = {
                 # make a list to allow for expansion in the future - for example it could
                 # include whether reads are forward or reverse if we get smarter about name
                 # detection. For backwards compatibilily, we'd leave the current FASTQ type and
                 # add a FASTQ-FWD or FWD type or something.
-                "file_type": [extension_to_file_format_mapping[extension]],
+                "file_ext_type": [extension_to_file_format_mapping[extension]],
+                "mappings": []
+            }
+        extensions_mapping[extension]["mappings"].append(
+            {
+                "id": app_id,
+                "title": app_id_to_title[app_id],
+                "app_weight": perfect_match_weight,
             }
         )
 

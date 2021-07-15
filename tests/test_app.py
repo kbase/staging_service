@@ -975,7 +975,7 @@ async def test_importer_mappings():
         # Or we need to reload json file itself
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
-        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]["gz"][0]
+        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]["gz"]["mappings"][0]
 
     # A dict is passed in
     data = {"file_list": [{}]}
