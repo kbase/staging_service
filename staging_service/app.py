@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-from pprint import pprint
 from urllib.parse import parse_qs
 
 import aiohttp_cors
