@@ -40,7 +40,7 @@ in the docker container all of these should be available
 
 all paths should be specified treating the user's home directory as root
 
-### Test Service
+## Test Service
 
 **URL** : `ci.kbase.us/services/staging_service/test-service`
 
@@ -48,7 +48,7 @@ all paths should be specified treating the user's home directory as root
 
 **Method** : `GET`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -57,7 +57,7 @@ all paths should be specified treating the user's home directory as root
 ```
 This is just a test. This is only a test.
 ```
-### Test Auth
+## Test Auth
 
 **URL** : `ci.kbase.us/services/staging_service/test-auth`
 
@@ -67,7 +67,7 @@ This is just a test. This is only a test.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -77,7 +77,7 @@ This is just a test. This is only a test.
 I'm authenticated as <username>
 ```
 
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -94,13 +94,13 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### File Lifetime
+## File Lifetime
 **URL** : `ci.kbase.us/services/staging_service/file-lifetime`
 **local URL** : `localhost:3000/file-lifetime`
 
 **Method** : `GET`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -112,7 +112,7 @@ this is not actually handled by the server but is expected to be performed by a 
 90
 ```
 
-### List Directory
+## List Directory
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/list/{path to directory}`
@@ -127,7 +127,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -151,7 +151,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -175,7 +175,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Download file
+## Download file
 
 **URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
 
@@ -189,12 +189,12 @@ path <username>/<incorrect path> does not exist
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 **Content** : `<file content>`
 
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -225,7 +225,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Search files and folders
+## Search files and folders
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/search/{search query}`
@@ -240,7 +240,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -271,7 +271,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -288,7 +288,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### File and Folder Metadata
+## File and Folder Metadata
 
 **URL** : `ci.kbase.us/services/staging_service/metadata/{path to file or folder}`
 
@@ -298,7 +298,7 @@ Must supply token
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -327,7 +327,7 @@ Must supply token
     "isFolder": false
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -351,7 +351,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-### Upload File
+## Upload File
 
 **URL** : `ci.kbase.us/services/staging_service/upload`
 
@@ -371,7 +371,9 @@ second element in request body should be multipart file data
 
 uploads: {multipart file}
 
-## Success Response
+Files starting with whitespace or a '.' are not allowed
+
+### Success Response
 
 **Code** : `200 OK`
 
@@ -388,7 +390,7 @@ uploads: {multipart file}
     }
 ]
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -405,7 +407,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### Define/Create UPA for file which has been imported
+## Define/Create UPA for file which has been imported
 
 **URL** : `ci.kbase.us/services/staging_service/define-upa/{path to imported file}`
 
@@ -421,7 +423,7 @@ first element in request body should be
 
 UPA: {the actual UPA of imported file}
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -430,7 +432,7 @@ UPA: {the actual UPA of imported file}
 ```
 successfully update UPA <UPA> for file <Path>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -455,7 +457,7 @@ must provide UPA field in body
 ```
 
 
-### Delete file or folder (will delete things contained in folder)
+## Delete file or folder (will delete things contained in folder)
 
 **URL** : `ci.kbase.us/services/staging_service/delete/{path to file or folder}`
 
@@ -465,7 +467,7 @@ must provide UPA field in body
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -474,7 +476,7 @@ must provide UPA field in body
 ```
 successfully deleted UPA <Path>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -508,7 +510,7 @@ cannot delete home directory
 cannot delete protected file
 ```
 
-### Move/rename a file or folder
+## Move/rename a file or folder
 
 **URL** : `ci.kbase.us/services/staging_service/mv/{path to file or folder}`
 
@@ -524,7 +526,7 @@ first element in request body should be
 
 newPath : {the new location/name for file or folder}
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -533,7 +535,7 @@ newPath : {the new location/name for file or folder}
 ```
 successfully moved <path> to <newPath>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -573,7 +575,7 @@ cannot rename or move protected file
 <newPath> allready exists
 ```
 
-### Decompress various archive formats
+## Decompress various archive formats
 supported archive formats are:
 .zip, .ZIP, .tar.gz, .tgz, .tar.bz, .tar.bz2, .tar, .gz, .bz2, .bzip2
 **URL** : `ci.kbase.us/services/staging_service/decompress/{path to archive`
@@ -584,7 +586,7 @@ supported archive formats are:
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -593,7 +595,7 @@ supported archive formats are:
 ```
 successfully decompressed <path to archive>
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -618,7 +620,7 @@ cannot decompress a <file extension> file
 ```
 
 
-### Add Globus ACL
+## Add Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -631,7 +633,7 @@ linking to globus.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -645,7 +647,7 @@ linking to globus.
     "permissions": "rw"
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -673,7 +675,7 @@ Error Connecting to auth service ...
 
 
 
-### Remove Globus ACL
+## Remove Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -686,7 +688,7 @@ linking to globus.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
@@ -700,7 +702,7 @@ linking to globus.
     "Success": true
 }
 ```
-## Error Response
+### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -725,21 +727,22 @@ Error Connecting to auth service ...
 }
 ```
 
-
-
-
 ## Get Importer Mappings
 
-This endpoint returns a list of available staging importer apps that have been marked as supported. This endpoint also
-returns a mapping between a list of files and predicted importer app.
+This endpoint returns:
+1) a mapping between a list of files and predicted importer apps, and
+2) a file information list that includes the input file names split between the file prefix and
+   the file suffix, if any, that was used to determine the file -> importer mapping, and a list
+   of file types based on the file suffix. If a file has a suffix that does not match
+   any mapping (e.g. `.sys`), the suffix will be `null`, the prefix the entire file name, and
+   the file type list empty.
 
 For example,
- * if we pass in nothing we get a response with a list of apps, and no mappings
+ * if we pass in nothing we get a response with no mappings
  * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a response
  that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
  which represents the probability that this is the correct importer for you.
  * for files for which there is no predicted app, the return is a null value
- * output type is not currently used for anything
  * this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
 **URL** : `ci.kbase.us/services/staging_service/importer_mappings`
@@ -750,14 +753,14 @@ For example,
 
 **Headers** : Not Required
 
-## Success Response
+### Success Response
 
 **Code** : `200 OK`
 
 **Content example**
 
 ```
-data = {"file_list": ["file1.txt", "file.zip"]}
+data = {"file_list": ["file1.txt", "file2.zip", "file3.gff3.gz"]}
     async with AppClient(config, username) as cli:
         resp = await cli.post(
             "importer_mappings/", data=data
@@ -766,22 +769,32 @@ data = {"file_list": ["file1.txt", "file.zip"]}
 Response:
 ```
 {
-	"apps": {
-		"decompress/unpack": {
-			"title": "Decompress/Unpack",
-			"app": "kb_uploadmethods/unpack_staging_file",
-			"output_type": [null],
-			"extensions": ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
-			"id": 7
-		},
-	"mappings": [null, [{
-		"id": 7,
-		"title": "decompress/unpack",
-		"app_weight": 1
-	}]]
+    "mappings": [
+        null,
+        [{
+            "id": "decompress",
+            "title": "decompress/unpack",
+            "app_weight": 1,
+        }],
+        [{
+            "app_weight": 1,
+            "id": "gff_genome",
+            "title": "GFF/FASTA Genome",
+          },
+         {
+            "app_weight": 1,
+            "id": "gff_metagenome",
+            "title": "GFF/FASTA MetaGenome",
+        }]
+    ],
+    "fileinfo": [
+        {"prefix": "file1.txt", "suffix": null, "file_ext_type": []},
+        {"prefix": "file2", "suffix": "zip", "file_ext_type": ["CompressedFileFormatArchive"]},
+        {"prefix": "file3", "suffix": "gff3.gz", "file_ext_type": ["GFF"]}
+    ]
 }
 ```
-## Error Response
+### Error Response
 **Code** : `400 Bad Request`
 
 **Content**
@@ -789,3 +802,49 @@ Response:
 must provide file_list field 
 ```
 
+# Autodetect App and File Type IDs
+
+## App type IDs
+
+These are the currently supported upload app type IDs:
+
+```
+fastq_reads_interleaved
+fastq_reads_noninterleaved
+sra_reads
+genbank_genome
+gff_genome
+gff_metagenome
+expression_matrix
+media
+fba_model
+assembly
+phenotype_set
+sample_set
+metabolic_annotation
+metabolic_annotation_bulk
+escher_map
+decompress
+```
+
+Note that decompress is only returned when no other file type can be detected from the file
+extension.
+
+## File type IDs
+
+These are the currently supported file type IDs. These are primarily useful for apps that take
+two different file types, like GFF/FASTA genomes.
+
+```
+FASTA
+FASTQ
+SRA
+GFF
+GENBANK
+SBML
+JSON
+TSV
+CSV
+EXCEL
+CompressedFileFormatArchive
+```

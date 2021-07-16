@@ -1,5 +1,8 @@
 import pytest
-from staging_service.autodetect.GenerateMappings import type_to_extension_mapping
+from staging_service.autodetect.GenerateMappings import (
+    file_format_to_extension_mapping,
+    extensions_mapping,
+)
 from staging_service.AutoDetectUtils import AutoDetectUtils
 from staging_service.app import inject_config_dependencies
 from tests.test_utils import bootstrap_config
@@ -17,10 +20,8 @@ def test_config():
     #TODO Can test PATH injections as well
     :return:
     """
-    mappings_fp = AutoDetectUtils._FILE_EXTENSION_MAPPINGS
     mappings = AutoDetectUtils._MAPPINGS
     assert mappings
-    assert mappings_fp
 
 
 def test_bad_filenames():
@@ -31,10 +32,15 @@ def test_bad_filenames():
     crappy_filenames = [" ", ".", ".txt", "fasta.txt", "><", ":=).=:"]
 
     for filename in crappy_filenames:
-        possible_importers = AutoDetectUtils.determine_possible_importers(
+        possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
             filename=filename
         )
         assert possible_importers is None
+        assert fileinfo == {
+            "prefix": filename,
+            "suffix": None,
+            "file_ext_type": []
+        }
 
 
 def test_reasonable_filenames():
@@ -44,26 +50,35 @@ def test_reasonable_filenames():
     """
 
     good_filenames = []
-    for heading in type_to_extension_mapping.keys():
-        extensions = type_to_extension_mapping[heading]
+    for heading in file_format_to_extension_mapping.keys():
+        extensions = file_format_to_extension_mapping[heading]
         for extension in extensions:
-            good_filenames.append((f"{heading}.{extension}", heading.count(".")))
+            good_filenames.append((
+                f"{heading}.{extension}",
+                heading.count("."),
+                extensions_mapping[extension]['file_ext_type']
+                ))
 
-    for filename, heading_dotcount in good_filenames:
+    for filename, heading_dotcount, ext in good_filenames:
         for filename_variant in [
             filename,
             filename.upper(),
             filename.lower(),
             filename.title(),
         ]:
-            possible_importers = AutoDetectUtils.determine_possible_importers(
+            possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
                 filename=filename_variant
             )
             print("Testing", filename_variant, possible_importers)
             assert possible_importers is not None
-            suffix = filename_variant.split(".", heading_dotcount + 1)[-1].lower()
-            assert possible_importers == AutoDetectUtils._MAPPINGS["types"].get(suffix), (
-                suffix, filename_variant)
+            expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
+            assert possible_importers == AutoDetectUtils._MAPPINGS["types"][
+                expected_suffix.lower()]["mappings"], filename_variant
+            assert fileinfo == {
+                "prefix": filename_variant[:-len(expected_suffix) - 1],
+                "suffix": expected_suffix,
+                "file_ext_type": ext
+            }
 
 
 def test_specific_filenames():
@@ -71,24 +86,68 @@ def test_specific_filenames():
     Test some made up filenames to check that multi-dot extensions are handled correctly
     """
     test_data = [
-        ("filename", None),
-        ("file.name", None),
-        ("fil.en.ame", None),
-        ("file.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+        ("filename", (None, {"prefix": "filename", "suffix": None, "file_ext_type": []})),
+        ("file.name", (None, {"prefix": "file.name", "suffix": None, "file_ext_type": []})),
+        ("fil.en.ame", (None, {"prefix": "fil.en.ame", "suffix": None, "file_ext_type": []})),
+        ("file.gZ", (
+            [{
+                'app_weight': 1,
+                'id': 'decompress',
+                'title': 'Decompress/Unpack',
+            }],
+            {"prefix": "file" , "suffix": "gZ", "file_ext_type": ['CompressedFileFormatArchive']},
+            )
          ),
-        ("file.name.gZ", [{'app_weight': 1, 'id': 'decompress', 'title': 'Decompress/Unpack'}]
+        ("file.name.gZ", (
+            [{
+                'app_weight': 1,
+                'id': 'decompress',
+                'title': 'Decompress/Unpack',
+            }],
+            {"prefix": "file.name",
+             "suffix": "gZ",
+             "file_ext_type": ['CompressedFileFormatArchive']
+             },
+            )
          ),
-        ("oscar_the_grouch_does_meth.FaStA.gz", [
-            {'app_weight': 1, 'id': 'assembly', 'title': 'Assembly'},
-            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
-            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
-            ]
+        ("oscar_the_grouch_does_meth.FaStA.gz", (
+            [
+                {'app_weight': 1,
+                 'id': 'assembly',
+                 'title': 'Assembly',
+                },
+                {'app_weight': 1,
+                 'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
+                },
+                {'app_weight': 1,
+                 'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
+                }
+            ],
+            {"prefix": "oscar_the_grouch_does_meth",
+             "suffix": "FaStA.gz",
+             "file_ext_type": ["FASTA"]
+             },
+            )
          ),
-        ("look.at.all.these.frigging.dots.gff2.gzip", [
-            {'app_weight': 1, 'id': 'gff_genome', 'title': 'GFF/FASTA Genome'},
-            {'app_weight': 1, 'id': 'gff_metagenome', 'title': 'GFF/FASTA MetaGenome'}
-            ]
-         )
+        ("look.at.all.these.frigging.dots.gff2.gzip", (
+            [
+                {'app_weight': 1,
+                 'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
+                 },
+                {'app_weight': 1,
+                 'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
+                }
+            ],
+            {"prefix": "look.at.all.these.frigging.dots",
+             "suffix": "gff2.gzip",
+             "file_ext_type": ["GFF"]
+             },
+            )
+        )
     ]
 
     for filename, importers in test_data:
@@ -101,11 +160,14 @@ def test_sra_mappings():
     :return:
     """
     sra_file = "test.sra"
-    possible_importers = AutoDetectUtils.determine_possible_importers(filename=sra_file)
-    app_title = "SRA Reads"
-    possible_app = possible_importers[0]["title"]
-    mappings = AutoDetectUtils._MAPPINGS
-    assert mappings["apps"][possible_app] == mappings["apps"][app_title]
+    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
+        filename=sra_file)
+    assert possible_importers == [{
+        'id': 'sra_reads',
+        'app_weight': 1,
+        'title': 'SRA Reads',
+    }]
+    assert fileinfo == {"prefix": "test", "suffix": "sra", "file_ext_type": ["SRA"]}
 
 
 def test_zip_mappings():
@@ -114,8 +176,50 @@ def test_zip_mappings():
     :return:
     """
     gz_file = "test.tar.gz"
-    possible_importers = AutoDetectUtils.determine_possible_importers(filename=gz_file)
-    app_title = "Decompress/Unpack"
-    possible_app = possible_importers[0]["title"]
-    mappings = AutoDetectUtils._MAPPINGS
-    assert mappings["apps"][possible_app] == mappings["apps"][app_title]
+    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
+        filename=gz_file)
+    assert possible_importers == [{
+        'id': 'decompress',
+        'app_weight': 1,
+        'title': 'Decompress/Unpack',
+    }]
+    assert fileinfo == {
+        "prefix": "test",
+        "suffix": "tar.gz",
+        'file_ext_type': ['CompressedFileFormatArchive']
+    }
+
+
+def test_get_mappings():
+    """
+    Basic test of the get mappings logic. Most of the logic is in determine_possible_importers
+    which is throughly tested above.
+    """
+    assert AutoDetectUtils.get_mappings(["filename", "file.name.Gz", "some.dots.gff3.gz"]) == {
+        "mappings": [
+            None,
+            [{
+                'app_weight': 1,
+                'id': 'decompress',
+                'title': 'Decompress/Unpack',
+            }],
+            [
+                {'app_weight': 1,
+                 'id': 'gff_genome',
+                 'title': 'GFF/FASTA Genome',
+                 },
+                {'app_weight': 1,
+                 'id': 'gff_metagenome',
+                 'title': 'GFF/FASTA MetaGenome',
+                }
+            ],
+        ],
+        "fileinfo": [
+            {"prefix": "filename", "suffix": None, "file_ext_type": []},
+            {"prefix": "file.name",
+             "suffix": "Gz",
+             "file_ext_type": ['CompressedFileFormatArchive']
+             },
+            {"prefix": "some.dots", "suffix": "gff3.gz", "file_ext_type": ['GFF']},
+        ]
+    }

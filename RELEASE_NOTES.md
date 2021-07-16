@@ -1,3 +1,10 @@
+### Version 1.2.0
+- BACKWARDS INCOMPATIBILITY: remove the unused `apps` key from the importer mappings endpoint.
+- added a `fileinfo` field to the return of the importer mappings endpoint that includes the
+  file prefix, suffix, and file type(s), if any.
+- reverted change to expose dotfiles in the api by default
+- attempting to upload a dotfile will now cause an error
+
 ### Version 1.1.9
 - Added support for Genbank *.gb and *.gbff extensions
 - Added support for gzipped Reads, Assemblies, Genbank Files, and GFF files.
