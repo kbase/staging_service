@@ -1,8 +1,7 @@
 ### Version 1.2.0
 - BACKWARDS INCOMPATIBILITY: remove the unused `apps` key from the importer mappings endpoint.
-- added a `file_type` field to the file extension mappings.
 - added a `fileinfo` field to the return of the importer mappings endpoint that includes the
-  file prefix and suffix.
+  file prefix, suffix, and file type(s), if any.
 - reverted change to expose dotfiles in the api by default
 - attempting to upload a dotfile will now cause an error
 
