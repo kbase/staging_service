@@ -17,7 +17,7 @@ The design introduces a new StS data type, `upload_specification`. The FE's curr
 behavior is to display any data types in the file dropdown, but ignore files for which
 the selected data type is unknown, a bug. The FE will be updated to ignore unknown
 data types returned from the StS, allowing for phased, non-lockstep upgrades. This work is not
-including is this project, but will be in a future FE project.
+included in this project, but will be in a future FE project.
 
 ## Upload specification input files
 
