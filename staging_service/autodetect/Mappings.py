@@ -46,6 +46,9 @@ phenotype_set_id = "phenotype_set"
 sample_set_id = "sample_set"
 
 # To be added to https://github.com/kbase/narrative/kbase-extension/static/kbase/config/staging_upload.json
+# upload_specification is not a "real" data type, but rather tells the narrative that the
+# file contains specifications for how to load one or more other staging area files.
+upload_specification = "upload_specification"
 decompress_id = "decompress"
 metabolic_annotations_id = "metabolic_annotation"
 metabolic_annotations_bulk_id = "metabolic_annotation_bulk"

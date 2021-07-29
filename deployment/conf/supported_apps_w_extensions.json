@@ -117,6 +117,12 @@
       "xls",
       "xlsx"
     ],
+    "upload_specification": [
+      "csv",
+      "tsv",
+      "xls",
+      "xlsx"
+    ],
     "media": [
       "tsv",
       "xls",
@@ -991,6 +997,11 @@
           "id": "sample_set",
           "title": "Samples",
           "app_weight": 1
+        },
+        {
+          "id": "upload_specification",
+          "title": "Upload Specification",
+          "app_weight": 1
         }
       ]
     },
@@ -1002,6 +1013,11 @@
         {
           "id": "sample_set",
           "title": "Samples",
+          "app_weight": 1
+        },
+        {
+          "id": "upload_specification",
+          "title": "Upload Specification",
           "app_weight": 1
         },
         {
@@ -1027,6 +1043,11 @@
           "app_weight": 1
         },
         {
+          "id": "upload_specification",
+          "title": "Upload Specification",
+          "app_weight": 1
+        },
+        {
           "id": "media",
           "title": "Media",
           "app_weight": 1
@@ -1043,6 +1064,11 @@
         "TSV"
       ],
       "mappings": [
+        {
+          "id": "upload_specification",
+          "title": "Upload Specification",
+          "app_weight": 1
+        },
         {
           "id": "media",
           "title": "Media",
