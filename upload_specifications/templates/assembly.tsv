@@ -1,0 +1,3 @@
+Data type:	assembly
+staging_file_subdir_path	assembly_name	type	min_contig_length
+FASTA file path	Assembly object name	Assembly Type	Minimum contig length
