@@ -1,8 +1,8 @@
-# Upload Specifications Architecture Design Record
+# Import Specifications Architecture Design Record
 
-This document specifies the design for handling upload specifications in the Staging Service (StS).
+This document specifies the design for handling import specifications in the Staging Service (StS).
 An upload specification is an Excel, CSV, or TSV file that contains instructions for how
-to upload one or more files in the staging area to KBase as KBase data types.
+to import one or more files in the staging area to KBase as KBase data types.
 
 ## Resources
 
@@ -51,7 +51,7 @@ As part of this project we will deliver:
 1. CSV templates for each in scope app (e.g. the first 3 lines of the example file)
 2. An Excel template containing a tab for each in scope app
 3. A `README.md` file explaining how to use the templates.
-   * The `README.md` should include a link to rich upload specification documentation on the KBase
+   * The `README.md` should include a link to rich import specification documentation on the KBase
      website once it is developed.
    * Note: cover booleans which are not intuitive.
 
@@ -64,25 +64,25 @@ with these features in CSV-based upload may require additional engineering.
 
 ## User operations
 
-* The user uploads the upload specification files to the staging area along with all the files
+* The user uploads the import specification files to the staging area along with all the files
   inluded in the specification. 
-* The user selects the `Upload Specification` type for the specification files.
-  * The user may also select other files in the staging area to include in the upload along
+* The user selects the `Import Specification` type for the specification files.
+  * The user may also select other files in the staging area to include in the import along
     with the files listed in the specification.
     * The user *does not* have to select any files included in the specification.
 * The user clicks `Import Selected`.
 
-As such, a new type must be added to the StS: `upload_specification` with the title
-`Upload Specification`. *Nota bene*: It may be preferable to have the Narrative specify the
+As such, a new type must be added to the StS: `import_specification` with the title
+`Import Specification`. *Nota bene*: It may be preferable to have the Narrative specify the
 titles to display in the staging area dropdown rather than the StS.
 
-## Narrative Bulk Upload cell operations
+## Narrative Bulk Import cell operations
 
-When the narrative sees a `upload_specification` data type, it calls out to the StS
+When the narrative sees an `import_specification` data type, it calls out to the StS
 endpoint detailed below to get the parsed specifications, and then initializes the bulk import
 cell with those specifications.
 
-## Staging service upload specification endpoint
+## Staging service import specification endpoint
 
 The StS endpoint responds to an HTTP GET with a file list in a `files` URL parameter. It is
 extremely unlikely that there will be a large enough set of data types that URL length limits
@@ -127,7 +127,7 @@ The order of the input structures MUST be the same as the order in the input fil
 
 Notably, the service will provide the contents of the files as is and will not perform most error
 checking, including for missing or unknown input parameters. Most error checking will be performed
-in the bulk upload cell configuration tab like other uploads, allowing for a consistent user
+in the bulk import cell configuration tab like other uploads, allowing for a consistent user
 experience.
 
 ### Missing files
