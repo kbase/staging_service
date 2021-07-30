@@ -158,7 +158,7 @@ file.
 
 ### Other errors
 
-If any other error occurs, a general error will be reported:
+If any other error occurs, a general 500 error will be reported:
 ```
 {"error": "unexpected_error",
  "message": <error message here>
