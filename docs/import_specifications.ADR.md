@@ -176,7 +176,7 @@ If any other error occurs, a general 500 error will be reported:
 ## Questions
 
 * Should it be an error to submit multiple files or tabs for the same type? If not,
-  how should the diffent files be denoted and ordered?
+  how should the different files be denoted and ordered?
   * This has follow on effect for how spreadsheet type views in the UI should be displayed.
 * Should we disallow filenames with commas? They may cause problems with the new endpoint.
 * Should we strictly enforce a column count for every row in xSV files?
