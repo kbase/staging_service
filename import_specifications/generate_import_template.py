@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick and dirty temporary code for generating a bulk upload template. Should probably
+Quick and dirty temporary code for generating a bulk import template. Should probably
 live somewhere else long term, maybe the narrative? ... and be rewritten with tests
 
 Doesn't do any error handling as it's expected that only KBase developers will run this code.
@@ -27,7 +27,7 @@ _NMS_URLS = {
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Generate a bulk upload template for an app')
+    parser = argparse.ArgumentParser(description='Generate a bulk import template for an app')
     parser.add_argument('app_id', help=
         'The app ID to process, for example kb_uploadmethods/import_sra_as_reads_from_staging')
     parser.add_argument('data_type', help=
