@@ -117,7 +117,7 @@
       "xls",
       "xlsx"
     ],
-    "upload_specification": [
+    "import_specification": [
       "csv",
       "tsv",
       "xls",
@@ -999,8 +999,8 @@
           "app_weight": 1
         },
         {
-          "id": "upload_specification",
-          "title": "Upload Specification",
+          "id": "import_specification",
+          "title": "Import Specification",
           "app_weight": 1
         }
       ]
@@ -1016,8 +1016,8 @@
           "app_weight": 1
         },
         {
-          "id": "upload_specification",
-          "title": "Upload Specification",
+          "id": "import_specification",
+          "title": "Import Specification",
           "app_weight": 1
         },
         {
@@ -1043,8 +1043,8 @@
           "app_weight": 1
         },
         {
-          "id": "upload_specification",
-          "title": "Upload Specification",
+          "id": "import_specification",
+          "title": "Import Specification",
           "app_weight": 1
         },
         {
@@ -1065,8 +1065,8 @@
       ],
       "mappings": [
         {
-          "id": "upload_specification",
-          "title": "Upload Specification",
+          "id": "import_specification",
+          "title": "Import Specification",
           "app_weight": 1
         },
         {
