@@ -44,7 +44,8 @@ The file, by row, is:
 4. (and beyond) Import specifications. Each line corresponds to a single import.
 
 For Excel files, the first two rows may be hidden in any provided templates. Additionally,
-Excel files may contain multiple data types, one per tab.
+Excel files may contain multiple data types, one per tab. Empty tabs will be ignored, and tabs
+that don't match the expected structure will be treated as an error.
 
 As part of this project we will deliver:
 1. CSV templates for each in scope app (e.g. the first 3 lines of the example file)
@@ -178,3 +179,8 @@ If any other error occurs, a general 500 error will be reported:
   how should the diffent files be denoted and ordered?
   * This has follow on effect for how spreadsheet type views in the UI should be displayed.
 * Should we disallow filenames with commas? They may cause problems with the new endpoint.
+* Should we strictly enforce a column count for every row in xSV files?
+  * Not enforcing a count makes it somewhat easier for users to fill in the data - they don't
+    need to add extraneous commas or tabs to the end of the line.
+  * Enforcing a count makes it less likely that a user will commit silent counting errors if
+    there are many empty entries between items in a line.
