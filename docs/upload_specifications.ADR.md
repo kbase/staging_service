@@ -14,10 +14,11 @@ to upload one or more files in the staging area to KBase as KBase data types.
 ## Front end changes
 
 The design introduces a new StS data type, `upload_specification`. The FE's current 
-behavior is to display any data types in the file dropdown, but ignore files for which
-the selected data type is unknown, a bug. The FE will be updated to ignore unknown
-data types returned from the StS, allowing for phased, non-lockstep upgrades. This work is not
-included in this project, but will be in a future FE project.
+behavior is to display any data types returned from the StS in the file dropdown, but silently
+ignore user-selected files for which the selected data type is unknown to the narrative, a bug.
+The FE will be updated to ignore unknown data types returned from the StS, allowing for phased,
+non-lockstep upgrades. This work is not included in this project, but will be in a future FE
+project.
 
 ## Upload specification input files
 
@@ -76,9 +77,9 @@ titles to display in the staging area dropdown rather than the StS.
 
 ## Narrative Bulk Upload cell operations
 
-When the bulk upload cell sees a `upload_specification` data type, it calls out to the StS
-endpoint detailed below to get the parsed specifications, and then autofills itself with
-those specifications.
+When the narrative sees a `upload_specification` data type, it calls out to the StS
+endpoint detailed below to get the parsed specifications, and then initializes the bulk import
+cell with those specifications.
 
 ## Staging service upload specification endpoint
 
