@@ -133,7 +133,7 @@ experience.
 
 If the StS cannot find one or more files it will return a 404 with the body contents:
 ```
-{"error": "Cannot_find_all_files",
+{"error": "cannot_find_all_files",
  "missing_files": [<list of missing filenames>]
 }
 ```
@@ -142,7 +142,7 @@ If the StS cannot find one or more files it will return a 404 with the body cont
 
 If the StS cannot parse one or more of the files it will return a 400 with the body contents:
 ```
-{"error": "Cannot_parse_all_files",
+{"error": "cannot_parse_all_files",
  "unparseable_files": [{"filename": <filename>,
                         "reason": <message>
                         },
@@ -155,6 +155,15 @@ entries, but will not do further error checking.
 
 Note in this case the service MUST log the stack trace along with the filename for each invalid
 file.
+
+### Other errors
+
+If any other error occurs, a general error will be reported:
+```
+{"error": "unexpected_error",
+ "message": <error message here>
+}
+```
 
 ## Alternatives explored
 
