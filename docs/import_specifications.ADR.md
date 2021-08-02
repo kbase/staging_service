@@ -178,9 +178,13 @@ If any other error occurs, a general 500 error will be reported:
 * Should it be an error to submit multiple files or tabs for the same type? If not,
   how should the different files be denoted and ordered?
   * This has follow on effect for how spreadsheet type views in the UI should be displayed.
+  * A: For the MVP disallow submitting more than one file / tab per type. Post release we'll
+    find out if this is a use case that users care about.
 * Should we disallow filenames with commas? They may cause problems with the new endpoint.
+  * A: Disallow commas, the same way we disallow files staring with whitespace or periods.
 * Should we strictly enforce a column count for every row in xSV files?
   * Not enforcing a count makes it somewhat easier for users to fill in the data - they don't
     need to add extraneous commas or tabs to the end of the line.
   * Enforcing a count makes it less likely that a user will commit silent counting errors if
     there are many empty entries between items in a line.
+  * A: Enforce a column count to prevent user errors.
