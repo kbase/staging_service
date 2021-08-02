@@ -25,6 +25,7 @@ _NMS_URLS = {
     'ci': 'https://ci.kbase.us/services/narrative_method_store/rpc',
 }
 
+_FORMAT_VERSION = 1  # evolve the format by making changes and incrementing the version
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Generate a bulk import template for an app')
@@ -85,7 +86,7 @@ def main():
         print(json.dumps(spec[0]['parameters'], indent=4), file=sys.stderr)
     params = sort_params(spec[0]['parameters'])
     sep = '\t' if args.tsv else ', '
-    print(f'Data type:{sep}{args.data_type}')
+    print(f'Data type:{sep}{args.data_type}{sep}Version:{sep}{_FORMAT_VERSION}')
     # we could theoretically use the parameter order to note for the users the type of each
     # column - e.g. file input, output name, params, advanced params
     # That's not in scope for now
