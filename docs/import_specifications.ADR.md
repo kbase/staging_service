@@ -56,7 +56,9 @@ As part of this project we will deliver:
 3. A `README.md` file explaining how to use the templates.
    * The `README.md` should include a link to rich import specification documentation on the KBase
      website once it is developed.
-   * Note: cover booleans which are not intuitive.
+   * Note: cover booleans / checkboxes which are not intuitive. 0 will indicate unchecked, and 1
+     checked. These values may show up as strings in the API, and the consumer will be expected to
+     handle conversion appropriately.
 
 These files will reside in the StS repo. As part of the front end effort, some means of
 delivering the templates and instructions to users will be developed.
