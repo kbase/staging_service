@@ -1,0 +1,3 @@
+Data type:	fastq_reads_interleaved	Version:	1
+fastq_fwd_staging_file_name	name	sequencing_tech	single_genome	read_orientation_outward	insert_size_std_dev	insert_size_mean
+Forward/Left FASTQ File Path	Reads Object Name	Sequencing Technology	Single Genome	Reads Orientation Outward	St. Dev. of Insert Size	Mean Insert Size
