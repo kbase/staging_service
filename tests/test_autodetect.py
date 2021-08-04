@@ -8,8 +8,8 @@ from staging_service.app import inject_config_dependencies
 from tests.test_utils import bootstrap_config
 
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_tests(tmpdir):
+@pytest.fixture(autouse=True, scope="module")
+def run_before_and_after_tests():
     config = bootstrap_config()
     inject_config_dependencies(config)
 

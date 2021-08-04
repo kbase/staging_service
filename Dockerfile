@@ -1,4 +1,4 @@
-FROM quay.io/kbase/python:3.6-slim-stretch
+FROM python:3.8-slim-buster
 # -----------------------------------------
 RUN mkdir -p /kb/deployment/lib
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
