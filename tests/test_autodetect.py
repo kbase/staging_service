@@ -9,7 +9,7 @@ from tests.test_utils import bootstrap_config
 
 
 @pytest.fixture(autouse=True, scope="module")
-def run_before_and_after_tests():
+def run_before_tests():
     config = bootstrap_config()
     inject_config_dependencies(config)
 
