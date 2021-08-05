@@ -150,6 +150,7 @@ If the StS cannot parse one or more of the files it will return a 400 with the b
 ```
 {"error": "cannot_parse_all_files",
  "unparseable_files": [{"filename": <filename>,
+                        "tab": <tab name for Excel files if the error is tab specific, else null>,
                         "reason": <message>
                         },
                         ...
