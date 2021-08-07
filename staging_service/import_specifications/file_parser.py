@@ -8,7 +8,7 @@ from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Tuple, Union
 
 # TODO should get mypy working at some point
 
@@ -52,7 +52,7 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
-    results: frozendict[str, Tuple[SpecificationSource, 
+    results: frozendict[str, Tuple[SpecificationSource,
         Tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
     errortype: ErrorType = None
     errors: frozendict[SpecificationSource, str] = None
