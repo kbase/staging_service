@@ -1,3 +1,6 @@
+### Version 1.3.0
+- Update to Python 3.9
+
 ### Version 1.2.0
 - BACKWARDS INCOMPATIBILITY: remove the unused `apps` key from the importer mappings endpoint.
 - added a `fileinfo` field to the return of the importer mappings endpoint that includes the

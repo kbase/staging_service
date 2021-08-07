@@ -4,7 +4,7 @@ setup local development
 
 must have docker installed
 
-if you want to run it locally you must have python3.6 installed
+if you want to run it locally you must have python3.9 installed
 
 
 # setup
