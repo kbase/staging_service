@@ -200,3 +200,22 @@ If any other error occurs, a general 500 error will be reported:
   * Enforcing a count makes it less likely that a user will commit silent counting errors if
     there are many empty entries between items in a line.
   * A: Enforce a column count to prevent user errors.
+
+## Addendum: dynamic parameter lookup
+
+Dynamic scientific name to taxon lookup may be added to the Genbank (and the currently
+out of scope, but trivial to add GFF/FASTA Genome) importer in the near future. If that occurs,
+for the purpose of xSV upload the user will be expected to provide the entire, correct,
+scientific name as returned from the taxon API. 
+
+* The user could get this name by starting a genome upload and running the query from the 
+  import app cell configuration screen.
+  * This will be documented in the README.md for the template files.
+* As part of the UI work we could theoretically provide a landing page for looking up valid
+  scientific names.
+* Presumably the UI would need to run the dynamic query and report an error to the user if the
+  dynamic service returns 0 or > 1 entries.
+* Providing the scientific name vs. the taxon api seems simpler because the machinery already 
+  exists to perform the query and is part of the spec.
+* Expect these plans to change as it becomes more clear how dynamic fields will work in the
+  context of bulk upload.
