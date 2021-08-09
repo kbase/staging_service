@@ -67,6 +67,12 @@ Currently, for all in scope apps, the inputs are all strings, numbers, or boolea
 no unusual inputs such as grouped parameters or dynamic lookups. Including future upload apps
 with these features in CSV-based upload may require additional engineering.
 
+Note that the endpoint will return individual data for each row, while the current front end
+only supports individual input files and output objects (this may be improved in a future update).
+The front end will be expected to either
+1. Ignore all parameters other than in the first entry in the return per type, or
+2. Throw an error if parameters differ from the first entry.
+
 ## User operations
 
 * The user uploads the import specification files to the staging area along with all the files
