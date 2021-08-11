@@ -8,11 +8,20 @@ from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Union, Callable
 
 # TODO should get mypy working at some point
 
 PRIMITIVE_TYPE = Union[str, int, float, bool, None]
+
+
+class SupportedFileType(Enum):
+    """
+    File types supported by the parser.
+    """
+    CSV = 0
+    TSV = 1
+    EXCEL = 2
 
 
 class ErrorType(Enum):
@@ -25,6 +34,37 @@ class ErrorType(Enum):
 
 
 @dataclass(frozen=True)
+class FileTypeResolution:
+    """
+    The result of resolving a file type given a file path.
+
+    Only one of type or unsupported_type may be specified.
+
+    type - the resolved file type if the type is one of the supported types.
+    unsupported_type - the file type if the type is not a supported type.
+    """
+    type: SupportedFileType = None
+    unsupported_type: str = None
+
+    def __post_init__(self):
+        if not (bool(self.type) ^ bool(self.unsupported_type)):  # xnor
+            raise ValueError("Exectly one of type or unsupported_type must be supplied")
+
+
+@dataclass(frozen=True)
+class PathDef:
+    """
+    A definition of a path to a file.
+
+    file - the true path to the file. This may contain implementation details that should be
+        hidden from the user.
+    userfile - the path to the file that should be displayed to the user.
+    """
+    file: Path
+    userfile: Path
+
+
+@dataclass(frozen=True)
 class SpecificationSource:
     """
     The source of an import specification.
@@ -32,7 +72,7 @@ class SpecificationSource:
     file - the file from which the import specification was obtained.
     tab - the spreadsheet file tab from which the import specification was obtained, if any.
     """
-    file: Path
+    file: PathDef
     tab: str = None
 
 
@@ -85,9 +125,9 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
-    results: frozendict[str, Tuple[SpecificationSource,
-        Tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
-    errors: Tuple[Error] = None
+    results: frozendict[str, tuple[SpecificationSource,
+        tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
+    errors: tuple[Error] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -95,3 +135,15 @@ class ParseResults:
         # we assume here that the data is otherwise correctly created.
 
 
+def parse_import_specifications(
+    paths: tuple[PathDef],
+    file_type_resolver: Callable[[Path], FileTypeResolution]
+) -> ParseResults:
+    """
+    Parse a set of import specification files and return the results.
+
+    paths - the file paths to open.
+    file_type_resolver - a callable that when given a file path, returns the type of the file.
+    """
+    results = {}
+    errors = []
