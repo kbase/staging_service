@@ -56,13 +56,18 @@ class Error:
     source: SpecificationSource = None
 
     def __post_init__(self):
-        if self.error == ErrorType.FILE_NOT_FOUND and not self.source:
-            raise ValueError(f'source is required for a {ErrorType.FILE_NOT_FOUND.name} error')
-        if self.error == ErrorType.PARSE_FAIL and (not self.source or not self.message):
-            pf = ErrorType.PARSE_FAIL.name
-            raise ValueError(f'source and message are required for a {pf} error')
-        if self.error == ErrorType.OTHER and not self.message:
-            raise ValueError(f'message is required for a {ErrorType.OTHER.name} error')
+        if self.error == ErrorType.FILE_NOT_FOUND:
+            if not self.source:
+                raise ValueError(f'source is required for a {ErrorType.FILE_NOT_FOUND.name} error')
+        elif self.error == ErrorType.PARSE_FAIL:
+            if not self.source or not self.message:
+                pf = ErrorType.PARSE_FAIL.name
+                raise ValueError(f'source and message are required for a {pf} error')
+        elif self.error == ErrorType.OTHER:
+            if not self.message:
+                raise ValueError(f'message is required for a {ErrorType.OTHER.name} error')
+        else:
+            assert 0, "unexpected error type"  # can't test this line
 
 
 @dataclass(frozen=True)
