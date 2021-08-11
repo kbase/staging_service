@@ -37,6 +37,35 @@ class SpecificationSource:
 
 
 @dataclass(frozen=True)
+class Error:
+    f"""
+    An error found while attempting to parse files.
+
+    error - the type of the error.
+    message - the error message, if any
+    source - the data source associated with the error, if any
+
+    Each error type has different required arguments:
+    {ErrorType.FILE_NOT_FOUND.name}: source
+    {ErrorType.PARSE_FAIL}: source and message
+    {ErrorType.OTHER}: message. source is optional if the error applies to a source file.
+
+    """
+    error: ErrorType
+    message: str = None
+    source: SpecificationSource = None
+
+    def __post_init__(self):
+        if self.error == ErrorType.FILE_NOT_FOUND and not self.source:
+            raise ValueError(f'source is required for a {ErrorType.FILE_NOT_FOUND.name} error')
+        if self.error == ErrorType.PARSE_FAIL and (not self.source or not self.message):
+            pf = ErrorType.PARSE_FAIL.name
+            raise ValueError(f'source and message are required for a {pf} error')
+        if self.error == ErrorType.OTHER and not self.message:
+            raise ValueError(f'message is required for a {ErrorType.OTHER.name} error')
+
+
+@dataclass(frozen=True)
 class ParseResults:
     """
     Contains the results of parsing import specification files.
@@ -44,26 +73,20 @@ class ParseResults:
     results - the parse results. A mapping from the data type, to a tuple containing
         1) the source of the results
         2) the data for the data type as a tuple of dicts.
-    errortype - the type of any errors encountered while parsing the files.
-    errors - error messages on a per data source basis.
+    errors - the errors encountered while parsing the files, if any.
 
-    Either results or both errotype and errors must be provided.
+    Either results or errors must be provided.
     Other than the above check, no other error checking is done by this class, and it is
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
     results: frozendict[str, Tuple[SpecificationSource,
         Tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
-    errortype: ErrorType = None
-    errors: frozendict[SpecificationSource, str] = None
+    errors: Tuple[Error] = None
 
     def __post_init__(self):
-        if self.results and (self.errortype or self.errors):
-            raise ValueError("Cannot include both results and errors")
-        if not self.results and (bool(self.errortype) ^ bool(self.errors)):  # xor
-            raise ValueError("Both or neither of the errortype and error are required")
-        if not self.results and not self.errortype:
-            raise ValueError("At least one of results or errors are required")
+        if not (bool(self.results) ^ bool(self.errors)):  # xnor
+            raise ValueError("Exectly one of results or errors must be supplied")
         # we assume here that the data is otherwise correctly created.
 
 
