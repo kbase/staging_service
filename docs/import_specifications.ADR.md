@@ -141,42 +141,68 @@ checking, including for missing or unknown input parameters. Most error checking
 in the bulk import cell configuration tab like other uploads, allowing for a consistent user
 experience.
 
-### Missing files
+### Error handling
 
-If the StS cannot find one or more files it will return a 404 with the body contents:
+The StS will return errors on a (mostly) per input file basis, with a string error code for
+each error type. Currently the error types are:
+
+* `cannot_find_file` if an input file cannot be found
+* `cannot_parse_file` if an input file cannot be parsed
+* `unexpected_error` if some other error occurs
+
+The HTTP code returned will be:
+
+* 500 if all errors are `unexpected_error`
+* 404 if at least one error is `cannot_find_file`
+* 400 if at least one error is `cannot_parse_file`
+
+The general structure of the error response is:
+
 ```
-{"error": "cannot_find_all_files",
- "missing_files": [<list of missing filenames>]
+{"errors": [
+    {"type": <error code string>,
+        ... other fields depending on the error code ...
+    },
+    ...
+]}
+```
+
+The individual error structures per error type are as follows:
+
+#### `cannot_find_file`
+
+```
+{"type": "cannot_find_file",
+ "file": <filepath>
 }
 ```
 
-### Unparseable files
+#### `cannot_parse_file`
 
-If the StS cannot parse one or more of the files it will return a 400 with the body contents:
 ```
-{"error": "cannot_parse_all_files",
- "unparseable_files": [{"filename": <filename>,
-                        "tab": <tab name for Excel files if the error is tab specific, else null>,
-                        "reason": <message>
-                        },
-                        ...
-                       ]
+{"type": "cannot_parse_file",
+ "file": <filepath>,
+ "tab": <Excel tab if applicable, else null>,
+ "message": <message regarding the parse error>
 }
 ```
+
 The service will check that the data type is valid and that rows >=2 all have the same number of
 entries, but will not do further error checking.
 
 Note in this case the service MUST log the stack trace along with the filename for each invalid
 file.
 
-### Other errors
+#### `unexpected_error`
 
-If any other error occurs, a general 500 error will be reported:
 ```
-{"error": "unexpected_error",
- "message": <error message here>
+{"type": "unexpected_error",
+ "file": <filepath if applicable to a single file>
+ "message": <message regarding the error>
 }
 ```
+
+Note in this case the service MUST log the stack trace along with the filename for each error.
 
 ## Alternatives explored
 
