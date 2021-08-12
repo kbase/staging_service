@@ -104,13 +104,38 @@ class Error:
 
 
 @dataclass(frozen=True)
+class ParseResult:
+    """
+    Contains the result of parsing one import specification, usually a single xSV file or a
+    spreadsheet tab.
+
+    source - the source of the import specification
+    result - the result of parsing the specification
+
+    Both arguments are required.
+    Other than the above check, no other error checking is done by this class, and it is
+    expected that the class creator do that error checking. Users should use the
+    parse_import_specifications method to create instances of this class.
+    """
+    source: SpecificationSource
+    result: tuple[frozendict[str, PRIMITIVE_TYPE]]
+
+    def __post_init__(self):
+        if not self.source:
+            raise ValueError("source is required")
+        if not self.result:
+            raise ValueError("result is required")
+        # we assume here that the data is otherwise correctly created.
+
+
+@dataclass(frozen=True)
 class ParseResults:
     """
     Contains the results of parsing import specification files.
 
-    results - the parse results. A mapping from the data type, to a tuple containing
+    results - the parse results. A mapping from the data type to a result containing
         1) the source of the results
-        2) the data for the data type as a tuple of dicts.
+        2) the data for the data type
     errors - the errors encountered while parsing the files, if any.
 
     Either results or errors must be provided.
@@ -118,9 +143,7 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
-    # TODO Result class for 1st tuple
-    results: frozendict[str, tuple[SpecificationSource,
-        tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
+    results: frozendict[str, ParseResult] = None
     errors: tuple[Error] = None
 
     def __post_init__(self):

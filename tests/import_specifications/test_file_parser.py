@@ -11,6 +11,7 @@ from staging_service.import_specifications.file_parser import (
     FileTypeResolution,
     SpecificationSource,
     Error,
+    ParseResult,
     ParseResults,
 )
 
@@ -125,9 +126,29 @@ def error_init_fail(errortype, message, source, expected):
     assert_exception_correct(got.value, expected)
 
 
-PR_RESULTS = frozendict({"data_type": (spcsrc("some_file", "tab"), (
-    frozendict({"fasta_file": "foo.fa", "do_thing": 1}),  # make a tuple!
-))})
+def test_ParseResult_init__success():
+    pr = ParseResult(spcsrc("bar"), (frozendict({"foo": "bar"}),))
+
+    assert pr.source == spcsrc("bar")
+    assert pr.result == (frozendict({"foo": "bar"}),)
+
+
+def test_ParseResult_init_fail():
+    parseResult_init_fail(None, None, ValueError("source is required"))
+    parseResult_init_fail(None, (frozendict({"foo": "bar"}),), ValueError("source is required"))
+    parseResult_init_fail(spcsrc("foo"), None, ValueError("result is required"))
+
+
+def parseResult_init_fail(source, result, expected):
+    with raises(Exception) as got:
+        ParseResult(source, result)
+    assert_exception_correct(got.value, expected)
+
+
+PR_RESULTS = frozendict({"data_type": ParseResult(
+    spcsrc("some_file", "tab"),
+    (frozendict({"fasta_file": "foo.fa", "do_thing": 1}),)  # make a tuple!
+)})
 
 PR_ERROR = (
     Error(ErrorType.OTHER, message="foo"),
