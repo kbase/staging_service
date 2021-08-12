@@ -19,18 +19,19 @@ class SupportedFileType(Enum):
     """
     File types supported by the parser.
     """
-    CSV = 0
-    TSV = 1
-    EXCEL = 2
+    CSV = 1
+    TSV = 2
+    EXCEL = 3
 
 
 class ErrorType(Enum):
     """
     The type of an error encountered when trying to parse import specifications.
     """
-    FILE_NOT_FOUND = 0
-    PARSE_FAIL = 1
-    OTHER = 2
+    FILE_NOT_FOUND = 1
+    PARSE_FAIL = 2
+    # TODO multiple data type defs error type
+    OTHER = 100
 
 
 @dataclass(frozen=True)
@@ -52,28 +53,20 @@ class FileTypeResolution:
 
 
 @dataclass(frozen=True)
-class PathDef:
-    """
-    A definition of a path to a file.
-
-    file - the true path to the file. This may contain implementation details that should be
-        hidden from the user.
-    userfile - the path to the file that should be displayed to the user.
-    """
-    file: Path
-    userfile: Path
-
-
-@dataclass(frozen=True)
 class SpecificationSource:
     """
     The source of an import specification.
 
     file - the file from which the import specification was obtained.
-    tab - the spreadsheet file tab from which the import specification was obtained, if any.
+    tab - the name of the spreadsheet file tab from which the import specification was obtained,
+        if any.
     """
-    file: PathDef
+    file: Path
     tab: str = None
+
+    def __post_init__(self):
+        if not self.file:
+            raise ValueError("file is required")
 
 
 @dataclass(frozen=True)
@@ -125,6 +118,7 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
+    # TODO Result class for 1st tuple
     results: frozendict[str, tuple[SpecificationSource,
         tuple[frozendict[str, PRIMITIVE_TYPE]]]] = None
     errors: tuple[Error] = None
@@ -136,7 +130,7 @@ class ParseResults:
 
 
 def parse_import_specifications(
-    paths: tuple[PathDef],
+    paths: tuple[Path],
     file_type_resolver: Callable[[Path], FileTypeResolution]
 ) -> ParseResults:
     """

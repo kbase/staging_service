@@ -9,14 +9,38 @@ from staging_service.import_specifications.file_parser import (
     ErrorType,
     SupportedFileType,
     FileTypeResolution,
-    PathDef,
     SpecificationSource,
     Error,
     ParseResults,
 )
 
-def spcsrc(path, upath, tab=None):
-    return SpecificationSource(PathDef(Path(path), Path(upath)), tab)
+def spcsrc(path, tab=None):
+    return SpecificationSource(Path(path), tab)
+
+
+def test_SpecificationSource_init_success():
+    # minimal
+    ss = SpecificationSource(Path("foo"))
+
+    assert ss.file == Path("foo")
+    assert ss.tab is None
+
+    # all
+    ss = SpecificationSource(Path("bar"), "tabbytab")
+
+    assert ss.file == Path("bar")
+    assert ss.tab == "tabbytab"
+
+
+def test_SpecificationSource_init_fail():
+    # could inline this, but might as well follow the same pattern as all the other tests
+    specificationSource_init_fail(None, ValueError("file is required"))
+
+
+def specificationSource_init_fail(file_, expected):
+    with raises(Exception) as got:
+        SpecificationSource(file_)
+    assert_exception_correct(got.value, expected)
 
 
 def test_FileTypeResolution_init_w_type_success():
@@ -47,26 +71,26 @@ def fileTypeResolution_init_fail(type_, utype, expected):
 
 def test_Error_init_w_FILE_NOT_FOUND_success():
     # minimal
-    e = Error(ErrorType.FILE_NOT_FOUND, source=spcsrc("foo", "bar"))
+    e = Error(ErrorType.FILE_NOT_FOUND, source=spcsrc("foo"))
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message is None
-    assert e.source == spcsrc("foo", "bar")
+    assert e.source == spcsrc("foo")
 
     # all
-    e = Error(ErrorType.FILE_NOT_FOUND, message="bar", source=spcsrc("foo", "bar"))
+    e = Error(ErrorType.FILE_NOT_FOUND, message="bar", source=spcsrc("foo"))
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message == "bar"
-    assert e.source == spcsrc("foo", "bar")
+    assert e.source == spcsrc("foo")
 
 
 def test_Error_init_w_PARSE_FAIL_success():
-    e = Error(ErrorType.PARSE_FAIL, message="foo", source=spcsrc("foo2", "bar"))
+    e = Error(ErrorType.PARSE_FAIL, message="foo", source=spcsrc("foo2"))
 
     assert e.error == ErrorType.PARSE_FAIL
     assert e.message == "foo"
-    assert e.source == spcsrc("foo2", "bar")
+    assert e.source == spcsrc("foo2")
 
 
 def test_Error_init_w_OTHER_success():
@@ -78,18 +102,18 @@ def test_Error_init_w_OTHER_success():
     assert e.source == None
 
     # all
-    e = Error(ErrorType.OTHER, message="foo", source=spcsrc("wooo", "bar"))
+    e = Error(ErrorType.OTHER, message="foo", source=spcsrc("wooo"))
 
     assert e.error == ErrorType.OTHER
     assert e.message == "foo"
-    assert e.source == spcsrc("wooo", "bar")
+    assert e.source == spcsrc("wooo")
 
 
 def test_Error_init_fail():
     error_init_fail(ErrorType.FILE_NOT_FOUND, None, None, ValueError(
         "source is required for a FILE_NOT_FOUND error"))
     err = "source and message are required for a PARSE_FAIL error"
-    error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo", "bar"), ValueError(err))
+    error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), ValueError(err))
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, ValueError(err))
     error_init_fail(ErrorType.OTHER, None, None, ValueError(
         "message is required for a OTHER error"))
@@ -101,13 +125,13 @@ def error_init_fail(errortype, message, source, expected):
     assert_exception_correct(got.value, expected)
 
 
-PR_RESULTS = frozendict({"data_type": (spcsrc("some_file", "user_file", "tab"), (
+PR_RESULTS = frozendict({"data_type": (spcsrc("some_file", "tab"), (
     frozendict({"fasta_file": "foo.fa", "do_thing": 1}),  # make a tuple!
 ))})
 
 PR_ERROR = (
     Error(ErrorType.OTHER, message="foo"),
-    Error(ErrorType.PARSE_FAIL, message="bar", source=spcsrc("some_file", "ufile", "tab3"))
+    Error(ErrorType.PARSE_FAIL, message="bar", source=spcsrc("some_file", "tab3"))
 )
 
 def test_ParseResults_init_w_results_success():
