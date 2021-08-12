@@ -99,6 +99,7 @@ async def file_exists(request: web.Request):
             show_hidden = False
     except KeyError as no_query:
         show_hidden = False
+    # this scans the entire directory recursively just to see if one file exists... why?
     results = await dir_info(user_dir, show_hidden, query)
     filtered_results = [result for result in results if result["name"] == query]
     if filtered_results:
@@ -236,8 +237,6 @@ async def get_jgi_metadata(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info["path"])
     return web.json_response(await read_metadata_for(path))
-
-
 
 
 @routes.post("/upload")

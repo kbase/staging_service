@@ -59,8 +59,7 @@ class Path(object):
     def validate_path(username: str, path: str = ""):
         """
         @returns a path object based on path that must start with username
-        throws an exeception for an invalid path or username
-        starts path at first occurance of username"""
+        """
         if len(path) > 0:
             path = os.path.normpath(path)
             path = path.replace("..", "/")
