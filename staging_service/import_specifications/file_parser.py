@@ -30,7 +30,7 @@ class ErrorType(Enum):
     """
     FILE_NOT_FOUND = 1
     PARSE_FAIL = 2
-    # TODO multiple data type defs error type
+    MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE = 3
     OTHER = 100
 
 
@@ -76,26 +76,37 @@ class Error:
 
     error - the type of the error.
     message - the error message, if any
-    source - the data source associated with the error, if any
+    source_1 - the first data source associated with the error, if any
+    source_2 - the second data source associated with the error, if any
 
     Each error type has different required arguments:
-    {ErrorType.FILE_NOT_FOUND.name}: source
-    {ErrorType.PARSE_FAIL}: source and message
-    {ErrorType.OTHER}: message. source is optional if the error applies to a source file.
+    {ErrorType.FILE_NOT_FOUND.name}: source_1
+    {ErrorType.PARSE_FAIL}: message and source_1
+    {ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE}: message, source_1, and source_2
+    {ErrorType.OTHER}: message. source_* is optional if the error applies to one or more
+        source files.
 
     """
     error: ErrorType
     message: str = None
-    source: SpecificationSource = None
+    source_1: SpecificationSource = None
+    source_2: SpecificationSource = None
 
     def __post_init__(self):
+        if not self.error:
+            raise ValueError("error is required")
         if self.error == ErrorType.FILE_NOT_FOUND:
-            if not self.source:
-                raise ValueError(f'source is required for a {ErrorType.FILE_NOT_FOUND.name} error')
+            if not self.source_1:
+                raise ValueError(
+                    f"source_1 is required for a {ErrorType.FILE_NOT_FOUND.name} error")
         elif self.error == ErrorType.PARSE_FAIL:
-            if not self.source or not self.message:
+            if not self.source_1 or not self.message:
                 pf = ErrorType.PARSE_FAIL.name
-                raise ValueError(f'source and message are required for a {pf} error')
+                raise ValueError(f'message and source_1 are required for a {pf} error')
+        elif self.error == ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE:
+            if not self.message or not self.source_1 or not self.source_2:
+                ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE.name
+                raise ValueError(f"message, source_1, and source_2 are required for a {ms} error")
         elif self.error == ErrorType.OTHER:
             if not self.message:
                 raise ValueError(f'message is required for a {ErrorType.OTHER.name} error')

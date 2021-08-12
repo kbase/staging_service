@@ -72,26 +72,40 @@ def fileTypeResolution_init_fail(type_, utype, expected):
 
 def test_Error_init_w_FILE_NOT_FOUND_success():
     # minimal
-    e = Error(ErrorType.FILE_NOT_FOUND, source=spcsrc("foo"))
+    e = Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo"))
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message is None
-    assert e.source == spcsrc("foo")
+    assert e.source_1 == spcsrc("foo")
+    assert e.source_2 is None
 
     # all
-    e = Error(ErrorType.FILE_NOT_FOUND, message="bar", source=spcsrc("foo"))
+    e = Error(ErrorType.FILE_NOT_FOUND, message="bar", source_1=spcsrc("foo"))
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message == "bar"
-    assert e.source == spcsrc("foo")
+    assert e.source_1 == spcsrc("foo")
+    assert e.source_2 is None
 
 
 def test_Error_init_w_PARSE_FAIL_success():
-    e = Error(ErrorType.PARSE_FAIL, message="foo", source=spcsrc("foo2"))
+    e = Error(ErrorType.PARSE_FAIL, message="foo", source_1=spcsrc("foo2"))
 
     assert e.error == ErrorType.PARSE_FAIL
     assert e.message == "foo"
-    assert e.source == spcsrc("foo2")
+    assert e.source_1 == spcsrc("foo2")
+    assert e.source_2 is None
+
+
+def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
+    e = Error(
+        ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE, "foo", spcsrc("foo2"), spcsrc("yay")
+    )
+
+    assert e.error == ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
+    assert e.message == "foo"
+    assert e.source_1 == spcsrc("foo2")
+    assert e.source_2 == spcsrc("yay")
 
 
 def test_Error_init_w_OTHER_success():
@@ -100,33 +114,43 @@ def test_Error_init_w_OTHER_success():
 
     assert e.error == ErrorType.OTHER
     assert e.message == "foo"
-    assert e.source == None
+    assert e.source_1 is None
+    assert e.source_2 is None
 
     # all
-    e = Error(ErrorType.OTHER, message="foo", source=spcsrc("wooo"))
+    e = Error(ErrorType.OTHER, message="foo", source_1=spcsrc("wooo"))
 
     assert e.error == ErrorType.OTHER
     assert e.message == "foo"
-    assert e.source == spcsrc("wooo")
+    assert e.source_1 == spcsrc("wooo")
+    assert e.source_2 is None
 
 
 def test_Error_init_fail():
-    error_init_fail(ErrorType.FILE_NOT_FOUND, None, None, ValueError(
-        "source is required for a FILE_NOT_FOUND error"))
-    err = "source and message are required for a PARSE_FAIL error"
-    error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), ValueError(err))
-    error_init_fail(ErrorType.PARSE_FAIL, "msg", None, ValueError(err))
-    error_init_fail(ErrorType.OTHER, None, None, ValueError(
+    error_init_fail(None, None, None, None, ValueError("error is required"))
+    error_init_fail(ErrorType.FILE_NOT_FOUND, None, None, None, ValueError(
+        "source_1 is required for a FILE_NOT_FOUND error"))
+    err = "message and source_1 are required for a PARSE_FAIL error"
+    error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
+    error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
+    ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
+    err = ("message, source_1, and source_2 are required for a "
+        + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error")
+    error_init_fail(ms, None, None, None, ValueError(err))
+    error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
+    error_init_fail(ms, "msg", None, spcsrc("bar"), ValueError(err))
+    error_init_fail(ms, "msg", spcsrc("foo"), None, ValueError(err))
+    error_init_fail(ErrorType.OTHER, None, None, None, ValueError(
         "message is required for a OTHER error"))
 
 
-def error_init_fail(errortype, message, source, expected):
+def error_init_fail(errortype, message, source_1, source_2, expected):
     with raises(Exception) as got:
-        Error(errortype, message, source)
+        Error(errortype, message, source_1, source_2)
     assert_exception_correct(got.value, expected)
 
 
-def test_ParseResult_init__success():
+def test_ParseResult_init_success():
     pr = ParseResult(spcsrc("bar"), (frozendict({"foo": "bar"}),))
 
     assert pr.source == spcsrc("bar")
@@ -152,7 +176,7 @@ PR_RESULTS = frozendict({"data_type": ParseResult(
 
 PR_ERROR = (
     Error(ErrorType.OTHER, message="foo"),
-    Error(ErrorType.PARSE_FAIL, message="bar", source=spcsrc("some_file", "tab3"))
+    Error(ErrorType.PARSE_FAIL, message="bar", source_1=spcsrc("some_file", "tab3"))
 )
 
 def test_ParseResults_init_w_results_success():
