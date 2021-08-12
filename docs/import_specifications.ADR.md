@@ -149,13 +149,15 @@ each error type. Currently the error types are:
 * `cannot_find_file` if an input file cannot be found
 * `cannot_parse_file` if an input file cannot be parsed
 * `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
+* `no_files_provided` if no files were provided
 * `unexpected_error` if some other error occurs
 
 The HTTP code returned will be:
 
 * 500 if all errors are `unexpected_error`
 * 404 if at least one error is `cannot_find_file`
-* 400 if at least one error is `cannot_parse_file` or `multiple_specifications_for_data_type`
+* 400 if at least one error is `cannot_parse_file`, `no_files_provided`, or
+  `multiple_specifications_for_data_type`
 
 The general structure of the error response is:
 
@@ -205,6 +207,12 @@ file.
  "tab_2": <spreadsheet tab for second file if applicable, else null>,
  "message": <message regarding the multiple specification error>
 }
+```
+
+### `no_files_provided`
+
+```
+{"type": "no_files_provided"}
 ```
 
 #### `unexpected_error`
