@@ -148,13 +148,14 @@ each error type. Currently the error types are:
 
 * `cannot_find_file` if an input file cannot be found
 * `cannot_parse_file` if an input file cannot be parsed
+* `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
 * `unexpected_error` if some other error occurs
 
 The HTTP code returned will be:
 
 * 500 if all errors are `unexpected_error`
 * 404 if at least one error is `cannot_find_file`
-* 400 if at least one error is `cannot_parse_file`
+* 400 if at least one error is `cannot_parse_file` or `multiple_specifications_for_data_type`
 
 The general structure of the error response is:
 
@@ -182,7 +183,7 @@ The individual error structures per error type are as follows:
 ```
 {"type": "cannot_parse_file",
  "file": <filepath>,
- "tab": <Excel tab if applicable, else null>,
+ "tab": <spreadsheet tab if applicable, else null>,
  "message": <message regarding the parse error>
 }
 ```
@@ -192,6 +193,19 @@ entries, but will not do further error checking.
 
 Note in this case the service MUST log the stack trace along with the filename for each invalid
 file.
+
+
+### `multiple_specifications_for_data_type`
+
+```
+{"type": "multiple_specifications_for_data_type",
+ "file_1": <filepath for first file>,
+ "tab_1": <spreadsheet tab from first file if applicable, else null>,
+ "file_2": <filepath for second file>,
+ "tab_2": <spreadsheet tab for second file if applicable, else null>,
+ "message": <message regarding the multiple specification error>
+}
+```
 
 #### `unexpected_error`
 
