@@ -15,15 +15,6 @@ from typing import Union, Callable
 PRIMITIVE_TYPE = Union[str, int, float, bool, None]
 
 
-class SupportedFileType(Enum):
-    """
-    File types supported by the parser.
-    """
-    CSV = 1
-    TSV = 2
-    EXCEL = 3
-
-
 class ErrorType(Enum):
     """
     The type of an error encountered when trying to parse import specifications.
@@ -32,24 +23,6 @@ class ErrorType(Enum):
     PARSE_FAIL = 2
     MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE = 3
     OTHER = 100
-
-
-@dataclass(frozen=True)
-class FileTypeResolution:
-    """
-    The result of resolving a file type given a file path.
-
-    Only one of type or unsupported_type may be specified.
-
-    type - the resolved file type if the type is one of the supported types.
-    unsupported_type - the file type if the type is not a supported type.
-    """
-    type: SupportedFileType = None
-    unsupported_type: str = None
-
-    def __post_init__(self):
-        if not (bool(self.type) ^ bool(self.unsupported_type)):  # xnor
-            raise ValueError("Exectly one of type or unsupported_type must be supplied")
 
 
 @dataclass(frozen=True)
@@ -163,6 +136,24 @@ class ParseResults:
         # we assume here that the data is otherwise correctly created.
 
 
+@dataclass(frozen=True)
+class FileTypeResolution:
+    """
+    The result of resolving a file type given a file path.
+
+    Only one of parser or unsupported_type may be specified.
+
+    parser - a parser for the file
+    unsupported_type - the file type if the type is not a supported type.
+    """
+    parser: Callable[[Path], ParseResults] = None
+    unsupported_type: str = None
+
+    def __post_init__(self):
+        if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor
+            raise ValueError("Exectly one of parser or unsupported_type must be supplied")
+
+
 def parse_import_specifications(
     paths: tuple[Path],
     file_type_resolver: Callable[[Path], FileTypeResolution]
@@ -171,7 +162,8 @@ def parse_import_specifications(
     Parse a set of import specification files and return the results.
 
     paths - the file paths to open.
-    file_type_resolver - a callable that when given a file path, returns the type of the file.
+    file_type_resolver - a callable that when given a file path, returns the type of the file or
+        a parser for the file.
     """
     results = {}
     errors = []

@@ -7,7 +7,6 @@ from pathlib import Path
 
 from staging_service.import_specifications.file_parser import (
     ErrorType,
-    SupportedFileType,
     FileTypeResolution,
     SpecificationSource,
     Error,
@@ -44,24 +43,26 @@ def specificationSource_init_fail(file_, expected):
     assert_exception_correct(got.value, expected)
 
 
-def test_FileTypeResolution_init_w_type_success():
-    ftr = FileTypeResolution(SupportedFileType.CSV)
+def test_FileTypeResolution_init_w_parser_success():
+    p = lambda path: ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
+    ftr = FileTypeResolution(p)
 
-    assert ftr.type == SupportedFileType.CSV
+    assert ftr.parser is p  # Here only identity equality makes sense
     assert ftr.unsupported_type is None
 
 
 def test_FileTypeResolution_init_w_unsupported_type_success():
     ftr = FileTypeResolution(unsupported_type="sys")
 
-    assert ftr.type is None
+    assert ftr.parser is None
     assert ftr.unsupported_type == "sys"
 
 
 def test_FileTypeResolution_init_fail():
-    err = "Exectly one of type or unsupported_type must be supplied"
+    err = "Exectly one of parser or unsupported_type must be supplied"
+    pr = ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
     fileTypeResolution_init_fail(None, None, ValueError(err))
-    fileTypeResolution_init_fail(SupportedFileType.CSV, "mp-2", ValueError(err))
+    fileTypeResolution_init_fail(lambda path: pr, "mp-2", ValueError(err))
 
 
 def fileTypeResolution_init_fail(type_, utype, expected):
