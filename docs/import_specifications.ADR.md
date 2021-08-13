@@ -152,12 +152,12 @@ each error type. Currently the error types are:
 * `no_files_provided` if no files were provided
 * `unexpected_error` if some other error occurs
 
-The HTTP code returned will be:
+The HTTP code returned will be, in order of precedence:
 
-* 500 if all errors are `unexpected_error`
-* 404 if at least one error is `cannot_find_file`
 * 400 if at least one error is `cannot_parse_file`, `no_files_provided`, or
   `multiple_specifications_for_data_type`
+* 404 if at least one error is `cannot_find_file` but there are no 400-type errors
+* 500 if all errors are `unexpected_error`
 
 The general structure of the error response is:
 
