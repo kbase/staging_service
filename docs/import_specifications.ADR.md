@@ -200,7 +200,7 @@ file.
 
 ```
 {"type": "illegal_file_name",
- "message": <message regarding the parse error>,
+ "message": <message regarding the illegal name>,
  "file": <filepath>
 }
 ```
