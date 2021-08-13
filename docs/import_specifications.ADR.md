@@ -155,7 +155,7 @@ each error type. Currently the error types are:
 
 The HTTP code returned will be, in order of precedence:
 
-* 400 if any error other than `cannnot_find_file` or `unexpected_error` occurs
+* 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
 * 404 if at least one error is `cannot_find_file` but there are no 400-type errors
 * 500 if all errors are `unexpected_error`
 
