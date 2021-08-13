@@ -4,8 +4,10 @@ from frozendict import frozendict
 from pytest import raises
 from tests.test_utils import assert_exception_correct
 from pathlib import Path
+from typing import Callable
 
 from staging_service.import_specifications.file_parser import (
+    PRIMITIVE_TYPE,
     ErrorType,
     FileTypeResolution,
     SpecificationSource,
@@ -14,7 +16,8 @@ from staging_service.import_specifications.file_parser import (
     ParseResults,
 )
 
-def spcsrc(path, tab=None):
+
+def spcsrc(path: str, tab: str=None):
     return SpecificationSource(Path(path), tab)
 
 
@@ -37,7 +40,7 @@ def test_SpecificationSource_init_fail():
     specificationSource_init_fail(None, ValueError("file is required"))
 
 
-def specificationSource_init_fail(file_, expected):
+def specificationSource_init_fail(file_: str, expected: Exception):
     with raises(Exception) as got:
         SpecificationSource(file_)
     assert_exception_correct(got.value, expected)
@@ -65,7 +68,11 @@ def test_FileTypeResolution_init_fail():
     fileTypeResolution_init_fail(lambda path: pr, "mp-2", ValueError(err))
 
 
-def fileTypeResolution_init_fail(parser, unexpected_type, expected):
+def fileTypeResolution_init_fail(
+    parser: Callable[[Path], ParseResults],
+    unexpected_type: str,
+    expected: Exception
+):
     with raises(Exception) as got:
         FileTypeResolution(parser, unexpected_type)
     assert_exception_correct(got.value, expected)
@@ -146,7 +153,13 @@ def test_Error_init_fail():
         "message is required for a OTHER error"))
 
 
-def error_init_fail(errortype, message, source_1, source_2, expected):
+def error_init_fail(
+    errortype: ErrorType,
+    message: str,
+    source_1: SpecificationSource,
+    source_2: SpecificationSource,
+    expected: Exception
+):
     with raises(Exception) as got:
         Error(errortype, message, source_1, source_2)
     assert_exception_correct(got.value, expected)
@@ -165,7 +178,11 @@ def test_ParseResult_init_fail():
     parseResult_init_fail(spcsrc("foo"), None, ValueError("result is required"))
 
 
-def parseResult_init_fail(source, result, expected):
+def parseResult_init_fail(
+    source: SpecificationSource,
+    result: tuple[frozendict[str, PRIMITIVE_TYPE]],
+    expected: Exception
+):
     with raises(Exception) as got:
         ParseResult(source, result)
     assert_exception_correct(got.value, expected)
@@ -207,7 +224,11 @@ def test_ParseResults_init_fail():
     parseResults_init_fail(PR_RESULTS, PR_ERROR, ValueError(err))
 
 
-def parseResults_init_fail(results, errors, expected):
+def parseResults_init_fail(
+    results: frozendict[str, ParseResult],
+    errors: tuple[Error],
+    expected: Exception
+):
     with raises(Exception) as got:
         ParseResults(results, errors)
     assert_exception_correct(got.value, expected)
