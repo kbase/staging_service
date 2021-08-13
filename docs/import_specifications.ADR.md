@@ -67,6 +67,12 @@ Currently, for all in scope apps, the inputs are all strings, numbers, or boolea
 no unusual inputs such as grouped parameters or dynamic lookups. Including future upload apps
 with these features in CSV-based upload may require additional engineering.
 
+Note that the endpoint will return individual data for each row, while the current front end
+only supports individual input files and output objects (this may be improved in a future update).
+The front end will be expected to either
+1. Ignore all parameters other than in the first entry in the return per type, or
+2. Throw an error if parameters differ from the first entry.
+
 ## User operations
 
 * The user uploads the import specification files to the staging area along with all the files
@@ -135,42 +141,90 @@ checking, including for missing or unknown input parameters. Most error checking
 in the bulk import cell configuration tab like other uploads, allowing for a consistent user
 experience.
 
-### Missing files
+### Error handling
 
-If the StS cannot find one or more files it will return a 404 with the body contents:
+The StS will return errors on a (mostly) per input file basis, with a string error code for
+each error type. Currently the error types are:
+
+* `cannot_find_file` if an input file cannot be found
+* `cannot_parse_file` if an input file cannot be parsed
+* `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
+* `no_files_provided` if no files were provided
+* `unexpected_error` if some other error occurs
+
+The HTTP code returned will be, in order of precedence:
+
+* 400 if at least one error is `cannot_parse_file`, `no_files_provided`, or
+  `multiple_specifications_for_data_type`
+* 404 if at least one error is `cannot_find_file` but there are no 400-type errors
+* 500 if all errors are `unexpected_error`
+
+The general structure of the error response is:
+
 ```
-{"error": "cannot_find_all_files",
- "missing_files": [<list of missing filenames>]
+{"errors": [
+    {"type": <error code string>,
+        ... other fields depending on the error code ...
+    },
+    ...
+]}
+```
+
+The individual error structures per error type are as follows:
+
+#### `cannot_find_file`
+
+```
+{"type": "cannot_find_file",
+ "file": <filepath>
 }
 ```
 
-### Unparseable files
+#### `cannot_parse_file`
 
-If the StS cannot parse one or more of the files it will return a 400 with the body contents:
 ```
-{"error": "cannot_parse_all_files",
- "unparseable_files": [{"filename": <filename>,
-                        "tab": <tab name for Excel files if the error is tab specific, else null>,
-                        "reason": <message>
-                        },
-                        ...
-                       ]
+{"type": "cannot_parse_file",
+ "file": <filepath>,
+ "tab": <spreadsheet tab if applicable, else null>,
+ "message": <message regarding the parse error>
 }
 ```
+
 The service will check that the data type is valid and that rows >=2 all have the same number of
 entries, but will not do further error checking.
 
 Note in this case the service MUST log the stack trace along with the filename for each invalid
 file.
 
-### Other errors
 
-If any other error occurs, a general 500 error will be reported:
+#### `multiple_specifications_for_data_type`
+
 ```
-{"error": "unexpected_error",
- "message": <error message here>
+{"type": "multiple_specifications_for_data_type",
+ "file_1": <filepath for first file>,
+ "tab_1": <spreadsheet tab from first file if applicable, else null>,
+ "file_2": <filepath for second file>,
+ "tab_2": <spreadsheet tab for second file if applicable, else null>,
+ "message": <message regarding the multiple specification error>
 }
 ```
+
+#### `no_files_provided`
+
+```
+{"type": "no_files_provided"}
+```
+
+#### `unexpected_error`
+
+```
+{"type": "unexpected_error",
+ "file": <filepath if applicable to a single file>
+ "message": <message regarding the error>
+}
+```
+
+Note in this case the service MUST log the stack trace along with the filename for each error.
 
 ## Alternatives explored
 
@@ -194,3 +248,22 @@ If any other error occurs, a general 500 error will be reported:
   * Enforcing a count makes it less likely that a user will commit silent counting errors if
     there are many empty entries between items in a line.
   * A: Enforce a column count to prevent user errors.
+
+## Addendum: dynamic parameter lookup
+
+Dynamic scientific name to taxon lookup may be added to the Genbank (and the currently
+out of scope, but trivial to add GFF/FASTA Genome) importer in the near future. If that occurs,
+for the purpose of xSV upload the user will be expected to provide the entire, correct,
+scientific name as returned from the taxon API. 
+
+* The user could get this name by starting a genome upload and running the query from the 
+  import app cell configuration screen.
+  * This will be documented in the README.md for the template files.
+* As part of the UI work we could theoretically provide a landing page for looking up valid
+  scientific names.
+* Presumably the UI would need to run the dynamic query and report an error to the user if the
+  dynamic service returns 0 or > 1 entries.
+* Providing the scientific name vs. the taxon api seems simpler because the machinery already 
+  exists to perform the query and is part of the spec.
+* Expect these plans to change as it becomes more clear how dynamic fields will work in the
+  context of bulk upload.
