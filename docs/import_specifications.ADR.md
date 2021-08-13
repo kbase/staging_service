@@ -241,7 +241,7 @@ Note in this case the service MUST log the stack trace along with the filename f
 ## Alternatives explored
 
 * We considered parsing the files in the Narrative backend (pulling the files as is from the StS)
-  but the current design allows other services and UIs reusing the parsing code. There doesn't
+  but the current design allows for other services and UIs reusing the parsing code. There doesn't
   otherwise seem to be a strong reason to include the code one place or the other so we decided
   to include it in the StS.
 
@@ -275,7 +275,7 @@ scientific name as returned from the taxon API.
   scientific names.
 * Presumably the UI would need to run the dynamic query and report an error to the user if the
   dynamic service returns 0 or > 1 entries.
-* Providing the scientific name vs. the taxon api seems simpler because the machinery already 
+* Providing the scientific name vs. the taxon ID seems simpler because the machinery already 
   exists to perform the query and is part of the spec.
 * Expect these plans to change as it becomes more clear how dynamic fields will work in the
   context of bulk upload.
