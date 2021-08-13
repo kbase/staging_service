@@ -65,9 +65,9 @@ def test_FileTypeResolution_init_fail():
     fileTypeResolution_init_fail(lambda path: pr, "mp-2", ValueError(err))
 
 
-def fileTypeResolution_init_fail(type_, utype, expected):
+def fileTypeResolution_init_fail(parser, unexpected_type, expected):
     with raises(Exception) as got:
-        FileTypeResolution(type_, utype)
+        FileTypeResolution(parser, unexpected_type)
     assert_exception_correct(got.value, expected)
 
 
@@ -128,6 +128,7 @@ def test_Error_init_w_OTHER_success():
 
 
 def test_Error_init_fail():
+    # arguments are error type, message string, 1st source, 2nd source, exception
     error_init_fail(None, None, None, None, ValueError("error is required"))
     error_init_fail(ErrorType.FILE_NOT_FOUND, None, None, None, ValueError(
         "source_1 is required for a FILE_NOT_FOUND error"))
