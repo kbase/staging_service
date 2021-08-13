@@ -148,14 +148,14 @@ each error type. Currently the error types are:
 
 * `cannot_find_file` if an input file cannot be found
 * `cannot_parse_file` if an input file cannot be parsed
+* `illegal_file_name` if an illegal file name is provided
 * `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
 * `no_files_provided` if no files were provided
 * `unexpected_error` if some other error occurs
 
 The HTTP code returned will be, in order of precedence:
 
-* 400 if at least one error is `cannot_parse_file`, `no_files_provided`, or
-  `multiple_specifications_for_data_type`
+* 400 if any error other than `cannnot_find_file` or `unexpected_error` occurs
 * 404 if at least one error is `cannot_find_file` but there are no 400-type errors
 * 500 if all errors are `unexpected_error`
 
@@ -196,6 +196,18 @@ entries, but will not do further error checking.
 Note in this case the service MUST log the stack trace along with the filename for each invalid
 file.
 
+#### `illegal_file_name`
+
+```
+{"type": "illegal_file_name",
+ "message": <message regarding the parse error>,
+ "file": <filepath>
+}
+```
+
+The `file` key will not be provided if there is a `null` filename provided. This is currently
+impossible based on the API but we note it here in case a JSON body based API is provided in the
+future.
 
 #### `multiple_specifications_for_data_type`
 
