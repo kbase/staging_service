@@ -197,7 +197,7 @@ Note in this case the service MUST log the stack trace along with the filename f
 file.
 
 
-### `multiple_specifications_for_data_type`
+#### `multiple_specifications_for_data_type`
 
 ```
 {"type": "multiple_specifications_for_data_type",
@@ -209,7 +209,7 @@ file.
 }
 ```
 
-### `no_files_provided`
+#### `no_files_provided`
 
 ```
 {"type": "no_files_provided"}
