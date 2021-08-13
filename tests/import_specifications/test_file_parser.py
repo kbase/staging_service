@@ -139,11 +139,11 @@ def test_Error_init_fail():
     error_init_fail(None, None, None, None, ValueError("error is required"))
     error_init_fail(ErrorType.FILE_NOT_FOUND, None, None, None, ValueError(
         "source_1 is required for a FILE_NOT_FOUND error"))
-    err = "message and source_1 are required for a PARSE_FAIL error"
+    err = "message, source_1 is required for a PARSE_FAIL error"
     error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
     ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
-    err = ("message, source_1, and source_2 are required for a "
+    err = ("message, source_1, source_2 is required for a "
         + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error")
     error_init_fail(ms, None, None, None, ValueError(err))
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
