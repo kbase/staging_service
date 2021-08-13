@@ -116,6 +116,15 @@ def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
     assert e.source_2 == spcsrc("yay")
 
 
+def test_Error_init_w_NO_FILES_PROVIDED_success():
+    e = Error(ErrorType.NO_FILES_PROVIDED)
+
+    assert e.error == ErrorType.NO_FILES_PROVIDED
+    assert e.message is None
+    assert e.source_1 is None
+    assert e.source_2 is None
+
+
 def test_Error_init_w_OTHER_success():
     # minimal
     e = Error(ErrorType.OTHER, message="foo")

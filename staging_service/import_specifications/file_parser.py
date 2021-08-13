@@ -22,6 +22,7 @@ class ErrorType(Enum):
     FILE_NOT_FOUND = 1
     PARSE_FAIL = 2
     MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE = 3
+    NO_FILES_PROVIDED = 4
     # TODO illegal file
     OTHER = 100
 
@@ -51,6 +52,7 @@ _ERRTYPE_TO_REQ_ARGS = {
     ErrorType.FILE_NOT_FOUND: (_ERR_SOURCE_1,),
     ErrorType.PARSE_FAIL: (_ERR_MESSAGE, _ERR_SOURCE_1),
     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: (_ERR_MESSAGE, _ERR_SOURCE_1, _ERR_SOURCE_2),
+    ErrorType.NO_FILES_PROVIDED: tuple(),
     ErrorType.OTHER: (_ERR_MESSAGE,),
 }
 
@@ -69,6 +71,7 @@ class Error:
     {ErrorType.PARSE_FAIL}: {_ERR_MESSAGE} and {_ERR_SOURCE_1}
     {ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE}: {_ERR_MESSAGE}, {_ERR_SOURCE_1}, and
         {_ERR_SOURCE_2}
+    {ErrorType.NO_FILES_PROVIDED}: none
     {ErrorType.OTHER}: {_ERR_MESSAGE}. source arguments are optional and may be included if
         the error applies to one or more source files.
 
