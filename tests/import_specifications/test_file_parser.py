@@ -125,6 +125,24 @@ def test_Error_init_w_NO_FILES_PROVIDED_success():
     assert e.source_2 is None
 
 
+def test_Error_init_w_ILLEGAL_FILE_NAME_success():
+    # minimal
+    e = Error(ErrorType.ILLEGAL_FILE_NAME, message="foo")
+
+    assert e.error == ErrorType.ILLEGAL_FILE_NAME
+    assert e.message == "foo"
+    assert e.source_1 is None
+    assert e.source_2 is None
+
+    # all
+    e = Error(ErrorType.ILLEGAL_FILE_NAME, message="foo", source_1=spcsrc("wooo"))
+
+    assert e.error == ErrorType.ILLEGAL_FILE_NAME
+    assert e.message == "foo"
+    assert e.source_1 == spcsrc("wooo")
+    assert e.source_2 is None
+
+
 def test_Error_init_w_OTHER_success():
     # minimal
     e = Error(ErrorType.OTHER, message="foo")
@@ -158,6 +176,8 @@ def test_Error_init_fail():
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
     error_init_fail(ms, "msg", None, spcsrc("bar"), ValueError(err))
     error_init_fail(ms, "msg", spcsrc("foo"), None, ValueError(err))
+    error_init_fail(ErrorType.ILLEGAL_FILE_NAME, None, None, None, ValueError(
+        "message is required for a ILLEGAL_FILE_NAME error"))
     error_init_fail(ErrorType.OTHER, None, None, None, ValueError(
         "message is required for a OTHER error"))
 
