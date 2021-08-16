@@ -8,7 +8,7 @@ from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Union, Callable
+from typing import Union, Callable, Optional as O
 
 # TODO should get mypy working at some point
 
@@ -22,6 +22,8 @@ class ErrorType(Enum):
     FILE_NOT_FOUND = 1
     PARSE_FAIL = 2
     MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE = 3
+    NO_FILES_PROVIDED = 4
+    ILLEGAL_FILE_NAME = 5
     OTHER = 100
 
 
@@ -35,12 +37,25 @@ class SpecificationSource:
         if any.
     """
     file: Path
-    tab: str = None
+    tab: O[str] = None
 
     def __post_init__(self):
         if not self.file:
             raise ValueError("file is required")
 
+
+_ERR_MESSAGE = 'message'
+_ERR_SOURCE_1 = 'source_1'
+_ERR_SOURCE_2 = 'source_2'
+
+_ERRTYPE_TO_REQ_ARGS = {
+    ErrorType.FILE_NOT_FOUND: (_ERR_SOURCE_1,),
+    ErrorType.PARSE_FAIL: (_ERR_MESSAGE, _ERR_SOURCE_1),
+    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: (_ERR_MESSAGE, _ERR_SOURCE_1, _ERR_SOURCE_2),
+    ErrorType.NO_FILES_PROVIDED: tuple(),
+    ErrorType.ILLEGAL_FILE_NAME: (_ERR_MESSAGE,),
+    ErrorType.OTHER: (_ERR_MESSAGE,),
+}
 
 @dataclass(frozen=True)
 class Error:
@@ -48,43 +63,38 @@ class Error:
     An error found while attempting to parse files.
 
     error - the type of the error.
-    message - the error message, if any
-    source_1 - the first data source associated with the error, if any
-    source_2 - the second data source associated with the error, if any
+    {_ERR_MESSAGE} - the error message, if any
+    {_ERR_SOURCE_1} - the first data source associated with the error, if any
+    {_ERR_SOURCE_2} - the second data source associated with the error, if any
 
     Each error type has different required arguments:
-    {ErrorType.FILE_NOT_FOUND.name}: source_1
-    {ErrorType.PARSE_FAIL}: message and source_1
-    {ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE}: message, source_1, and source_2
-    {ErrorType.OTHER}: message. source_* is optional if the error applies to one or more
-        source files.
+    {ErrorType.FILE_NOT_FOUND.name}: {_ERR_SOURCE_1}
+    {ErrorType.PARSE_FAIL}: {_ERR_MESSAGE} and {_ERR_SOURCE_1}
+    {ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE}: {_ERR_MESSAGE}, {_ERR_SOURCE_1}, and
+        {_ERR_SOURCE_2}
+    {ErrorType.NO_FILES_PROVIDED}: none
+    {ErrorType.ILLEGAL_FILE_NAME}: message. {_ERR_SOURCE_1} should be supplied if the file name
+        is representable as a Path.
+    {ErrorType.OTHER}: {_ERR_MESSAGE}. source arguments are optional and may be included if
+        the error applies to one or more source files.
 
     """
     error: ErrorType
-    message: str = None
-    source_1: SpecificationSource = None
-    source_2: SpecificationSource = None
+    message: O[str] = None
+    source_1: O[SpecificationSource] = None
+    source_2: O[SpecificationSource] = None
 
     def __post_init__(self):
         if not self.error:
             raise ValueError("error is required")
-        if self.error == ErrorType.FILE_NOT_FOUND:
-            if not self.source_1:
-                raise ValueError(
-                    f"source_1 is required for a {ErrorType.FILE_NOT_FOUND.name} error")
-        elif self.error == ErrorType.PARSE_FAIL:
-            if not self.source_1 or not self.message:
-                pf = ErrorType.PARSE_FAIL.name
-                raise ValueError(f'message and source_1 are required for a {pf} error')
-        elif self.error == ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE:
-            if not self.message or not self.source_1 or not self.source_2:
-                ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE.name
-                raise ValueError(f"message, source_1, and source_2 are required for a {ms} error")
-        elif self.error == ErrorType.OTHER:
-            if not self.message:
-                raise ValueError(f'message is required for a {ErrorType.OTHER.name} error')
-        else:
-            assert 0, "unexpected error type"  # can't test this line
+        if self.error not in _ERRTYPE_TO_REQ_ARGS:
+            # can't test this line in a meaningful way
+            assert 0, f"unexpected error type: {self.error}"
+        attrs = _ERRTYPE_TO_REQ_ARGS[self.error]
+        for attr in attrs:
+            if not getattr(self, attr):
+                # grammar sucks but this is not expected to be seen by end users so meh
+                raise ValueError(f"{', '.join(attrs)} is required for a {self.error.name} error")
 
 
 @dataclass(frozen=True)
@@ -127,8 +137,8 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
-    results: frozendict[str, ParseResult] = None
-    errors: tuple[Error] = None
+    results: O[frozendict[str, ParseResult]] = None
+    errors: O[tuple[Error]] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -146,8 +156,8 @@ class FileTypeResolution:
     parser - a parser for the file
     unsupported_type - the file type if the type is not a supported type.
     """
-    parser: Callable[[Path], ParseResults] = None
-    unsupported_type: str = None
+    parser: O[Callable[[Path], ParseResults]] = None
+    unsupported_type: O[str] = None
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor
