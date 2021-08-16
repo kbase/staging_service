@@ -440,14 +440,14 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         Error(
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
             "data type bar appears in two importer specification sources",
-            SpecificationSource("b1"),
-            SpecificationSource("b2")
+            spcsrc("b1"),
+            spcsrc("b2")
         ),
         Error(
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
             "data type baz appears in two importer specification sources",
-            SpecificationSource("c1"),
-            SpecificationSource("c2")
+            spcsrc("c1"),
+            spcsrc("c2")
         )
     ]))
 
