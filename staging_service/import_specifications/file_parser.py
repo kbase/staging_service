@@ -8,7 +8,7 @@ from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Union, Callable
+from typing import Union, Callable, Optional as O
 
 # TODO should get mypy working at some point
 
@@ -37,7 +37,7 @@ class SpecificationSource:
         if any.
     """
     file: Path
-    tab: str = None
+    tab: O[str] = None
 
     def __post_init__(self):
         if not self.file:
@@ -80,9 +80,9 @@ class Error:
 
     """
     error: ErrorType
-    message: str = None
-    source_1: SpecificationSource = None
-    source_2: SpecificationSource = None
+    message: O[str] = None
+    source_1: O[SpecificationSource] = None
+    source_2: O[SpecificationSource] = None
 
     def __post_init__(self):
         if not self.error:
@@ -137,8 +137,8 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
-    results: frozendict[str, ParseResult] = None
-    errors: tuple[Error] = None
+    results: O[frozendict[str, ParseResult]] = None
+    errors: O[tuple[Error]] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -156,8 +156,8 @@ class FileTypeResolution:
     parser - a parser for the file
     unsupported_type - the file type if the type is not a supported type.
     """
-    parser: Callable[[Path], ParseResults] = None
-    unsupported_type: str = None
+    parser: O[Callable[[Path], ParseResults]] = None
+    unsupported_type: O[str] = None
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor

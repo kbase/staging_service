@@ -4,7 +4,7 @@ from frozendict import frozendict
 from pytest import raises
 from tests.test_utils import assert_exception_correct
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional as O
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
@@ -17,7 +17,7 @@ from staging_service.import_specifications.file_parser import (
 )
 
 
-def spcsrc(path: str, tab: str=None):
+def spcsrc(path: str, tab: O[str]=None):
     return SpecificationSource(Path(path), tab)
 
 
@@ -40,7 +40,7 @@ def test_SpecificationSource_init_fail():
     specificationSource_init_fail(None, ValueError("file is required"))
 
 
-def specificationSource_init_fail(file_: str, expected: Exception):
+def specificationSource_init_fail(file_: O[str], expected: Exception):
     with raises(Exception) as got:
         SpecificationSource(file_)
     assert_exception_correct(got.value, expected)
@@ -69,8 +69,8 @@ def test_FileTypeResolution_init_fail():
 
 
 def fileTypeResolution_init_fail(
-    parser: Callable[[Path], ParseResults],
-    unexpected_type: str,
+    parser: O[Callable[[Path], ParseResults]],
+    unexpected_type: O[str],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -183,10 +183,10 @@ def test_Error_init_fail():
 
 
 def error_init_fail(
-    errortype: ErrorType,
-    message: str,
-    source_1: SpecificationSource,
-    source_2: SpecificationSource,
+    errortype: O[ErrorType],
+    message: O[str],
+    source_1: O[SpecificationSource],
+    source_2: O[SpecificationSource],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -208,8 +208,8 @@ def test_ParseResult_init_fail():
 
 
 def parseResult_init_fail(
-    source: SpecificationSource,
-    result: tuple[frozendict[str, PRIMITIVE_TYPE]],
+    source: O[SpecificationSource],
+    result: O[tuple[frozendict[str, PRIMITIVE_TYPE]]],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -254,8 +254,8 @@ def test_ParseResults_init_fail():
 
 
 def parseResults_init_fail(
-    results: frozendict[str, ParseResult],
-    errors: tuple[Error],
+    results: O[frozendict[str, ParseResult]],
+    errors: O[tuple[Error]],
     expected: Exception
 ):
     with raises(Exception) as got:
