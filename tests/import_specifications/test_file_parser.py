@@ -5,6 +5,7 @@ from pytest import raises
 from tests.test_utils import assert_exception_correct
 from pathlib import Path
 from typing import Callable, Optional as O
+from unittest.mock import Mock, call
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
@@ -14,6 +15,7 @@ from staging_service.import_specifications.file_parser import (
     Error,
     ParseResult,
     ParseResults,
+    parse_import_specifications
 )
 
 
@@ -262,3 +264,199 @@ def parseResults_init_fail(
         ParseResults(results, errors)
     assert_exception_correct(got.value, expected)
 
+
+def _ftr(parser: Callable[[Path], ParseResults] = None, notype: str=None) -> FileTypeResolution:
+    return FileTypeResolution(parser, notype)
+
+def _get_mocks(count: int) -> tuple[Mock]:
+    return (Mock() for _ in range(count))
+
+
+def test_parse_import_specifications_success():
+    resolver, logger, parser1, parser2 = _get_mocks(4)
+
+    resolver.side_effect = [_ftr(parser1), _ftr(parser2)]
+
+    parser1.return_value = ParseResults(frozendict(
+        {"type1": ParseResult(
+            spcsrc("myfile.xlsx", "tab1"),
+            (frozendict({"foo": "bar"}), frozendict({"baz": "bat"}))
+            ),
+         "type2": ParseResult(
+            spcsrc("myfile.xlsx", "tab2"),
+            (frozendict({"whee": "whoo"}),)  # tuple!
+            )
+        }
+    ))
+
+    parser2.return_value = ParseResults(frozendict(
+        {"type_other": ParseResult(
+            spcsrc("somefile.csv"),
+            (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"}))
+            )
+        }
+    ))
+
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+    )
+
+    assert res == ParseResults(frozendict({
+        "type1": ParseResult(
+            spcsrc("myfile.xlsx", "tab1"),
+            (frozendict({"foo": "bar"}), frozendict({"baz": "bat"}))
+            ),
+        "type2": ParseResult(
+            spcsrc("myfile.xlsx", "tab2"),
+            (frozendict({"whee": "whoo"}),)  # tuple!
+            ),
+        "type_other": ParseResult(
+            spcsrc("somefile.csv"),
+            (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"}))
+            )
+    }))
+
+    resolver.assert_has_calls([call(Path("myfile.xlsx")), call(Path("somefile.csv"))])
+    parser1.assert_called_once_with(Path("myfile.xlsx"))
+    parser2.assert_called_once_with(Path("somefile.csv"))
+    logger.assert_not_called()
+
+
+def test_parse_import_specifications_fail_no_paths():
+    res = parse_import_specifications(tuple(), lambda p: None, lambda e: None)
+    assert res == ParseResults(errors=tuple([Error(ErrorType.NO_FILES_PROVIDED)]))
+
+
+def test_parse_import_specification_resolver_exception():
+    """
+    This tests an "oh shit" error scenario where we get a completely unexpected error that
+    gets caught in the top level catch block and we bail out.
+    """
+    resolver, logger, parser1 = _get_mocks(3)
+
+    resolver.side_effect = [_ftr(parser1), ArithmeticError("crapsticks")]
+
+    # test that other errors aren't included in the result
+    parser1.return_value = ParseResults(errors=tuple([Error(ErrorType.OTHER, 'foo')]))
+
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+    )
+
+    assert res == ParseResults(errors=tuple([Error(ErrorType.OTHER, "crapsticks")]))
+
+    resolver.assert_has_calls([call(Path("myfile.xlsx")), call(Path("somefile.csv"))])
+    parser1.assert_called_once_with(Path("myfile.xlsx"))
+    # In [1]: ArithmeticError("a") == ArithmeticError("a")                            
+    # Out[1]: False
+    # so assert_called_once_with doesn't work
+    assert_exception_correct(logger.call_args[0][0], ArithmeticError("crapsticks"))
+
+
+def test_parse_import_specification_unsupported_type_and_parser_error():
+    """
+    This test really tests 4 things:
+    1. a parser returning an error and that error showing up in the final results
+    2. an invalid file type being submitted and having an error show up in the final results
+    3. results from a parser being ignored if an error is produced
+    4. errors from multiple sources being integrated into the final results
+    It's not possible to split the test up further and still test #4
+    """
+    resolver, logger, parser1, parser2 = _get_mocks(4)
+
+    resolver.side_effect = [_ftr(parser1), _ftr(parser2), _ftr(notype="JPEG")]
+
+    # check that other errors are also returned, and the results are ignored
+    parser1.return_value = ParseResults(errors=tuple([
+        Error(ErrorType.OTHER, 'foo'),
+        Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv"))
+    ]))
+    parser2.return_value = ParseResults(
+        frozendict({"foo": ParseResult(spcsrc("a"), tuple([frozendict({"a": "b"})]))}))
+
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")), resolver, logger
+    )
+
+    assert res == ParseResults(errors=tuple([
+        Error(ErrorType.OTHER, "foo"),
+        Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv")),
+        Error(
+            ErrorType.PARSE_FAIL,
+            "JPEG is not a supported file type for import specifications",
+            spcsrc(Path("x.jpeg"))
+        )
+    ]))
+
+    resolver.assert_has_calls([
+        call(Path("myfile.xlsx")),
+        call(Path("somefile.csv")),
+        call(Path("x.jpeg")),
+        ])
+    parser1.assert_called_once_with(Path("myfile.xlsx"))
+    parser2.assert_called_once_with(Path("somefile.csv"))
+    logger.assert_not_called()
+
+
+def test_parse_import_specification_multiple_specs_and_parser_error():
+    """
+    This test really tests 4 things:
+    1. a parser returning an error and that error showing up in the final results
+    2. two specifications for the same data type being submitted and having an error show up
+       in the final results
+    3. results from a parser being ignored if an error is produced
+    4. errors from multiple sources being integrated into the final results
+    It's not possible to split the test up further and still test #4
+    """
+    resolver, logger, parser1, parser2, parser3 = _get_mocks(5)
+
+    resolver.side_effect = [_ftr(parser1), _ftr(parser2), _ftr(parser3)]
+
+    # check that other errors are also returned, and the results are ignored
+    parser1.return_value = ParseResults(errors=tuple([
+        Error(ErrorType.OTHER, "other"),
+        Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx"))
+    ]))
+    parser2.return_value = ParseResults(frozendict(
+        {"foo": ParseResult(spcsrc("a1"), tuple([frozendict({"a": "b"})])),
+         "bar": ParseResult(spcsrc("b1"), tuple([frozendict({"a": "b"})])),
+         "baz": ParseResult(spcsrc("c1"), tuple([frozendict({"a": "b"})]))
+         },
+    ))
+    parser3.return_value = ParseResults(frozendict(
+        {"foo2": ParseResult(spcsrc("a2"), tuple([frozendict({"a": "b"})])),
+         "bar": ParseResult(spcsrc("b2"), tuple([frozendict({"a": "b"})])),
+         "baz": ParseResult(spcsrc("c2"), tuple([frozendict({"a": "b"})]))
+         },
+    ))
+
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")), resolver, logger
+    )
+
+    assert res == ParseResults(errors=tuple([
+        Error(ErrorType.OTHER, "other"),
+        Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx")),
+        Error(
+            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+            "data type bar appears in two importer specification sources",
+            SpecificationSource("b1"),
+            SpecificationSource("b2")
+        ),
+        Error(
+            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+            "data type baz appears in two importer specification sources",
+            SpecificationSource("c1"),
+            SpecificationSource("c2")
+        )
+    ]))
+
+    resolver.assert_has_calls([
+        call(Path("myfile.xlsx")),
+        call(Path("somefile.csv")),
+        call(Path("x.tsv")),
+        ])
+    parser1.assert_called_once_with(Path("myfile.xlsx"))
+    parser2.assert_called_once_with(Path("somefile.csv"))
+    parser3.assert_called_once_with(Path("x.tsv"))
+    logger.assert_not_called()

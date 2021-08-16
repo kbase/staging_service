@@ -166,7 +166,8 @@ class FileTypeResolution:
 
 def parse_import_specifications(
     paths: tuple[Path],
-    file_type_resolver: Callable[[Path], FileTypeResolution]
+    file_type_resolver: Callable[[Path], FileTypeResolution],
+    log_error: Callable[[Exception], None]
 ) -> ParseResults:
     """
     Parse a set of import specification files and return the results.
@@ -174,6 +175,51 @@ def parse_import_specifications(
     paths - the file paths to open.
     file_type_resolver - a callable that when given a file path, returns the type of the file or
         a parser for the file.
+    log_error - callable for logging an exception.
     """
+    if not paths:
+        return ParseResults(errors=tuple([Error(ErrorType.NO_FILES_PROVIDED)]))
+    # TODO check for None, whitespace only paths, '.', '..' & Path.resolve()
+    try:
+        return _parse(paths, file_type_resolver)
+    except Exception as e:
+        log_error(e)
+        errors = tuple([Error(ErrorType.OTHER, str(e))])
+        return ParseResults(errors=errors)
+
+def _parse(
+    paths: tuple[Path],
+    file_type_resolver: Callable[[Path], FileTypeResolution],
+) -> ParseResults:
     results = {}
     errors = []
+    for p in paths:
+        file_type = file_type_resolver(p)
+        if file_type.unsupported_type:
+            errors.append(Error(
+                ErrorType.PARSE_FAIL,
+                f"{file_type.unsupported_type} "
+                    + "is not a supported file type for import specifications",
+                SpecificationSource(p)
+            ))
+            continue
+        res = file_type.parser(p)
+        if res.errors:
+            errors.extend(res.errors)
+        else:
+            for data_type in res.results:
+                if data_type in results:
+                    errors.append(Error(
+                        ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+                        f"data type {data_type} appears in two importer specification sources",
+                        results[data_type].source,
+                        res.results[data_type].source
+                    ))
+                else:
+                    results[data_type] = res.results[data_type]
+    if errors:
+        return ParseResults(errors=tuple(errors))
+    else:
+        return ParseResults(frozendict(results))
+        
+
