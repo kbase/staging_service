@@ -347,7 +347,7 @@ def test_parse_import_specification_resolver_exception():
 
     resolver.assert_has_calls([call(Path("myfile.xlsx")), call(Path("somefile.csv"))])
     parser1.assert_called_once_with(Path("myfile.xlsx"))
-    # In [1]: ArithmeticError("a") == ArithmeticError("a")                            
+    # In [1]: ArithmeticError("a") == ArithmeticError("a")
     # Out[1]: False
     # so assert_called_once_with doesn't work
     assert_exception_correct(logger.call_args[0][0], ArithmeticError("crapsticks"))
