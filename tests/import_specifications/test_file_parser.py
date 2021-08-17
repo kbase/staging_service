@@ -211,7 +211,7 @@ def test_ParseResult_init_fail():
 
 def parseResult_init_fail(
     source: O[SpecificationSource],
-    result: O[tuple[frozendict[str, PRIMITIVE_TYPE]]],
+    result: O[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -257,7 +257,7 @@ def test_ParseResults_init_fail():
 
 def parseResults_init_fail(
     results: O[frozendict[str, ParseResult]],
-    errors: O[tuple[Error]],
+    errors: O[tuple[Error, ...]],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -268,7 +268,7 @@ def parseResults_init_fail(
 def _ftr(parser: Callable[[Path], ParseResults] = None, notype: str=None) -> FileTypeResolution:
     return FileTypeResolution(parser, notype)
 
-def _get_mocks(count: int) -> tuple[Mock]:
+def _get_mocks(count: int) -> tuple[Mock, ...]:
     return (Mock() for _ in range(count))
 
 
