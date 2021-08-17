@@ -1,10 +1,11 @@
 # not much point in testing data classes unless there's custom logic in them
 
+from collections.abc import Callable
 from frozendict import frozendict
 from pytest import raises
 from tests.test_utils import assert_exception_correct
 from pathlib import Path
-from typing import Callable, Optional as O
+from typing import Optional as O
 from unittest.mock import Mock, call
 
 from staging_service.import_specifications.file_parser import (

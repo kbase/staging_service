@@ -3,12 +3,13 @@ Parse import specifications files, either CSV, TSV, or Excel, and return the con
 error information.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Union, Callable, Optional as O
+from typing import Union, Optional as O
 
 # TODO should get mypy working at some point
 
