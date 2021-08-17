@@ -26,7 +26,7 @@ Input file formats may be Excel, CSV, or TSV. An example CSV file structure for 
 is below:
 
 ```
-Data type:, gff_metagenome, Version:, 1
+Data type: gff_metagenome; Version: 1
 fasta_file, gff_file, genome_name, source, release, genetic_code, generate_missing_genes
 FASTA File Path, GFF3 File Path, Metagenome Object Name, Source of metagenome, Release or Version of the Source Data, Genetic Code for protein translation, Spoof Genes for parentless CDS
 mygenome.fa, mygenome.gff3, mygenomeobject, , , 11, 0
