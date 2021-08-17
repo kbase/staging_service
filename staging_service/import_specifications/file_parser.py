@@ -3,12 +3,13 @@ Parse import specifications files, either CSV, TSV, or Excel, and return the con
 error information.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import Union, Callable, Optional as O
+from typing import Union, Optional as O
 
 # TODO should get mypy working at some point
 
@@ -112,7 +113,7 @@ class ParseResult:
     parse_import_specifications method to create instances of this class.
     """
     source: SpecificationSource
-    result: tuple[frozendict[str, PRIMITIVE_TYPE]]
+    result: tuple[frozendict[str, PRIMITIVE_TYPE], ...]
 
     def __post_init__(self):
         if not self.source:
@@ -138,7 +139,7 @@ class ParseResults:
     parse_import_specifications method to create an instance of this class.
     """
     results: O[frozendict[str, ParseResult]] = None
-    errors: O[tuple[Error]] = None
+    errors: O[tuple[Error, ...]] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -165,7 +166,7 @@ class FileTypeResolution:
 
 
 def parse_import_specifications(
-    paths: tuple[Path],
+    paths: tuple[Path, ...],
     file_type_resolver: Callable[[Path], FileTypeResolution],
     log_error: Callable[[Exception], None]
 ) -> ParseResults:
@@ -188,7 +189,7 @@ def parse_import_specifications(
         return ParseResults(errors=errors)
 
 def _parse(
-    paths: tuple[Path],
+    paths: tuple[Path, ...],
     file_type_resolver: Callable[[Path], FileTypeResolution],
 ) -> ParseResults:
     results = {}

@@ -1,10 +1,11 @@
 # not much point in testing data classes unless there's custom logic in them
 
+from collections.abc import Callable
 from frozendict import frozendict
 from pytest import raises
 from tests.test_utils import assert_exception_correct
 from pathlib import Path
-from typing import Callable, Optional as O
+from typing import Optional as O
 from unittest.mock import Mock, call
 
 from staging_service.import_specifications.file_parser import (
@@ -211,7 +212,7 @@ def test_ParseResult_init_fail():
 
 def parseResult_init_fail(
     source: O[SpecificationSource],
-    result: O[tuple[frozendict[str, PRIMITIVE_TYPE]]],
+    result: O[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -257,7 +258,7 @@ def test_ParseResults_init_fail():
 
 def parseResults_init_fail(
     results: O[frozendict[str, ParseResult]],
-    errors: O[tuple[Error]],
+    errors: O[tuple[Error, ...]],
     expected: Exception
 ):
     with raises(Exception) as got:
@@ -268,7 +269,7 @@ def parseResults_init_fail(
 def _ftr(parser: Callable[[Path], ParseResults] = None, notype: str=None) -> FileTypeResolution:
     return FileTypeResolution(parser, notype)
 
-def _get_mocks(count: int) -> tuple[Mock]:
+def _get_mocks(count: int) -> tuple[Mock, ...]:
     return (Mock() for _ in range(count))
 
 
