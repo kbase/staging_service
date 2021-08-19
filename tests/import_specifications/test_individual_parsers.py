@@ -1,6 +1,6 @@
 import uuid
 
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
@@ -20,7 +20,7 @@ from staging_service.import_specifications.individual_parsers import (
 from tests.test_app import FileUtil
 
 @fixture(scope="module")
-def temp_dir() -> Path:
+def temp_dir() -> Generator[Path, None, None]:
     with FileUtil() as fu:
         childdir = Path(fu.make_dir(str(uuid.uuid4()))).resolve()
 
