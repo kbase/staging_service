@@ -56,7 +56,6 @@ def _parse_header(line: str, spec_source: SpecificationSource, maximum_version: 
 
 
 def _get_datatype(input_: TextIO, spec_source: SpecificationSource, maximum_version: int) -> str:
-    # return is data type
     try:
         return _parse_header(next(input_).strip(), spec_source, maximum_version)
     except StopIteration:
