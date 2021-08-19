@@ -57,7 +57,7 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
                 frozendict({"spec1": "val3", "spec2": "val4", "spec3": 1, "spec4": 8.9}),
                 frozendict({"spec1": "val5", "spec2": None, "spec3": None, "spec4": 42.42}),
                 frozendict({"spec1": "val6", "spec2": None, "spec3": None, "spec4": 3.14}),
-            ])    
+            ])
         )}
     ))
 
@@ -106,9 +106,9 @@ def test_xsv_parse_fail_no_file(temp_dir: Path):
     with open(input_, "w") as test_file:
         test_file.writelines([
             "Data type: other_type; Version: 1\n",
-            f"spec1, spec2, spec3, spec4\n",
-            f"Spec 1, Spec 2, Spec 3, Spec 4\n",
-            f"val1 , val2,    7     , 3.2\n",
+            "spec1, spec2, spec3, spec4\n",
+            "Spec 1, Spec 2, Spec 3, Spec 4\n",
+            "val1 , val2,    7     , 3.2\n",
         ])
     input_ = Path(str(input_)[-1])
 
@@ -150,7 +150,7 @@ def test_xsv_parse_fail_bad_version(temp_dir: Path):
 def test_xsv_parse_fail_missing_column_headers(temp_dir: Path):
     err = "Expected 2 column header rows"
     _xsv_parse_fail(temp_dir, ["Data type: foo; Version: 1\n"], parse_csv, err)
-    
+
     lines = ["Data type: foo; Version: 1\n", "head1, head2\n"]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
