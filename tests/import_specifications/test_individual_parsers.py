@@ -97,7 +97,7 @@ def _xsv_parse_success_with_mixed_column(
                 frozendict({"spec1": "val1", "spec2": "val2", "spec3": "7", "spec4": "3.2"}),
                 frozendict({"spec1": "val3", "spec2": "val4", "spec3": "1", "spec4": "8.9"}),
                 frozendict({"spec1": "val5", "spec2": "val6", "spec3": "int", "spec4": "float"}),
-            ])    
+            ])
         )}
     ))
 
