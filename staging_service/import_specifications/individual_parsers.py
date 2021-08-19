@@ -83,7 +83,7 @@ def _check_for_duplicate_headers(headers: pandas.Index, spec_source: Specificati
         seen.add(name)
 
 
-def _check_xsv_row_count(path: Path, expected_count: int, sep: str):
+def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
     with open(path) as input_:
         # since we parsed the first line in the main _parse_xsv method, just discard here
         next(input_)
@@ -102,10 +102,12 @@ def _check_xsv_row_count(path: Path, expected_count: int, sep: str):
 
 def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource) -> ParseResult:
     results = []
-    for r in df.to_dict(orient="records"):
+    recs: list[dict[tuple[str, str], PRIMITIVE_TYPE]] = df.to_dict(orient="records")
+    for r in recs:
         results.append(frozendict(
-            # NaN represents missing values in pandas
-            {k[0].strip(): None if pandas.isna(r[k]) else _strip(r[k]) for k in r}
+            {headers[0].strip():  # headers is a tuple of the 2 column headers in the xSV
+                None if pandas.isna(val) else _strip(val)  # NaN = missing values in pandas
+                for headers, val in r.items()}
         ))
     if not results:
         raise _ParseException(Error(ErrorType.PARSE_FAIL, "No data in file", spec_source))
@@ -128,7 +130,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
             )
         # since pandas will autofill rows with missing entries, we check the counts
         # manually
-        _check_xsv_row_count(path, df.columns.shape[0], sep)
+        _validate_xsv_row_count(path, df.columns.shape[0], sep)
         _check_for_duplicate_headers(df.columns, spcsrc)
         return ParseResults(frozendict(
             {datatype: _process_dataframe(df, spcsrc)}
