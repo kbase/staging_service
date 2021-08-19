@@ -225,3 +225,11 @@ def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
         "Head 1, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+
+    # test with duplicate dual headers
+    lines = [
+        "Data type: foo; Version: 1\n"
+        "head3, head2, head3\n",
+        "Head 3, Head 2, Head 3\n",
+    ]
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
