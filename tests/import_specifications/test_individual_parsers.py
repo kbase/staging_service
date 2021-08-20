@@ -156,7 +156,7 @@ def test_xsv_parse_fail_missing_column_headers(temp_dir: Path):
 
 
 def test_xsv_parse_fail_missing_data(temp_dir: Path):
-    err = "No data in file"
+    err = "No data found, only headers"
     lines = [
         "Data type: foo; Version: 1\n"
         "head1, head2, head3\n",

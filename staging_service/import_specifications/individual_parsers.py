@@ -110,7 +110,8 @@ def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource) -
                 for headers, val in r.items()}
         ))
     if not results:
-        raise _ParseException(Error(ErrorType.PARSE_FAIL, "No data in file", spec_source))
+        raise _ParseException(Error(
+            ErrorType.PARSE_FAIL, "No data found, only headers", spec_source))
     return ParseResult(spec_source, tuple(results))
 
 
