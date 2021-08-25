@@ -10,6 +10,7 @@ from pytest import fixture
 from staging_service.import_specifications.individual_parsers import (
     parse_csv,
     parse_tsv,
+    parse_excel,
     ErrorType,
     Error,
     SpecificationSource,
@@ -19,6 +20,9 @@ from staging_service.import_specifications.individual_parsers import (
 
 from tests.test_app import FileUtil
 
+_TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
+
+
 @fixture(scope="module")
 def temp_dir() -> Generator[Path, None, None]:
     with FileUtil() as fu:
@@ -27,6 +31,10 @@ def temp_dir() -> Generator[Path, None, None]:
         yield childdir
 
     # FileUtil will auto delete after exiting
+
+##########################################
+# xSV tests
+##########################################
 
 
 def test_xsv_parse_success(temp_dir: Path):
@@ -119,6 +127,16 @@ def test_xsv_parse_fail_no_file(temp_dir: Path):
     ]))
 
 
+def test_xsv_parse_fail_binary_file(temp_dir: Path):
+    test_file = _TEST_DATA_DIR / "testtabs3full2nodata1empty.xls"
+
+    res = parse_csv(test_file)
+
+    assert res == ParseResults(errors=tuple([
+        Error(ErrorType.PARSE_FAIL, "Not a text file", source_1=SpecificationSource(test_file))
+    ]))
+
+
 def _xsv_parse_fail(
     temp_dir: Path, lines: list[str], parser: Callable[[Path], ParseResults], message: str
 ):
@@ -146,6 +164,7 @@ def test_xsv_parse_fail_bad_datatype_header(temp_dir: Path):
 def test_xsv_parse_fail_bad_version(temp_dir: Path):
     err = "Schema version 87 is larger than maximum processable version 1"
     _xsv_parse_fail(temp_dir, ["Data type: foo; Columns: 22; Version: 87"], parse_csv, err)
+
 
 def test_xsv_parse_fail_missing_column_headers(temp_dir: Path):
     err = "Expected 2 column header rows"
@@ -249,3 +268,153 @@ def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
         "Head 3, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+
+
+##########################################
+# Excel tests
+# 
+# Note: for these tests we use actual
+#   Excel files saved by LibreOffice
+#   rather than using a python writer
+##########################################
+
+
+def _get_test_file(filename: str):
+    return _TEST_DATA_DIR / filename
+
+
+def test_excel_parse_success():
+    """
+    Tests files with 3 different tabs with data, including empty cells and whitespace only
+    cells, 2 tabs with no data, and one completely empty tab.
+    """
+
+    for ext in ["xls", "xlsx"]:
+        ex = _get_test_file("testtabs3full2nodata1empty." + ext)
+
+        res = parse_excel(ex)
+
+        assert res == ParseResults(frozendict({
+            "type1": ParseResult(SpecificationSource(ex, "tab1"), (
+                frozendict({"header1": "foo", "header2": 1, "header3": 6.7}),
+                frozendict({"header1": "bar", "header2": 2, "header3": 8.9}),
+                frozendict({"header1": "baz", "header2": None, "header3": 3.4}),
+                frozendict({"header1": "bat", "header2": 4, "header3": None}),
+            )),
+            "type2": ParseResult(SpecificationSource(ex, "tab2"), (
+                frozendict({"h1": "golly gee", "h2": 42, "h3": "super"}),
+            )),
+            "type3": ParseResult(SpecificationSource(ex, "tab3"), (
+                frozendict({"head1": "some data", "head2": 1}),
+            )),
+        }))
+
+
+def _excel_parse_fail(
+    test_file: str, message: str = None, errors: list[Error] = None, print_res=False
+):
+    res = parse_excel(test_file)
+    if print_res:
+        print(res)
+
+    if errors:
+        assert res == ParseResults(errors=tuple(errors))
+    else:
+        assert res == ParseResults(errors=tuple([
+            Error(ErrorType.PARSE_FAIL, message, source_1=SpecificationSource(test_file))
+        ]))
+
+
+def test_excel_parse_fail_no_file():
+    f = _get_test_file("testtabs3full2nodata1empty0.xls")
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(f))
+    ])
+
+
+def test_excel_parse_fail_empty_file(temp_dir: Path):
+    _xsv_parse_fail(temp_dir, [], parse_excel, "Not a supported Excel file type")
+
+
+def test_excel_parse_fail_non_excel_file(temp_dir: Path):
+    lines = [
+        "Data type: foo; Version: 1\n"
+        "head1, head2, head 3\n",
+        "Head 1, Head 2, Head 3\n",
+        "1, 2, 3\n",
+    ]
+    _xsv_parse_fail(temp_dir, lines, parse_excel, "Not a supported Excel file type")
+
+
+def test_excel_parse_1emptytab():
+    _excel_parse_fail(_get_test_file("testtabs1empty.xls"), "No non-header data in file")
+
+
+def test_excel_parse_fail_missing_header():
+    f = _get_test_file("testmissingheaders.xlsx")
+    err = "Missing expected header rows"
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f, "badheader1")),
+        Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f, "badheader2")),
+    ])
+
+
+def test_excel_parse_fail_bad_datatype_header():
+    f = _get_test_file("testbadinitialheader.xls")
+    err1 = ('Invalid header; got "This header is wack, yo", expected "Data type: '
+        + '<data_type>; Columns: <column count>; Version: <version>"')
+    err2 = "Schema version 2 is larger than maximum processable version 1"
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.PARSE_FAIL, err1, SpecificationSource(f, "badheader1")),
+        Error(ErrorType.PARSE_FAIL, err2, SpecificationSource(f, "badheader2")),
+    ])
+
+
+def test_excel_parse_fail_headers_only():
+    f = _get_test_file("testheadersonly.xlsx")
+    _excel_parse_fail(f, "No non-header data in file")
+
+
+def test_excel_parse_fail_colliding_datatypes():
+    f = _get_test_file("testdatatypecollisions.xls")
+    l = lambda t: f"Found datatype {t} in multiple tabs"
+    err = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
+    _excel_parse_fail(f, errors=[
+        Error(err, l("type2"), SpecificationSource(f, "dt2"), SpecificationSource(f, "dt2_2")),
+        Error(err, l("type3"), SpecificationSource(f, "dt3"), SpecificationSource(f, "dt3_2")),
+        Error(err, l("type2"), SpecificationSource(f, "dt2"), SpecificationSource(f, "dt2_3")),
+    ])
+
+
+def test_excel_parse_fail_duplicate_headers():
+    f = _get_test_file("testduplicateheaders.xlsx")
+    l = lambda h: f"Duplicate column name: {h}"
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.PARSE_FAIL, l("head1"), SpecificationSource(f, "dt2")),
+        Error(ErrorType.PARSE_FAIL, l("head2"), SpecificationSource(f, "dt3")),
+    ])
+
+
+def test_excel_parse_fail_unequal_rows():
+    """
+    This test differs in a number of ways from the xSV unequal rows test above:
+    1) Not having a full row of entries for every column is fine, unlike for xSV files. 
+       Spreadsheets provide a clear view of what entries are missing and the user doesn't have to
+       worry about off by one errors when filling in separator characters.
+    2) Since pandas silently duplicates missing header entries, a missing spec ID header (the
+       2nd row) will cause a header duplication error rather than the preferred row count
+       error. There doesn't seem to be an easy way around this.
+    3) For the above reason, a missing human readable error (row 3) will not cause an error at
+       all, since the parser doesn't care about that row other than to skip it.
+    """
+    f = _get_test_file("testunequalrows.xlsx")
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.PARSE_FAIL, "Expected 2 data columns, got 3",
+            SpecificationSource(f, "2 cols, 3 human readable")),
+        Error(ErrorType.PARSE_FAIL, "Expected 2 data columns, got 3",
+            SpecificationSource(f, "2 cols, 3 spec IDs")),
+        Error(ErrorType.PARSE_FAIL, "Duplicate column name: head2",
+            SpecificationSource(f, "3 cols, 2 spec IDs, header dup error")),
+        Error(ErrorType.PARSE_FAIL, "Expected 3 data columns, got 4",
+            SpecificationSource(f, "3 cols, 4 data")),
+    ])
