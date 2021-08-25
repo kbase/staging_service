@@ -70,6 +70,38 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
     ))
 
 
+def test_xsv_parse_success_with_numeric_headers(temp_dir: Path):
+    """
+    Not a use case we expect but good to check numeric headers don't cause an unexpected
+    error.
+    """
+    _xsv_parse_success_with_numeric_headers(temp_dir, ',', parse_csv)
+    _xsv_parse_success_with_numeric_headers(temp_dir, '\t', parse_tsv)
+
+
+def _xsv_parse_success_with_numeric_headers(
+    temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]
+):
+    s = sep
+    input_ = temp_dir / str(uuid.uuid4())
+    with open(input_, "w") as test_file:
+        test_file.writelines([
+            "Data type: some_type; Columns: 4; Version: 1\n",
+            f"1{s} 2.0{s} 3{s} 4.1\n",    # test trimming
+            f"Spec 1{s} Spec 2{s} Spec 3{s} Spec 4\n",
+            f"val3 {s} val4{s} 1{s} 8.9\n",
+        ])
+
+    res = parser(input_)
+
+    assert res == ParseResults(frozendict(
+        {"some_type": ParseResult(SpecificationSource(input_),
+            tuple([frozendict({"1": "val3", "2.0": "val4", "3": 1, "4.1": 8.9}),
+            ])
+        )}
+    ))
+
+
 def test_xsv_parse_success_with_mixed_column(temp_dir: Path):
     """
     This is less a test than a demonstration of current behavior. If the user mixes up rows
@@ -138,9 +170,13 @@ def test_xsv_parse_fail_binary_file(temp_dir: Path):
 
 
 def _xsv_parse_fail(
-    temp_dir: Path, lines: list[str], parser: Callable[[Path], ParseResults], message: str
+    temp_dir: Path,
+    lines: list[str],
+    parser: Callable[[Path], ParseResults],
+    message: str,
+    extension: str = "",
 ):
-    input_ = temp_dir / str(uuid.uuid4())
+    input_ = temp_dir / (str(uuid.uuid4()) + extension)
     with open(input_, "w") as test_file:
         test_file.writelines(lines)
 
@@ -333,7 +369,7 @@ def test_excel_parse_fail_no_file():
 
 
 def test_excel_parse_fail_empty_file(temp_dir: Path):
-    _xsv_parse_fail(temp_dir, [], parse_excel, "Not a supported Excel file type")
+    _xsv_parse_fail(temp_dir, [], parse_excel, "Not a supported Excel file type", extension=".xls")
 
 
 def test_excel_parse_fail_non_excel_file(temp_dir: Path):
@@ -343,7 +379,8 @@ def test_excel_parse_fail_non_excel_file(temp_dir: Path):
         "Head 1, Head 2, Head 3\n",
         "1, 2, 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_excel, "Not a supported Excel file type")
+    _xsv_parse_fail(
+        temp_dir, lines, parse_excel, "Not a supported Excel file type", extension=".xlsx")
 
 
 def test_excel_parse_1emptytab():
