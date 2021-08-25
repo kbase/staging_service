@@ -26,7 +26,7 @@ Input file formats may be Excel, CSV, or TSV. An example CSV file structure for 
 is below:
 
 ```
-Data type: gff_metagenome; Version: 1
+Data type: gff_metagenome; Columns: 7; Version: 1
 fasta_file, gff_file, genome_name, source, release, genetic_code, generate_missing_genes
 FASTA File Path, GFF3 File Path, Metagenome Object Name, Source of metagenome, Release or Version of the Source Data, Genetic Code for protein translation, Spoof Genes for parentless CDS
 mygenome.fa, mygenome.gff3, mygenomeobject, , , 11, 0
@@ -35,13 +35,18 @@ mygenome2.fa, mygenome2.gff3, mygenomeobject2, yermumspoo, 30456, 11, 1
 ```
 
 The file, by row, is:
-1. The data type, in this case `gff_metagenome`, and the version, in this case 1. The data type is
-  from the list in the
-  [Mappings.py](https://github.com/kbase/staging_service/blob/master/staging_service/autodetect/Mappings.py)
-  file in the StS. The Narrative is expected to understand these types and map them to uploader
-  apps. The version allows us to update the file format and increment the version, allowing
-  backwards compatibility - the staging service can process the file appropriately depending on
-  the version number.
+1. The data type, in this case `gff_metagenome`, the column count, and the version, in this case 1.
+    * The data type is from the list in the
+       [Mappings.py](https://github.com/kbase/staging_service/blob/master/staging_service/autodetect/Mappings.py)
+       file in the StS. The Narrative is expected to understand these types and map them to
+       uploader apps.
+    * The column count allows for error checking row sizes. This particularly important for
+       the Excel parser, which uses `pandas` under the hood. `pandas` will silently pad data
+       and headers out to match the longest row in the sheet, so the column count is required
+       to detect errors.
+    * The version allows us to update the file format and increment the version,
+       allowing backwards compatibility - the staging service can process the file appropriately
+       depending on the version number.
 2. The IDs of the app inputs from the `spec.json` file. 
 3. The corresponding human readable names of the app inputs from the `display.yaml` file.
 4. (and beyond) Import specifications. Each line corresponds to a single import.
@@ -49,6 +54,14 @@ The file, by row, is:
 For Excel files, the first two rows may be hidden in any provided templates. Additionally,
 Excel files may contain multiple data types, one per tab. Empty tabs will be ignored, and tabs
 that don't match the expected structure will be treated as an error.
+
+Parsing will be on a "best effort" basis given the underlying `pandas` technology. We have
+decided not to include type information per column in the spec, which means that the type
+will be determined by `pandas`. Pandas specifies a single type per column, which means that
+if a single `string` value is accidentally inserted into a column that is otherwise
+full of `float`s, `pandas` will coerce all the values in that column to `string`s. Under normal
+operations this should not be an issue, but could cause unexpected type returns if a user adds
+an incorrect value to a column
 
 As part of this project we will deliver:
 1. CSV templates for each in scope app (e.g. the first 3 lines of the example file)
@@ -148,6 +161,8 @@ each error type. Currently the error types are:
 
 * `cannot_find_file` if an input file cannot be found
 * `cannot_parse_file` if an input file cannot be parsed
+* `incorrect_column_count` if the column count is not as expected
+    * For Excel files, this may mean there is a non-empty cell outside the bounds of the data area
 * `illegal_file_name` if an illegal file name is provided
 * `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
 * `no_files_provided` if no files were provided
@@ -193,8 +208,18 @@ The individual error structures per error type are as follows:
 The service will check that the data type is valid and that rows >=2 all have the same number of
 entries, but will not do further error checking.
 
-Note in this case the service MUST log the stack trace along with the filename for each invalid
-file.
+In this case the service should log the stack trace along with the filename for
+each invalid file if the trace would assist in debugging the error.
+
+#### `incorrect_column_count`
+
+```
+{"type": "incorrect_column_count",
+ "file": <filepath>,
+ "tab": <spreadsheet tab if applicable, else null>,
+ "message": <message regarding the error>
+}
+```
 
 #### `illegal_file_name`
 
