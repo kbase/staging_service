@@ -26,25 +26,29 @@ _VERSION = 1
 
 _DATA_TYPE = "Data type:"
 _VERSION_STR = "Version:"
+_COLUMN_STR = "Columns:"
 _HEADER_SEP = ";"
-_EXPECTED_HEADER = f"{_DATA_TYPE} <data_type>{_HEADER_SEP} {_VERSION_STR} <version>"
-_HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
+_EXPECTED_HEADER = (f"{_DATA_TYPE} <data_type>{_HEADER_SEP} "
+     + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>")
+_HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
+    + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
 
 
 class _ParseException(Exception):
     pass
 
 
-def _parse_header(line: str, spec_source: SpecificationSource, maximum_version: int) -> str:
-    # return is data type
-    match = _HEADER_REGEX.fullmatch(line)
+def _parse_header(header: str, spec_source: SpecificationSource, maximum_version: int
+) -> tuple[str, int]:
+    # return is (data type, column count)
+    match = _HEADER_REGEX.fullmatch(header)
     if not match:
         raise _ParseException(Error(
             ErrorType.PARSE_FAIL,
-            f'Invalid header; got "{line}", expected "{_EXPECTED_HEADER}"',
+            f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"',
             spec_source
         ))
-    version = int(match[2])
+    version = int(match[3])
     if version > maximum_version:
         raise _ParseException(Error(
             ErrorType.PARSE_FAIL,
@@ -52,10 +56,12 @@ def _parse_header(line: str, spec_source: SpecificationSource, maximum_version: 
             + f"version {maximum_version}",
             spec_source
         ))
-    return match[1]
+    return match[1], int(match[2])
 
 
-def _get_datatype(input_: TextIO, spec_source: SpecificationSource, maximum_version: int) -> str:
+def _get_datatype(input_: TextIO, spec_source: SpecificationSource, maximum_version: int
+) -> tuple[str, int]:
+    # return is (data type, column count)
     try:
         return _parse_header(next(input_).strip(), spec_source, maximum_version)
     except StopIteration:
@@ -67,13 +73,22 @@ def _error(error: Error) -> ParseResults:
     return ParseResults(errors = tuple([error]))
 
 
-def _strip(putative_str: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
-    return putative_str.strip() if isinstance(putative_str, str) else putative_str
+def _normalize(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
+    if pandas.isna(val):  # NaN = missing values in pandas
+        return None
+    if isinstance(val, str):
+        val = val.strip()
+        return val if val else None
+    if isinstance(val, float):
+        return int(val) if val.is_integer() else val
+    return val
 
 
-def _check_for_duplicate_headers(headers: pandas.Index, spec_source: SpecificationSource):
+def _check_for_duplicate_headers(
+    headers: pandas.Index, spec_source: SpecificationSource, header_index=0
+):
     seen = set()
-    for name in headers.get_level_values(0):
+    for name in headers.get_level_values(header_index):
         if name in seen:
             raise _ParseException(Error(
                 ErrorType.PARSE_FAIL,
@@ -100,18 +115,18 @@ def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
                     SpecificationSource(path)
                 ))
 
-def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource) -> ParseResult:
+def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, header_index=0
+) -> ParseResult:
     results = []
-    recs: list[dict[tuple[str, str], PRIMITIVE_TYPE]] = df.to_dict(orient="records")
+    recs: list[dict[tuple[str, ...], PRIMITIVE_TYPE]] = df.to_dict(orient="records")
     for r in recs:
         results.append(frozendict(
-            {headers[0].strip():  # headers is a tuple of the 2 column headers in the xSV
-                None if pandas.isna(val) else _strip(val)  # NaN = missing values in pandas
-                for headers, val in r.items()}
+            # headers is a tuple of the column headers
+            {headers[header_index].strip(): _normalize(val) for headers, val in r.items()}
         ))
     if not results:
         raise _ParseException(Error(
-            ErrorType.PARSE_FAIL, "No data found, only headers", spec_source))
+            ErrorType.PARSE_FAIL, "No non-header data in file", spec_source))
     return ParseResult(spec_source, tuple(results))
 
 
@@ -121,7 +136,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
     spcsrc = SpecificationSource(path)
     try:
         with open(path) as input_:
-            datatype = _get_datatype(input_, spcsrc, _VERSION)
+            datatype, columns = _get_datatype(input_, spcsrc, _VERSION)
             df = pandas.read_csv(
                 input_,
                 sep=sep,
@@ -131,7 +146,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
             )
         # since pandas will autofill rows with missing entries, we check the counts
         # manually
-        _validate_xsv_row_count(path, df.columns.shape[0], sep)
+        _validate_xsv_row_count(path, columns, sep)
         _check_for_duplicate_headers(df.columns, spcsrc)
         return ParseResults(frozendict(
             {datatype: _process_dataframe(df, spcsrc)}
