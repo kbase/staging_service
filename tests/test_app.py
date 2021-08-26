@@ -2,10 +2,12 @@ import asyncio
 import configparser
 import hashlib
 import os
+import pandas
 import shutil
 import string
 import time
 from json import JSONDecoder
+from pathlib import Path
 from urllib.parse import urlencode,unquote
 from io import BytesIO
 
@@ -1003,3 +1005,355 @@ async def test_importer_mappings():
             assert resp.status == 400
             text = await resp.text()
             assert f"must provide file_list field. Your provided qs: {unquote(qsd)}" in text
+
+
+async def test_bulk_specification_success():
+    # In other tests a username is passed to AppClient but AppClient completely ignores it...
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/somefolder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            tsv = "genomes.tsv"
+            with open(base / tsv, "w") as f:
+                f.writelines([
+                    "Data type: genomes; Columns: 3; Version: 1\n",
+                    f"spec1\tspec2\t   spec3   \n",
+                    f"Spec 1\t Spec 2\t Spec 3\n",
+                    f"val1 \t   ꔆ   \t    7\n",
+                    f"val3\tval4\t1\n",
+                ])
+            csv = "somefolder/breakfastcereals.csv"
+            with open(base / csv, "w") as f:
+                f.writelines([
+                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                    f"s1,s2,s3\n",
+                    f"S 1,S 2,S 3\n",
+                    f"froot loops ,   puffin   ,   gross\n",
+                    f"grape nuts , dietary fiber, also gross\n",
+                ])
+            excel = "importspec.xlsx"
+            with pandas.ExcelWriter(base / excel) as exw:
+                df = pandas.DataFrame([
+                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42],
+                    ["Fred", 1.5]
+                ])
+                df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                    ["entity_id", "preferred_food"],
+                    ["Entity ID", "Preferred Food"],
+                    ["That which ends all", "ꔆ"],
+                ])
+                df.to_excel(exw, sheet_name="sloths", header=False, index=False)
+
+            
+            resp = await cli.get(f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   ")
+            jsn = await resp.json()
+            assert jsn == {"types": {
+                "genomes": [
+                    {"spec1": "val1", "spec2": "ꔆ", "spec3": 7},
+                    {"spec1": "val3", "spec2": "val4", "spec3": 1}
+                ],
+                "breakfastcereals": [
+                    {"s1": "froot loops", "s2": "puffin", "s3": "gross"},
+                    {"s1": "grape nuts", "s2": "dietary fiber", "s3": "also gross"},
+                ],
+                "fruit_bats": [
+                    {"bat_name": "George", "wing_count": 42},
+                    {"bat_name": "Fred", "wing_count": 1.5},
+                ],
+                "tree_sloths": [
+                    {"entity_id": "That which ends all", "preferred_food": "ꔆ"}
+                ]
+            }}
+            assert resp.status == 200
+
+
+async def test_bulk_specification_fail_no_files():
+    async with AppClient(config) as cli:
+        for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
+            resp = await cli.get(f"bulk_specification/{f}")
+            jsn = await resp.json()
+            assert jsn == {"errors": [{"type": "no_files_provided"}]}
+            assert resp.status == 400
+
+
+async def test_bulk_specification_fail_not_found():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            tsv = "otherfolder/genomes.tsv"
+            with open(base / tsv, "w") as f:
+                f.writelines([
+                    "Data type: genomes; Columns: 3; Version: 1\n",
+                    f"spec1\tspec2\t   spec3   \n",
+                    f"Spec 1\t Spec 2\t Spec 3\n",
+                    f"val1 \t   ꔆ   \t    7\n",
+                ])
+            resp = await cli.get(f"bulk_specification/?files={tsv},somefile.csv")
+            jsn = await resp.json()
+            assert jsn == {"errors": [
+                {"type": "cannot_find_file", "file": "testuser/somefile.csv"}
+            ]}
+            assert resp.status == 404
+
+
+async def test_bulk_specification_fail_parse_fail():
+    """
+    Tests a number of different parse fail cases, including incorrect file types.
+    Also tests that all the errors are combined correctly.
+    """
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            tsv = "otherfolder/genomes.tsv"
+            with open(base / tsv, "w") as f:
+                f.writelines([
+                    "Data type: genomes; Columns: 3; Version: 1\n",
+                    f"spec1\tspec2\t   spec3   \n",
+                    f"Spec 1\t Spec 2\t Spec 3\n",
+                    f"val1 \t   ꔆ   \t    7\n",
+                ])
+            csv = "otherfolder/thing.csv"
+            with open(base / csv, "w") as f:
+                f.writelines([
+                    "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
+                    f"s1,s2,s3\n",
+                    f"S 1,S 2,S 3\n",
+                    f"froot loops ,   puffin   ,   gross\n",
+                ])
+            excel = "stuff.xlsx"
+            with pandas.ExcelWriter(base / excel) as exw:
+                df = pandas.DataFrame([
+                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42],
+                ])
+                df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                    ["entity_id", "preferred_food"],
+                ])
+                df.to_excel(exw, sheet_name="sloths", header=False, index=False)
+
+            resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}"
+                + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile.")
+            jsn = await resp.json()
+            assert jsn == {"errors": [
+                {"type": "cannot_parse_file",
+                 "message": 'Invalid header; got "Dater type: breakfastcereals; '
+                    + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
+                    + 'Columns: <column count>; Version: <version>"',
+                 "file": "testuser/otherfolder/thing.csv",
+                 "tab": None,
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "Missing expected header rows",
+                 "file": "testuser/stuff.xlsx",
+                 "tab": "sloths",
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "badfile is not a supported file type for import specifications",
+                 "file": "testuser/badfile",
+                 "tab": None,
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "fasta.gz is not a supported file type for import specifications",
+                 "file": "testuser/badfile.fasta.gz",
+                 "tab": None,
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "sra is not a supported file type for import specifications",
+                 "file": "testuser/badfile.sra",
+                 "tab": None,
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "sys is not a supported file type for import specifications",
+                 "file": "testuser/badfile.sys",
+                 "tab": None,
+                 },
+                {"type": "cannot_parse_file",
+                 "message": "badfile. is not a supported file type for import specifications",
+                 "file": "testuser/badfile.",
+                 "tab": None,
+                 },
+            ]}
+            assert resp.status == 400
+
+
+async def test_bulk_specification_fail_column_count():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            tsv = "genomes.tsv"
+            with open(base / tsv, "w") as f:
+                f.writelines([
+                    "Data type: genomes; Columns: 3; Version: 1\n",
+                    f"spec1\tspec2\t   spec3   \n",
+                    f"Spec 1\t Spec 2\t Spec 3\n",
+                    f"val1 \t   ꔆ   \t    7\n",
+                ])
+            csv = "thing.csv"
+            with open(base / csv, "w") as f:
+                f.writelines([
+                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                    f"s1,s2,s3\n",
+                    f"S 1,S 2,S 3\n",
+                    f"froot loops ,   puffin\n",
+                ])
+            excel = "stuff.xlsx"
+            with pandas.ExcelWriter(base / excel) as exw:
+                df = pandas.DataFrame([
+                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42, 56],
+                ])
+                df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                    ["entity_id", "preferred_food"],
+                    ["Entity ID", "Preferred Food"],
+                    ["That which ends all", "ꔆ"],
+                ])
+                df.to_excel(exw, sheet_name="sloths", header=False, index=False)
+
+            resp = await cli.get(
+                f"bulk_specification/?files={tsv},{csv},{excel}")
+            jsn = await resp.json()
+            assert jsn == {"errors": [
+                {"type": "incorrect_column_count",
+                 "message": "Incorrect number of items in line 4, expected 3, got 2",
+                 "file": "testuser/thing.csv",
+                 "tab": None,
+                 },
+                {"type": "incorrect_column_count",
+                 "message": "Expected 2 data columns, got 3",
+                 "file": "testuser/stuff.xlsx",
+                 "tab": "bats",
+                 },
+            ]}
+            assert resp.status == 400
+
+
+async def test_bulk_specification_fail_multiple_specs_per_type():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            tsv = "genomes.tsv"
+            with open(base / tsv, "w") as f:
+                f.writelines([
+                    "Data type: genomes; Columns: 3; Version: 1\n",
+                    f"spec1\tspec2\t   spec3   \n",
+                    f"Spec 1\t Spec 2\t Spec 3\n",
+                    f"val1 \t   ꔆ   \t    7\n",
+                ])
+            csv1 = "thing.csv"
+            with open(base / csv1, "w") as f:
+                f.writelines([
+                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                    f"s1,s2,s3\n",
+                    f"S 1,S 2,S 3\n",
+                    f"froot loops ,   puffin, whee\n",
+                ])
+            csv2 = "thing2.csv"
+            with open(base / csv2, "w") as f:
+                f.writelines([
+                    "Data type: breakfastcereals; Columns: 2; Version: 1\n",
+                    f"s1,s2\n",
+                    f"S 1,S 2\n",
+                    f"froot loops ,   puffin\n",
+                ])
+            excel = "stuff.xlsx"
+            with pandas.ExcelWriter(base / excel) as exw:
+                df = pandas.DataFrame([
+                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42],
+                ])
+                df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                    ["entity_id", "preferred_food"],
+                    ["Entity ID", "Preferred Food"],
+                    ["That which ends all", "ꔆ"],
+                ])
+                df.to_excel(exw, sheet_name="sloths", header=False, index=False)
+
+            resp = await cli.get(
+                f"bulk_specification/?files={tsv},{csv1},{csv2},{excel}")
+            jsn = await resp.json()
+            err = "Data type breakfastcereals appears in two importer specification sources"
+            assert jsn == {"errors": [
+                {"type": "multiple_specifications_for_data_type",
+                 "message": err,
+                 "file_1": "testuser/thing.csv",
+                 "tab_1": None,
+                 "file_2": "testuser/thing2.csv",
+                 "tab_2": None
+                 },
+                {"type": "multiple_specifications_for_data_type",
+                 "message": err,
+                 "file_1": "testuser/thing.csv",
+                 "tab_1": None,
+                 "file_2": "testuser/stuff.xlsx",
+                 "tab_2": "bats"
+                 },
+            ]}
+            assert resp.status == 400
+
+
+async def test_bulk_specification_fail_multiple_specs_per_type_excel():
+    """
+    Test an excel file with an internal data type collision.
+    This is the only case when all 5 error fields are filled out.
+    """
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            excel = "stuff.xlsx"
+            with pandas.ExcelWriter(base / excel) as exw:
+                df = pandas.DataFrame([
+                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42],
+                ])
+                df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                    ["entity_id", "preferred_food"],
+                    ["Entity ID", "Preferred Food"],
+                    ["That which ends all", "ꔆ"],
+                ])
+                df.to_excel(exw, sheet_name="sloths", header=False, index=False)
+                df = pandas.DataFrame([
+                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                    ["bat_name", "wing_count"],
+                    ["Name of Bat", "Number of wings"],
+                    ["George", 42],
+                ])
+                df.to_excel(exw, sheet_name="otherbats", header=False, index=False)
+
+            resp = await cli.get(f"bulk_specification/?files={excel}")
+            jsn = await resp.json()
+            assert jsn == {"errors": [
+                {"type": "multiple_specifications_for_data_type",
+                 "message": "Found datatype breakfastcereals in multiple tabs",
+                 "file_1": "testuser/stuff.xlsx",
+                 "tab_1": "bats",
+                 "file_2": "testuser/stuff.xlsx",
+                 "tab_2": "otherbats"
+                 },
+            ]}
+            assert resp.status == 400

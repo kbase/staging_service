@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 import shutil
+import sys
 from urllib.parse import parse_qs
+from pathlib import Path as PathPy
 
 import aiohttp_cors
 from aiohttp import web
@@ -12,9 +15,65 @@ from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
 from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
+from .import_specifications.file_parser import (
+    ErrorType,
+    Error,
+    FileTypeResolution,
+    parse_import_specifications,
+)
+from .import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel
+from .autodetect.Mappings import CSV, TSV, EXCEL
 
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
 VERSION = "1.2.0"
+
+_APP_JSON = "application/json"
+
+_IMPSPEC_FILE_TO_PARSER = {
+    CSV: parse_csv,
+    TSV: parse_tsv,
+    EXCEL: parse_excel,
+}
+
+# Types for the lambda parameters are all strings
+# We don't add hints in to avoid repeating them over and over
+_ERROR_FORMATTERS = {
+    # I don't think there's a good way to test the OTHER message
+    ErrorType.OTHER: lambda msg, file1, tab1, file2, tab2: {
+        "type": "unexpected_error",
+        "message": msg,
+        "file": file1,
+    },
+    ErrorType.FILE_NOT_FOUND: lambda msg, file1, tab1, file2, tab2: {
+        "type": "cannot_find_file",
+        "file": file1,
+    },
+    ErrorType.NO_FILES_PROVIDED: lambda msg, file1, tab1, file2, tab2: {
+        "type": "no_files_provided",
+    },
+    ErrorType.PARSE_FAIL: lambda msg, file1, tab1, file2, tab2: {
+        "type": "cannot_parse_file",
+        "message": msg,
+        "file": file1,
+        "tab": tab1
+    },
+    ErrorType.INCORRECT_COLUMN_COUNT: lambda msg, file1, tab1, file2, tab2: {
+        "type": "incorrect_column_count",
+        "message": msg,
+        "file": file1,
+        "tab": tab1
+    },
+    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg, file1, tab1, file2, tab2: {
+        "type": "multiple_specifications_for_data_type",
+        "message": msg,
+        "file_1": file1,
+        "tab_1": tab1,
+        "file_2": file2,
+        "tab_2": tab2,
+    },
+}
 
 
 @routes.get("/importer_mappings/{query:.*}")
@@ -34,6 +93,70 @@ async def importer_mappings(request: web.Request) -> web.json_response:
 
     mappings = AutoDetectUtils.get_mappings(file_list)
     return web.json_response(data=mappings)
+
+
+def _file_type_resolver(path: PathPy) -> FileTypeResolution:
+    fi = AutoDetectUtils.get_mappings([str(path)])["fileinfo"][0]
+    # Here we assume that the first entry in the file_ext_type field is the entry
+    # we want. Presumably secondary entries are less general.
+    ftype = fi['file_ext_type'][0] if fi['file_ext_type'] else None
+    if ftype in _IMPSPEC_FILE_TO_PARSER:
+        return FileTypeResolution(parser=_IMPSPEC_FILE_TO_PARSER[ftype])
+    else:
+        ext = fi['suffix'] if fi['suffix'] else path.suffix[1:] if path.suffix else path.name
+        return FileTypeResolution(unsupported_type=ext)
+
+
+def _format_errors(errors: tuple[Error, ...], paths: dict[PathPy, Path]) -> str:
+    errs = []
+    for e in errors:
+        file1 = None
+        tab1 = None
+        file2 = None
+        tab2 = None
+        if e.source_1:
+            file1 = paths[e.source_1.file].user_path
+            tab1 = e.source_1.tab
+        if e.source_2:
+            file2 = paths[e.source_2.file].user_path
+            tab2 = e.source_2.tab
+        errs.append(_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2))
+    return json.dumps({"errors": errs})
+
+
+@routes.get("/bulk_specification/{query:.*}")
+async def bulk_specification(request: web.Request) -> web.json_response:
+    """
+    Takes a `files` query parameter with a list of comma separated import specification file paths.
+    Returns the contents of those files parsed into a list of dictionaries, mapped from the data
+    type, in the `types` key.
+    
+    :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+    """
+    username = await authorize_request(request)
+    files = parse_qs(request.query_string).get("files", [])
+    files = files[0].split(",") if files else []
+    files = [f.strip() for f in files if f.strip()]
+    paths = {}
+    for f in files:
+        p = Path.validate_path(username, f)
+        paths[PathPy(p.full_path)] = p
+    # list(dict) returns a list of the dict keys in insertion order (py3.7+)
+    res = parse_import_specifications(
+        tuple(list(paths)),
+        _file_type_resolver,
+        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e))
+    if res.results:
+        t = {dt: result.result for dt, result in res.results.items()}
+        return web.json_response({"types": t})
+    errtypes = {e.error for e in res.errors}
+    if errtypes - {ErrorType.OTHER, ErrorType.FILE_NOT_FOUND}:
+        return web.HTTPBadRequest(text=_format_errors(res.errors, paths), content_type=_APP_JSON)
+    if errtypes - {ErrorType.OTHER}:
+        return web.HTTPNotFound(text=_format_errors(res.errors, paths), content_type=_APP_JSON)
+    return web.HTTPInternalServerError(
+        # I don't think there's a good way to test this codepath
+        text=_format_errors(res.errors, paths), content_type=_APP_JSON)
 
 
 @routes.get("/add-acl-concierge")
