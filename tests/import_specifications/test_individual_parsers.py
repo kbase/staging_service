@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from collections.abc import Callable, Generator
@@ -167,6 +168,17 @@ def test_xsv_parse_fail_binary_file(temp_dir: Path):
     assert res == ParseResults(errors=tuple([
         Error(ErrorType.PARSE_FAIL, "Not a text file", source_1=SpecificationSource(test_file))
     ]))
+
+
+def test_xsv_parse_fail_directory(temp_dir: Path):
+    test_file = temp_dir / "testdir.tsv"
+    os.makedirs(test_file, exist_ok=True)
+
+    res = parse_tsv(test_file)
+
+    assert res == ParseResults(errors=tuple([Error(
+        ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file)
+    )]))
 
 
 def _xsv_parse_fail(
@@ -366,6 +378,14 @@ def test_excel_parse_fail_no_file():
     _excel_parse_fail(f, errors=[
         Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(f))
     ])
+
+
+def test_excel_parse_fail_directory(temp_dir):
+    for d in ["testdir.xls", "testdir.xlsx"]:
+        f = temp_dir / d
+        os.makedirs(f, exist_ok=True)
+        err = "The given path is a directory"
+        _excel_parse_fail(f, errors=[Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f))])
 
 
 def test_excel_parse_fail_empty_file(temp_dir: Path):

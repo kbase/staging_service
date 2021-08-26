@@ -158,6 +158,8 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         ))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except _ParseException as e:
         return _error(e.args[0])
     except pandas.errors.EmptyDataError as e:
@@ -251,6 +253,8 @@ def parse_excel(path: Path) -> ParseResults:
                     errors.append(e.args[0])
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except ValueError as e:
         if "Excel file format cannot be determined" in str(e):
             return _error(Error(
