@@ -14,7 +14,7 @@ parameters.
 
 The templates come in three flavors: CSV (comma separated values), TSV (tab separated values),
 and Excel (`.xls` and `.xlsx` files are supported). Most users will want to select one of the
-three formats, but they can be mixed and matched as desired (but see limitations below).
+three formats, but they can be mixed and matched as desired (but see `Troubleshooting` below).
 
 To use a template, examine the human readable fields in the template - the third row in CSV
 and TSV files, and the first visible row in Excel files (the first two rows are hidden). Each
@@ -27,16 +27,15 @@ in the templates with the same data they would use to fill in the UI. For checkb
 
 There is one caveat, in that the templates currently support specifying all the parameters for
 an import for each import, while the UI does not. Currently the first row of data in the template
-(row 4) will be used to specify parameters for all the other rows for the case where the UI
-does not allow individual parameter settings per row (1). Only input files and output object names
-are allowed to differ for a set of imports for a type.
+will be used to specify parameters for all the other rows for the case where the UI
+does not allow individual parameter settings per row (see note 1). Only input files and output
+object names are allowed to differ for a set of imports for a type.
 
 Once the template or templates are filled out, upload the templates and the corresponding files
-to be imported to KBase to the narrative staging area (in the narrative UI, click on the blue
-add data button - a plus sign > Import tab). For each template, specify the `Import Specification`
-type and ensure the selection checkbox for each file is checked. There is no need to specify
-types for or select the files that are specified in the templates - indeed selecting those files
-will cause them to be, in effect, selected twice.
+to be imported to KBase to the narrative staging area. For each template, choose the
+`Import Specification` type and ensure the selection checkbox for each file is checked. There is
+no need to choose types for or select the files that are specified in the templates - indeed
+selecting those files will cause them to be, in effect, selected twice.
 
 When the template's types have been properly chosen and the selection checkboxes are correct,
 click the `Import Selected` button. The bulk import cell will be created in your narrative and
