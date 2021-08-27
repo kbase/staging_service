@@ -1,7 +1,7 @@
 # Import Specifications Architecture Design Record
 
 This document specifies the design for handling import specifications in the Staging Service (StS).
-An upload specification is an Excel, CSV, or TSV file that contains instructions for how
+An import specification is an Excel, CSV, or TSV file that contains instructions for how
 to import one or more files in the staging area to KBase as KBase data types.
 
 ## Resources
@@ -13,16 +13,16 @@ to import one or more files in the staging area to KBase as KBase data types.
 
 ## Front end changes
 
-The design introduces a new StS data type, `upload_specification`. The FE's current 
+The design introduces a new StS data type, `import_specification`. The FE's current 
 behavior is to display any data types returned from the StS in the file dropdown, but silently
 ignore user-selected files for which the selected data type is unknown to the narrative, a bug.
 The FE will be updated to ignore unknown data types returned from the StS, allowing for phased,
 non-lockstep upgrades. This work is not included in this project, but will be in a future FE
 project.
 
-## Upload specification input files
+## Import specification input files
 
-Input file formats may be Excel, CSV, or TSV. An example CSV file structure for GFF/FASTA uploads
+Input file formats may be Excel, CSV, or TSV. An example CSV file structure for GFF/FASTA imports
 is below:
 
 ```
@@ -39,7 +39,7 @@ The file, by row, is:
     * The data type is from the list in the
        [Mappings.py](https://github.com/kbase/staging_service/blob/master/staging_service/autodetect/Mappings.py)
        file in the StS. The Narrative is expected to understand these types and map them to
-       uploader apps.
+       importer apps.
     * The column count allows for error checking row sizes. This particularly important for
        the Excel parser, which uses `pandas` under the hood. `pandas` will silently pad data
        and headers out to match the longest row in the sheet, so the column count is required
@@ -77,8 +77,8 @@ These files will reside in the StS repo. As part of the front end effort, some m
 delivering the templates and instructions to users will be developed.
 
 Currently, for all in scope apps, the inputs are all strings, numbers, or booleans. There are
-no unusual inputs such as grouped parameters or dynamic lookups. Including future upload apps
-with these features in CSV-based upload may require additional engineering.
+no unusual inputs such as grouped parameters or dynamic lookups. Including future import apps
+with these features in CSV-based import may require additional engineering.
 
 Note that the endpoint will return individual data for each row, while the current front end
 only supports individual input files and output objects (this may be improved in a future update).
@@ -151,7 +151,7 @@ The order of the input structures MUST be the same as the order in the input fil
 
 Notably, the service will provide the contents of the files as is and will not perform most error
 checking, including for missing or unknown input parameters. Most error checking will be performed
-in the bulk import cell configuration tab like other uploads, allowing for a consistent user
+in the bulk import cell configuration tab like other imports, allowing for a consistent user
 experience.
 
 ### Error handling
@@ -276,10 +276,10 @@ Note in this case the service MUST log the stack trace along with the filename f
 
 Dynamic scientific name to taxon lookup may be added to the Genbank (and the currently
 out of scope, but trivial to add GFF/FASTA Genome) importer in the near future. If that occurs,
-for the purpose of xSV upload the user will be expected to provide the entire, correct,
+for the purpose of xSV import the user will be expected to provide the entire, correct,
 scientific name as returned from the taxon API. 
 
-* The user could get this name by starting a genome upload and running the query from the 
+* The user could get this name by starting a genome import and running the query from the 
   import app cell configuration screen.
   * This will be documented in the README.md for the template files.
 * As part of the UI work we could theoretically provide a landing page for looking up valid
@@ -289,4 +289,4 @@ scientific name as returned from the taxon API.
 * Providing the scientific name vs. the taxon ID seems simpler because the machinery already 
   exists to perform the query and is part of the spec.
 * Expect these plans to change as it becomes more clear how dynamic fields will work in the
-  context of bulk upload.
+  context of bulk import.
