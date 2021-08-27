@@ -817,34 +817,35 @@ async def test_upload():
 
             assert res2.status == 200
 
-            # test upload file with leading space
-            f2 = fs.make_file(os.path.join(username, "test", " test_file_1"), txt)
 
-            files = {"destPath": "/", "uploads": open(f2, "rb")}
-
-            res3 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
-
-            assert res3.status == 403
-            assert await res3.text() == "cannot upload file with name beginning with space"
-
-
-async def test_upload_fail_dotfile():
-    # this test is split from the prior test because two file uploads in a row causes a test error:
+async def _upload_file_fail_filename(filename: str, err: str):
+    # Note two file uploads in a row causes a test error:
     # https://github.com/aio-libs/aiohttp/issues/3968
-    async with AppClient(config, "fake") as cli:
+    async with AppClient(config, "fake") as cli:  # username is ignored by AppClient
 
         formdata = FormData()
         formdata.add_field("destPath", "/")
-        formdata.add_field("uploads", BytesIO(b"sometext"), filename=".test_file")
+        formdata.add_field("uploads", BytesIO(b"sometext"), filename=filename)
 
-        res = await cli.post(
-            os.path.join("upload"), headers={"Authorization": ""}, data=formdata
-        )
+        res = await cli.post("upload", headers={"Authorization": ""}, data=formdata)
 
-        assert await res.text() == "cannot upload file with name beginning with '.'"
+        assert await res.text() == err
         assert res.status == 403
+
+
+async def test_upload_fail_leading_space():
+    await _upload_file_fail_filename(
+        " test_file", "cannot upload file with name beginning with space")
+
+
+async def test_upload_fail_dotfile():
+    await _upload_file_fail_filename(
+        ".test_file", "cannot upload file with name beginning with '.'")
+
+
+async def test_upload_fail_comma_in_file():
+    await _upload_file_fail_filename(
+        "test,file", "cannot upload file with ',' in name")
 
 
 @settings(deadline=None)
