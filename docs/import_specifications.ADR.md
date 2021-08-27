@@ -163,7 +163,6 @@ each error type. Currently the error types are:
 * `cannot_parse_file` if an input file cannot be parsed
 * `incorrect_column_count` if the column count is not as expected
     * For Excel files, this may mean there is a non-empty cell outside the bounds of the data area
-* `illegal_file_name` if an illegal file name is provided
 * `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
 * `no_files_provided` if no files were provided
 * `unexpected_error` if some other error occurs
@@ -220,19 +219,6 @@ each invalid file if the trace would assist in debugging the error.
  "message": <message regarding the error>
 }
 ```
-
-#### `illegal_file_name`
-
-```
-{"type": "illegal_file_name",
- "message": <message regarding the illegal name>,
- "file": <filepath>
-}
-```
-
-The `file` key will not be provided if there is a `null` filename provided. This is currently
-impossible based on the API but we note it here in case a JSON body based API is provided in the
-future.
 
 #### `multiple_specifications_for_data_type`
 
