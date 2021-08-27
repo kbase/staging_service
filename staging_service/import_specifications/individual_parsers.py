@@ -2,13 +2,14 @@
 Contains parser functions for use with the file parser framework.
 """
 
+import magic
 import pandas
 import re
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import TextIO
+from typing import TextIO, Optional as O
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
@@ -32,6 +33,8 @@ _EXPECTED_HEADER = (f"{_DATA_TYPE} <data_type>{_HEADER_SEP} "
      + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>")
 _HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
     + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
+
+_MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty"}
 
 
 class _ParseException(Exception):
@@ -135,6 +138,8 @@ def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, h
 def _parse_xsv(path: Path, sep: str) -> ParseResults:
     spcsrc = SpecificationSource(path)
     try:
+        if magic.from_file(str(path), mime=True) not in _MAGIC_TEXT_FILES:
+            return _error(Error(ErrorType.PARSE_FAIL, "Not a text file", spcsrc))
         with open(path) as input_:
             datatype, columns = _get_datatype(input_, spcsrc, _VERSION)
             df = pandas.read_csv(
@@ -153,6 +158,8 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         ))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except _ParseException as e:
         return _error(e.args[0])
     except pandas.errors.EmptyDataError as e:
@@ -180,3 +187,83 @@ def parse_tsv(path: Path) -> ParseResults:
     """ Parse the provided TSV file. """
     return _parse_xsv(path, "\t")
 
+
+def _load_excel_tab_to_dataframe(excel: pandas.ExcelFile, spcsrc: SpecificationSource
+) -> pandas.DataFrame:
+    try:
+        return excel.parse(sheet_name=spcsrc.tab, header=[0, 1, 2])
+    except IndexError:
+        # ugh. https://github.com/pandas-dev/pandas/issues/43143
+        # I really hope I'm not swallowing other pandas bugs here, but not really
+        # any way to tell
+        raise _ParseException(Error(
+            ErrorType.PARSE_FAIL, "Missing expected header rows", spcsrc
+        ))
+
+
+def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
+) -> (O[str], O[ParseResult]):
+    df = _load_excel_tab_to_dataframe(excel, spcsrc)
+    if df.empty:  # might as well not error check headers in sheets with no data
+        return (None, None)  # next line will throw an error for a completely empty sheet
+    # at this point we know that the 3 headers are present
+    header = df.columns.get_level_values(0)[0]
+    datatype, columns = _parse_header(header, spcsrc, _VERSION)
+    # Could run through the entire sheet looking for non-NaN values to find offending rows
+    # Seems like a lot of complexity. If this becomes a problem reconsider
+    # Can't catch some header errors anyway, since pandas duplicates them silently
+    if df.columns.shape[0] != columns:
+        raise _ParseException(Error(
+            ErrorType.PARSE_FAIL,
+            f"Expected {columns} data columns, got {df.columns.shape[0]}",
+            spcsrc,
+        ))
+    _check_for_duplicate_headers(df.columns, spcsrc, header_index=1)
+    return datatype, _process_dataframe(df, spcsrc, header_index=1)
+
+
+def parse_excel(path: Path) -> ParseResults:
+    """
+    Parse the provided Excel file.
+    xls and xlsx files are supported.
+    """
+    spcsrc = SpecificationSource(path)
+    errors = []
+    try:
+        with pandas.ExcelFile(path) as ex:
+            results = {}
+            datatype_to_tab = {}
+            for tab in ex.sheet_names:
+                spcsrc_tab = SpecificationSource(path, tab)
+                try:
+                    datatype, result = _process_excel_tab(ex, spcsrc_tab)
+                    if not datatype:
+                        continue
+                    elif datatype in results:
+                        errors.append(Error(
+                            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+                            f"Found datatype {datatype} in multiple tabs",
+                            SpecificationSource(path, datatype_to_tab[datatype]),
+                            spcsrc_tab,
+                        ))
+                    else:
+                        datatype_to_tab[datatype] = tab
+                        results[datatype] = result
+                except _ParseException as e:
+                    errors.append(e.args[0])
+    except FileNotFoundError:
+        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    except ValueError as e:
+        if "Excel file format cannot be determined" in str(e):
+            return _error(Error(
+                ErrorType.PARSE_FAIL, "Not a supported Excel file type", source_1=spcsrc))
+        raise e  # bail out, not sure what's wrong, not sure how to test either
+    if errors:
+        return ParseResults(errors=tuple(errors))
+    elif results:
+        return ParseResults(frozendict(results))
+    else:
+        return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+    
