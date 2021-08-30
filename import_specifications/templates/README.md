@@ -47,7 +47,7 @@ Some importers, such as the Genbank importer, have input fields that are based o
 lookup from user input - for example, the taxon ID of a genome is looked up from the prefix
 of a scientific name provided by the user. Clearly specifying a prefix in the template will not
 work in this case - the user must specify the entirety of the input; for instance the entire
-scientific name. To to this, start an import and use the lookup box to find the scientific name
+scientific name. To do this, start an import and use the lookup box to find the scientific name
 of interest, and then add that name to the template.
 
 We are considering ways to make this easier in the future.
