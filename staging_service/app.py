@@ -130,7 +130,7 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Takes a `files` query parameter with a list of comma separated import specification file paths.
     Returns the contents of those files parsed into a list of dictionaries, mapped from the data
     type, in the `types` key.
-    
+
     :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
     """
     username = await authorize_request(request)

@@ -1017,19 +1017,19 @@ async def test_bulk_specification_success():
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
-                    f"spec1\tspec2\t   spec3   \n",
-                    f"Spec 1\t Spec 2\t Spec 3\n",
-                    f"val1 \t   ꔆ   \t    7\n",
-                    f"val3\tval4\t1\n",
+                    "spec1\tspec2\t   spec3   \n",
+                    "Spec 1\t Spec 2\t Spec 3\n",
+                    "val1 \t   ꔆ   \t    7\n",
+                    "val3\tval4\t1\n",
                 ])
             csv = "somefolder/breakfastcereals.csv"
             with open(base / csv, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    f"s1,s2,s3\n",
-                    f"S 1,S 2,S 3\n",
-                    f"froot loops ,   puffin   ,   gross\n",
-                    f"grape nuts , dietary fiber, also gross\n",
+                    "s1,s2,s3\n",
+                    "S 1,S 2,S 3\n",
+                    "froot loops ,   puffin   ,   gross\n",
+                    "grape nuts , dietary fiber, also gross\n",
                 ])
             excel = "importspec.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
@@ -1049,7 +1049,6 @@ async def test_bulk_specification_success():
                 ])
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
-            
             resp = await cli.get(f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   ")
             jsn = await resp.json()
             assert jsn == {"types": {
@@ -1090,9 +1089,9 @@ async def test_bulk_specification_fail_not_found():
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
-                    f"spec1\tspec2\t   spec3   \n",
-                    f"Spec 1\t Spec 2\t Spec 3\n",
-                    f"val1 \t   ꔆ   \t    7\n",
+                    "spec1\tspec2\t   spec3   \n",
+                    "Spec 1\t Spec 2\t Spec 3\n",
+                    "val1 \t   ꔆ   \t    7\n",
                 ])
             resp = await cli.get(f"bulk_specification/?files={tsv},somefile.csv")
             jsn = await resp.json()
@@ -1115,17 +1114,17 @@ async def test_bulk_specification_fail_parse_fail():
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
-                    f"spec1\tspec2\t   spec3   \n",
-                    f"Spec 1\t Spec 2\t Spec 3\n",
-                    f"val1 \t   ꔆ   \t    7\n",
+                    "spec1\tspec2\t   spec3   \n",
+                    "Spec 1\t Spec 2\t Spec 3\n",
+                    "val1 \t   ꔆ   \t    7\n",
                 ])
             csv = "otherfolder/thing.csv"
             with open(base / csv, "w") as f:
                 f.writelines([
                     "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
-                    f"s1,s2,s3\n",
-                    f"S 1,S 2,S 3\n",
-                    f"froot loops ,   puffin   ,   gross\n",
+                    "s1,s2,s3\n",
+                    "S 1,S 2,S 3\n",
+                    "froot loops ,   puffin   ,   gross\n",
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
@@ -1196,17 +1195,17 @@ async def test_bulk_specification_fail_column_count():
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
-                    f"spec1\tspec2\t   spec3   \n",
-                    f"Spec 1\t Spec 2\t Spec 3\n",
-                    f"val1 \t   ꔆ   \t    7\n",
+                    "spec1\tspec2\t   spec3   \n",
+                    "Spec 1\t Spec 2\t Spec 3\n",
+                    "val1 \t   ꔆ   \t    7\n",
                 ])
             csv = "thing.csv"
             with open(base / csv, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    f"s1,s2,s3\n",
-                    f"S 1,S 2,S 3\n",
-                    f"froot loops ,   puffin\n",
+                    "s1,s2,s3\n",
+                    "S 1,S 2,S 3\n",
+                    "froot loops ,   puffin\n",
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
@@ -1252,25 +1251,25 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
-                    f"spec1\tspec2\t   spec3   \n",
-                    f"Spec 1\t Spec 2\t Spec 3\n",
-                    f"val1 \t   ꔆ   \t    7\n",
+                    "spec1\tspec2\t   spec3   \n",
+                    "Spec 1\t Spec 2\t Spec 3\n",
+                    "val1 \t   ꔆ   \t    7\n",
                 ])
             csv1 = "thing.csv"
             with open(base / csv1, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    f"s1,s2,s3\n",
-                    f"S 1,S 2,S 3\n",
-                    f"froot loops ,   puffin, whee\n",
+                    "s1,s2,s3\n",
+                    "S 1,S 2,S 3\n",
+                    "froot loops ,   puffin, whee\n",
                 ])
             csv2 = "thing2.csv"
             with open(base / csv2, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 2; Version: 1\n",
-                    f"s1,s2\n",
-                    f"S 1,S 2\n",
-                    f"froot loops ,   puffin\n",
+                    "s1,s2\n",
+                    "S 1,S 2\n",
+                    "froot loops ,   puffin\n",
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
