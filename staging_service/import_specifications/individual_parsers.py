@@ -133,8 +133,6 @@ def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, h
     return ParseResult(spec_source, tuple(results))
 
 
-# TODO README document quoting rules in readme for templates
-# TODO README document that non-internal white space is ignored
 def _parse_xsv(path: Path, sep: str) -> ParseResults:
     spcsrc = SpecificationSource(path)
     try:
