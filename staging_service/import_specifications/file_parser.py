@@ -25,7 +25,6 @@ class ErrorType(Enum):
     INCORRECT_COLUMN_COUNT = 3
     MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE = 4
     NO_FILES_PROVIDED = 5
-    ILLEGAL_FILE_NAME = 6
     OTHER = 100
 
 
@@ -56,7 +55,6 @@ _ERRTYPE_TO_REQ_ARGS = {
     ErrorType.INCORRECT_COLUMN_COUNT: (_ERR_MESSAGE, _ERR_SOURCE_1),
     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: (_ERR_MESSAGE, _ERR_SOURCE_1, _ERR_SOURCE_2),
     ErrorType.NO_FILES_PROVIDED: tuple(),
-    ErrorType.ILLEGAL_FILE_NAME: (_ERR_MESSAGE,),
     ErrorType.OTHER: (_ERR_MESSAGE,),
 }
 
@@ -77,8 +75,6 @@ class Error:
     {ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE.name}: {_ERR_MESSAGE}, {_ERR_SOURCE_1}, and
         {_ERR_SOURCE_2}
     {ErrorType.NO_FILES_PROVIDED.name}: none
-    {ErrorType.ILLEGAL_FILE_NAME.name}: message. {_ERR_SOURCE_1} should be supplied if the file name
-        is representable as a Path.
     {ErrorType.OTHER.name}: {_ERR_MESSAGE}. source arguments are optional and may be included if
         the error applies to one or more source files.
 
