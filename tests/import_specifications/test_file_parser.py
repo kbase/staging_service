@@ -108,6 +108,15 @@ def test_Error_init_w_PARSE_FAIL_success():
     assert e.source_2 is None
 
 
+def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
+    e = Error(ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile"))
+
+    assert e.error == ErrorType.INCORRECT_COLUMN_COUNT
+    assert e.message == "42"
+    assert e.source_1 == spcsrc("somefile")
+    assert e.source_2 is None
+
+
 def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
     e = Error(
         ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE, "foo", spcsrc("foo2"), spcsrc("yay")
@@ -172,6 +181,9 @@ def test_Error_init_fail():
     err = "message, source_1 is required for a PARSE_FAIL error"
     error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
+    err = "message, source_1 is required for a INCORRECT_COLUMN_COUNT error"
+    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err))
+    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err))
     ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     err = ("message, source_1, source_2 is required for a "
         + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error")

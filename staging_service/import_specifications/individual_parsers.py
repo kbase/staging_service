@@ -112,7 +112,7 @@ def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
                 # could collect errors (first 10?) and throw an exception with a list
                 # lets wait and see if that's really needed
                 raise _ParseException(Error(
-                    ErrorType.PARSE_FAIL,
+                    ErrorType.INCORRECT_COLUMN_COUNT,
                     f"Incorrect number of items in line {i + 2}, "
                     + f"expected {expected_count}, got {count}",
                     SpecificationSource(path)
@@ -172,7 +172,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         # ugh. https://github.com/pandas-dev/pandas/issues/43102
         # I really hope I'm not swallowing other pandas bugs here, but not really any way to tell
         return _error(Error(
-            ErrorType.PARSE_FAIL, "Header rows have unequal column counts", spcsrc
+            ErrorType.INCORRECT_COLUMN_COUNT, "Header rows have unequal column counts", spcsrc
         ))
 
 
@@ -212,7 +212,7 @@ def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
     # Can't catch some header errors anyway, since pandas duplicates them silently
     if df.columns.shape[0] != columns:
         raise _ParseException(Error(
-            ErrorType.PARSE_FAIL,
+            ErrorType.INCORRECT_COLUMN_COUNT,
             f"Expected {columns} data columns, got {df.columns.shape[0]}",
             spcsrc,
         ))

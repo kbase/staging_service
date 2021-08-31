@@ -186,6 +186,7 @@ def _xsv_parse_fail(
     lines: list[str],
     parser: Callable[[Path], ParseResults],
     message: str,
+    err_type: ErrorType = ErrorType.PARSE_FAIL,
     extension: str = "",
 ):
     input_ = temp_dir / (str(uuid.uuid4()) + extension)
@@ -193,9 +194,7 @@ def _xsv_parse_fail(
         test_file.writelines(lines)
 
     res = parser(input_)
-    expected = ParseResults(errors=tuple([Error(
-        ErrorType.PARSE_FAIL, message, SpecificationSource(input_)
-    )]))
+    expected = ParseResults(errors=tuple([Error(err_type, message, SpecificationSource(input_))]))
     assert res == expected
 
 
@@ -239,7 +238,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 3, expected 2, got 3"
     lines = [
@@ -247,7 +246,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "head1\thead2\n",
         "Head 1\tHead 2\tHead 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_tsv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Header rows have unequal column counts"
     lines = [
@@ -255,7 +254,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 2, expected 3, got 2"
     lines = [
@@ -263,7 +262,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "head1\thead2\n",
         "Head 1\tHead 2\tHead 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_tsv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 5, expected 3, got 4"
     lines = [
@@ -274,7 +273,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "1, 2, 3, 4\n",
         "1, 2, 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 6, expected 3, got 2"
     lines = [
@@ -286,7 +285,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "1\t2\n",
         "1\t2\t3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_tsv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 5, expected 3, got 0"
     lines = [
@@ -297,7 +296,7 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "\n",
         "1, 2, 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
 
 def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
@@ -320,7 +319,7 @@ def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
 
 ##########################################
 # Excel tests
-# 
+#
 # Note: for these tests we use actual
 #   Excel files saved by LibreOffice
 #   rather than using a python writer
@@ -455,7 +454,7 @@ def test_excel_parse_fail_duplicate_headers():
 def test_excel_parse_fail_unequal_rows():
     """
     This test differs in a number of ways from the xSV unequal rows test above:
-    1) Not having a full row of entries for every column is fine, unlike for xSV files. 
+    1) Not having a full row of entries for every column is fine, unlike for xSV files.
        Spreadsheets provide a clear view of what entries are missing and the user doesn't have to
        worry about off by one errors when filling in separator characters.
     2) Since pandas silently duplicates missing header entries, a missing spec ID header (the
@@ -466,12 +465,12 @@ def test_excel_parse_fail_unequal_rows():
     """
     f = _get_test_file("testunequalrows.xlsx")
     _excel_parse_fail(f, errors=[
-        Error(ErrorType.PARSE_FAIL, "Expected 2 data columns, got 3",
+        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 2 data columns, got 3",
             SpecificationSource(f, "2 cols, 3 human readable")),
-        Error(ErrorType.PARSE_FAIL, "Expected 2 data columns, got 3",
+        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 2 data columns, got 3",
             SpecificationSource(f, "2 cols, 3 spec IDs")),
         Error(ErrorType.PARSE_FAIL, "Duplicate column name: head2",
             SpecificationSource(f, "3 cols, 2 spec IDs, header dup error")),
-        Error(ErrorType.PARSE_FAIL, "Expected 3 data columns, got 4",
+        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 3 data columns, got 4",
             SpecificationSource(f, "3 cols, 4 data")),
     ])
