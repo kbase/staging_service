@@ -25,7 +25,13 @@ to run locally run /deployment/bin/entrypoint.sh
 
 to run inside docker run /run_in_docker.sh
 
-to run tests TODO
+# tests
+
+* to test use ./run_tests.sh
+* requires python 3.9.6 or higher
+* requires installation on mac of libmagic `brew install libmagic`
+
+
 
 # debugging
 
