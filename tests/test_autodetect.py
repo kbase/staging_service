@@ -69,7 +69,6 @@ def test_reasonable_filenames():
             possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
                 filename=filename_variant
             )
-            print("Testing", filename_variant, possible_importers)
             assert possible_importers is not None
             expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
             assert possible_importers == AutoDetectUtils._MAPPINGS["types"][
