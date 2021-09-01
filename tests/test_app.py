@@ -1111,6 +1111,7 @@ async def test_bulk_specification_fail_parse_fail():
             fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             tsv = "otherfolder/genomes.tsv"
+            # this one is fine
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1119,6 +1120,7 @@ async def test_bulk_specification_fail_parse_fail():
                     "val1 \t   ꔆ   \t    7\n",
                 ])
             csv = "otherfolder/thing.csv"
+            # this one has a misspelling in the header
             with open(base / csv, "w") as f:
                 f.writelines([
                     "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1128,6 +1130,7 @@ async def test_bulk_specification_fail_parse_fail():
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
+                # this one is fine
                 df = pandas.DataFrame([
                     ["Data type: fruit_bats; Columns: 2; Version: 1"],
                     ["bat_name", "wing_count"],
@@ -1135,12 +1138,14 @@ async def test_bulk_specification_fail_parse_fail():
                     ["George", 42],
                 ])
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                # this one is missing the 3rd header line
                 df = pandas.DataFrame([
                     ["Data type: tree_sloths; Columns: 2; Version: 1"],
                     ["entity_id", "preferred_food"],
                 ])
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
+            # this also tests a number of bad file extensions - no need to create files
             resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}"
                 + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile.")
             jsn = await resp.json()
@@ -1192,6 +1197,7 @@ async def test_bulk_specification_fail_column_count():
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             tsv = "genomes.tsv"
+            # this one is fine
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1200,6 +1206,7 @@ async def test_bulk_specification_fail_column_count():
                     "val1 \t   ꔆ   \t    7\n",
                 ])
             csv = "thing.csv"
+            # this one is missing a column in the last row
             with open(base / csv, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1209,6 +1216,7 @@ async def test_bulk_specification_fail_column_count():
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
+                # this one has an extra column in the last row
                 df = pandas.DataFrame([
                     ["Data type: fruit_bats; Columns: 2; Version: 1"],
                     ["bat_name", "wing_count"],
@@ -1216,6 +1224,7 @@ async def test_bulk_specification_fail_column_count():
                     ["George", 42, 56],
                 ])
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                # this one is fine
                 df = pandas.DataFrame([
                     ["Data type: tree_sloths; Columns: 2; Version: 1"],
                     ["entity_id", "preferred_food"],
@@ -1248,6 +1257,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             tsv = "genomes.tsv"
+            # this one is fine
             with open(base / tsv, "w") as f:
                 f.writelines([
                     "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1256,6 +1266,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
                     "val1 \t   ꔆ   \t    7\n",
                 ])
             csv1 = "thing.csv"
+            # this is the first of the breakfastcereals data sources, so fine
             with open(base / csv1, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1264,6 +1275,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
                     "froot loops ,   puffin, whee\n",
                 ])
             csv2 = "thing2.csv"
+            # this data type is also breakfastcereals, so will cause an error
             with open(base / csv2, "w") as f:
                 f.writelines([
                     "Data type: breakfastcereals; Columns: 2; Version: 1\n",
@@ -1273,6 +1285,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
                 ])
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
+                # this data type is also breakfastcereals, so will cause an error
                 df = pandas.DataFrame([
                     ["Data type: breakfastcereals; Columns: 2; Version: 1"],
                     ["bat_name", "wing_count"],
@@ -1280,6 +1293,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
                     ["George", 42],
                 ])
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
+                # this one is fine
                 df = pandas.DataFrame([
                     ["Data type: tree_sloths; Columns: 2; Version: 1"],
                     ["entity_id", "preferred_food"],
