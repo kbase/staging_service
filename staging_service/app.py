@@ -9,6 +9,7 @@ from pathlib import Path as PathPy
 import aiohttp_cors
 from aiohttp import web
 
+from .app_error_formatter import format_import_spec_errors
 from .AutoDetectUtils import AutoDetectUtils
 from .JGIMetadata import read_metadata_for
 from .auth2Client import KBaseAuth2
@@ -17,7 +18,6 @@ from .metadata import some_metadata, dir_info, add_upa, similar
 from .utils import Path, run_command, AclManager
 from .import_specifications.file_parser import (
     ErrorType,
-    Error,
     FileTypeResolution,
     parse_import_specifications,
 )
@@ -35,44 +35,6 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
-}
-
-# Types for the lambda parameters are all strings
-# We don't add hints in to avoid repeating them over and over
-_ERROR_FORMATTERS = {
-    # I don't think there's a good way to test the OTHER message
-    ErrorType.OTHER: lambda msg, file1, tab1, file2, tab2: {
-        "type": "unexpected_error",
-        "message": msg,
-        "file": file1,
-    },
-    ErrorType.FILE_NOT_FOUND: lambda msg, file1, tab1, file2, tab2: {
-        "type": "cannot_find_file",
-        "file": file1,
-    },
-    ErrorType.NO_FILES_PROVIDED: lambda msg, file1, tab1, file2, tab2: {
-        "type": "no_files_provided",
-    },
-    ErrorType.PARSE_FAIL: lambda msg, file1, tab1, file2, tab2: {
-        "type": "cannot_parse_file",
-        "message": msg,
-        "file": file1,
-        "tab": tab1
-    },
-    ErrorType.INCORRECT_COLUMN_COUNT: lambda msg, file1, tab1, file2, tab2: {
-        "type": "incorrect_column_count",
-        "message": msg,
-        "file": file1,
-        "tab": tab1
-    },
-    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg, file1, tab1, file2, tab2: {
-        "type": "multiple_specifications_for_data_type",
-        "message": msg,
-        "file_1": file1,
-        "tab_1": tab1,
-        "file_2": file2,
-        "tab_2": tab2,
-    },
 }
 
 
@@ -107,23 +69,6 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
         return FileTypeResolution(unsupported_type=ext)
 
 
-def _format_errors(errors: tuple[Error, ...], paths: dict[PathPy, Path]) -> str:
-    errs = []
-    for e in errors:
-        file1 = None
-        tab1 = None
-        file2 = None
-        tab2 = None
-        if e.source_1:
-            file1 = paths[e.source_1.file].user_path
-            tab1 = e.source_1.tab
-        if e.source_2:
-            file2 = paths[e.source_2.file].user_path
-            tab2 = e.source_2.tab
-        errs.append(_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2))
-    return json.dumps({"errors": errs})
-
-
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
     """
@@ -140,7 +85,7 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     paths = {}
     for f in files:
         p = Path.validate_path(username, f)
-        paths[PathPy(p.full_path)] = p
+        paths[PathPy(p.full_path)] = PathPy(p.user_path)
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     res = parse_import_specifications(
         tuple(list(paths)),
@@ -150,13 +95,13 @@ async def bulk_specification(request: web.Request) -> web.json_response:
         t = {dt: result.result for dt, result in res.results.items()}
         return web.json_response({"types": t})
     errtypes = {e.error for e in res.errors}
+    errtext = json.dumps({"errors": format_import_spec_errors(res.errors, paths)})
     if errtypes - {ErrorType.OTHER, ErrorType.FILE_NOT_FOUND}:
-        return web.HTTPBadRequest(text=_format_errors(res.errors, paths), content_type=_APP_JSON)
+        return web.HTTPBadRequest(text=errtext, content_type=_APP_JSON)
     if errtypes - {ErrorType.OTHER}:
-        return web.HTTPNotFound(text=_format_errors(res.errors, paths), content_type=_APP_JSON)
-    return web.HTTPInternalServerError(
-        # I don't think there's a good way to test this codepath
-        text=_format_errors(res.errors, paths), content_type=_APP_JSON)
+        return web.HTTPNotFound(text=errtext, content_type=_APP_JSON)
+    # I don't think there's a good way to test this codepath
+    return web.HTTPInternalServerError(text=errtext, content_type=_APP_JSON)
 
 
 @routes.get("/add-acl-concierge")
