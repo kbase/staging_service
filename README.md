@@ -736,10 +736,12 @@ This endpoint parses one or more import specification files in the staging area 
 structure (close to) ready for insertion into the Narrative bulk import cell.
 
 It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the currently
-supported data types are available in the `import_specifications/templates` directory of this repo.
+supported data types are available in the
+[templates](./import_specifications/templates) directory of this repo.
 See the `README.md` file for instructions on template usage.
 
-See the import specification ADR document in the `docs` folder for design details.
+See the [import specification ADR document](./docs/import_specifications.ADR.md) for design
+details.
 
 **URL** : `ci.kbase.us/services/staging_service/bulk_specification`
 
@@ -776,10 +778,10 @@ Reponse:
 }}
 ```
 
-* `<type N>` is a data type ID from the `Mappings.py` file and the Narrative staging area
-  configuration file - it is a shared namespace between the staging service and Narrative to
-  specify import applications, and has a 1:1 mapping to an import app. It is determined by the
-  first header line from the import templates.
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify import applications, and has a 1:1 mapping to an
+  import app. It is determined by the first header line from the import templates.
 * `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
   These are determined by the second header line from the import templates and will differ
   by the data type.
