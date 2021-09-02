@@ -432,13 +432,13 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx")),
         Error(
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
-            "data type bar appears in two importer specification sources",
+            "Data type bar appears in two importer specification sources",
             spcsrc("b1"),
             spcsrc("b2")
         ),
         Error(
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
-            "data type baz appears in two importer specification sources",
+            "Data type baz appears in two importer specification sources",
             spcsrc("c1"),
             spcsrc("c2")
         )

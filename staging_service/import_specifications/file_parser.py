@@ -211,7 +211,7 @@ def _parse(
                 if data_type in results:
                     errors.append(Error(
                         ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
-                        f"data type {data_type} appears in two importer specification sources",
+                        f"Data type {data_type} appears in two importer specification sources",
                         results[data_type].source,
                         res.results[data_type].source
                     ))

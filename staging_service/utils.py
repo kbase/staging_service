@@ -3,7 +3,6 @@ import configparser
 import json
 import logging
 import os
-import sys
 
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
@@ -92,7 +91,6 @@ class AclManager:
         """
         The ACLManager is used to add and remove acl endpoints for KBase Users on our Globus Share
         """
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         config = configparser.ConfigParser()
         config.read("/etc/globus.cfg")
         cf = config["globus"]
