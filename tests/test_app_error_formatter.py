@@ -5,16 +5,16 @@ from staging_service.import_specifications.file_parser import ErrorType, Error, 
 
 
 def _ss(file: str, tab: str = None) -> SpecificationSource:
-    return SpecificationSource(file, tab)
+    return SpecificationSource(Path(file), tab)
 
 
 def test_format_import_spec_errors_no_input():
-    assert format_import_spec_errors([], None) == []
+    assert format_import_spec_errors([], {}) == []
 
 
 def test_format_import_spec_errors_one_error():
     errors = [Error(ErrorType.OTHER, "foobar")]
-    assert format_import_spec_errors(errors, None) == [
+    assert format_import_spec_errors(errors, {}) == [
         {"type": "unexpected_error",
          "message": "foobar",
          "file": None,
@@ -37,12 +37,12 @@ def test_format_import_spec_errors_all_the_errors_no_tabs():
         Error(ErrorType.FILE_NOT_FOUND, source_1=_ss("file6")),
     ]
     paths = {
-        "file1": "f1",
-        "file2": "f2",
-        "file3": "f3",
-        "file4": "f4",
-        "file5": "f5",
-        "file6": "f6",
+        Path("file1"): Path("f1"),
+        Path("file2"): Path("f2"),
+        Path("file3"): Path("f3"),
+        Path("file4"): Path("f4"),
+        Path("file5"): Path("f5"),
+        Path("file6"): Path("f6"),
     }
     assert format_import_spec_errors(errors, paths) == [
         {"type": "unexpected_error",
@@ -85,10 +85,10 @@ def test_format_import_spec_errors_all_the_errors_with_tabs():
         ),
     ]
     paths = {
-        "file1": "f1",
-        "file2": "f2",
-        "file3": "f3",
-        "file4": "f4",
+        Path("file1"): Path("f1"),
+        Path("file2"): Path("f2"),
+        Path("file3"): Path("f3"),
+        Path("file4"): Path("f4"),
     }
     assert format_import_spec_errors(errors, paths) == [
         {"type": "cannot_parse_file",
