@@ -736,9 +736,9 @@ This endpoint parses one or more import specification files in the staging area 
 structure (close to) ready for insertion into the Narrative bulk import cell.
 
 It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the currently
-supported data types are available in the
-[templates](./import_specifications/templates) directory of this repo.
-See the `README.md` file for instructions on template usage.
+supported data types are available in the [templates](./import_specifications/templates)
+directory of this repo. See the [README.md](./import_specifications/templates/README.md) file
+for instructions on template usage.
 
 See the [import specification ADR document](./docs/import_specifications.ADR.md) for design
 details.
@@ -764,18 +764,20 @@ GET bulk_specification/?files=file1.<ext>[,file2.<ext>,...]
 
 Reponse:
 ```
-{"types": {
-    <type 1>: [
-        {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
-        {<spec.json ID 1: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...},
+{
+    "types": {
+        <type 1>: [
+            {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            {<spec.json ID 1: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...},
+            ...
+        ],
+        <type 2>: [
+            {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            ...
+        ],
         ...
-    ],
-    <type 2>: [
-        {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
-        ...
-    ],
-    ...
-}}
+    }
+}
 ```
 
 * `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
@@ -795,12 +797,14 @@ Reponse:
 
 Error reponses are of the general form:
 ```
-{"errors": [
-    {"type": <error code string>,
-        ... other fields depending on the error code ...
-    },
-    ...
-]}
+{
+    "errors": [
+        {"type": <error code string>,
+            ... other fields depending on the error code ...
+        },
+        ...
+    ]
+}
 ```
 
 Existing error codes are currently:
@@ -823,55 +827,62 @@ The per error type data structures are:
 #### `cannot_find_file`
 
 ```
-{"type": "cannot_find_file",
- "file": <filepath>
+{
+    "type": "cannot_find_file",
+    "file": <filepath>
 }
 ```
 
 #### `cannot_parse_file`
 
 ```
-{"type": "cannot_parse_file",
- "file": <filepath>,
- "tab": <spreadsheet tab if applicable, else null>,
- "message": <message regarding the parse error>
+{
+    "type": "cannot_parse_file",
+    "file": <filepath>,
+    "tab": <spreadsheet tab if applicable, else null>,
+    "message": <message regarding the parse error>
 }
 ```
 
 #### `incorrect_column_count`
 
 ```
-{"type": "incorrect_column_count",
- "file": <filepath>,
- "tab": <spreadsheet tab if applicable, else null>,
- "message": <message regarding the error>
+{
+    "type": "incorrect_column_count",
+    "file": <filepath>,
+    "tab": <spreadsheet tab if applicable, else null>,
+    "message": <message regarding the error>
 }
 ```
 
 #### `multiple_specifications_for_data_type`
 
 ```
-{"type": "multiple_specifications_for_data_type",
- "file_1": <filepath for first file>,
- "tab_1": <spreadsheet tab from first file if applicable, else null>,
- "file_2": <filepath for second file>,
- "tab_2": <spreadsheet tab for second file if applicable, else null>,
- "message": <message regarding the multiple specification error>
+{
+    "type": "multiple_specifications_for_data_type",
+    "file_1": <filepath for first file>,
+    "tab_1": <spreadsheet tab from first file if applicable, else null>,
+    "file_2": <filepath for second file>,
+    "tab_2": <spreadsheet tab for second file if applicable, else null>,
+    "message": <message regarding the multiple specification error>
 }
 ```
 
 #### `no_files_provided`
 
 ```
-{"type": "no_files_provided"}
+{
+    "type": "no_files_provided"
+}
 ```
 
 #### `unexpected_error`
 
 ```
-{"type": "unexpected_error",
- "file": <filepath if applicable to a single file>
- "message": <message regarding the error>
+{
+    "type": "unexpected_error",
+    "file": <filepath if applicable to a single file>
+    "message": <message regarding the error>
 }
 ```
 
