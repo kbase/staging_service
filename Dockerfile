@@ -4,7 +4,8 @@ RUN mkdir -p /kb/deployment/lib
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 RUN apt-get install -y zip && \
     apt-get install -y unzip && \
-    apt-get install -y bzip2
+    apt-get install -y bzip2 && \
+    apt-get install -y libmagic-dev
 
 
 RUN apt-get install -y htop wget
