@@ -46,6 +46,9 @@ phenotype_set_id = "phenotype_set"
 sample_set_id = "sample_set"
 
 # To be added to https://github.com/kbase/narrative/kbase-extension/static/kbase/config/staging_upload.json
+# import_specification is not a "real" data type, but rather tells the narrative that the
+# file contains specifications for how to load one or more other staging area files.
+import_specification = "import_specification"
 decompress_id = "decompress"
 metabolic_annotations_id = "metabolic_annotation"
 metabolic_annotations_bulk_id = "metabolic_annotation_bulk"
@@ -85,13 +88,16 @@ file_format_to_extension_mapping = {
     #     "phylip",
     #     "stockholm",
     # ],
-    TSV: ["tsv"],
-    CSV: ["csv"],
+    TSV: ["tsv"],            # See Note 1 below
+    CSV: ["csv"],            # See Note 1 below
     JSON: ["json"],
-    EXCEL: ["xls", "xlsx"],
+    EXCEL: ["xls", "xlsx"],  # See Note 1 below
     ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
     SBML: ["smbl"],
 }
+
+# Note 1: These types are used internally by the bulk_specification endpoint. If you make changes
+# to the type (say by adding more extensions), ensure that that endpoint can handle the changes.
 
 extension_to_file_format_mapping = {}
 for type_, extensions in file_format_to_extension_mapping.items():

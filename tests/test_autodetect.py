@@ -8,8 +8,8 @@ from staging_service.app import inject_config_dependencies
 from tests.test_utils import bootstrap_config
 
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_tests(tmpdir):
+@pytest.fixture(autouse=True, scope="module")
+def run_before_tests():
     config = bootstrap_config()
     inject_config_dependencies(config)
 
@@ -69,7 +69,6 @@ def test_reasonable_filenames():
             possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
                 filename=filename_variant
             )
-            print("Testing", filename_variant, possible_importers)
             assert possible_importers is not None
             expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
             assert possible_importers == AutoDetectUtils._MAPPINGS["types"][

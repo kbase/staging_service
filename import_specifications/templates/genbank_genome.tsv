@@ -1,0 +1,3 @@
+Data type: genbank_genome; Columns: 9; Version: 1
+staging_file_subdir_path	genome_name	genome_type	source	scientific_name	release	genetic_code	generate_ids_if_needed	generate_missing_genes
+GenBank File Path	Genome Object Name	Genome Type	Source of the GenBank File	Scientific Name	Release or Version of the Source Data	Genetic Code for the Organism	Generate Feature IDs if Needed	Spoof Genes for parentless CDS

@@ -1,4 +1,5 @@
 import configparser
+import traceback
 
 from dotenv import load_dotenv
 import os
@@ -25,3 +26,9 @@ def bootstrap_config():
     config = configparser.ConfigParser()
     config.read(config_filepath)
     return config
+
+
+def assert_exception_correct(got: Exception, expected: Exception):
+    err = "".join(traceback.TracebackException.from_exception(got).format())
+    assert got.args == expected.args, err
+    assert type(got) == type(expected)

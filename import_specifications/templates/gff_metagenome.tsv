@@ -1,0 +1,3 @@
+Data type: gff_metagenome; Columns: 7; Version: 1
+fasta_file	gff_file	genome_name	source	release	genetic_code	generate_missing_genes
+FASTA File Path	GFF3 File Path	Metagenome Object Name	Source of metagenome	Release or Version of the Source Data	Genetic Code for protein translation	Spoof Genes for parentless CDS
