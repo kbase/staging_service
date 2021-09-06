@@ -1,11 +1,6 @@
 # staging_service
 
-setup local development
-
-must have docker installed
-
-if you want to run it locally you must have python3.6 installed
-
+In order to setup local development, you must have docker installed and if you want to run it locally you must have python 3.9.6 or greater installed
 
 # setup
 
