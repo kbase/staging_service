@@ -1,5 +1,6 @@
 ### Version 1.3.0
 - Update to Python 3.9
+- Add `bulk_specification` endpoint for parsing import specifications
 
 ### Version 1.2.0
 - BACKWARDS INCOMPATIBILITY: remove the unused `apps` key from the importer mappings endpoint.

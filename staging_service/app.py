@@ -27,7 +27,7 @@ from .autodetect.Mappings import CSV, TSV, EXCEL
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 _APP_JSON = "application/json"
 
