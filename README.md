@@ -764,14 +764,19 @@ Reponse:
 {
     "types": {
         <type 1>: [
-            {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
-            {<spec.json ID 1: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...},
+            {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            {<spec.json ID 1>: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...},
             ...
         ],
         <type 2>: [
-            {<spec.json ID 1: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
             ...
         ],
+        ...
+    },
+    "files": {
+        <type 1>: {"file": "<username>/file1.<ext>", "tab": "tabname"},
+        <type 2>: {"file": "<username>/file2.<ext>", "tab": null},
         ...
     }
 }

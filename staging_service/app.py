@@ -27,7 +27,7 @@ from .autodetect.Mappings import CSV, TSV, EXCEL
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 _APP_JSON = "application/json"
 
@@ -92,8 +92,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
         _file_type_resolver,
         lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e))
     if res.results:
-        t = {dt: result.result for dt, result in res.results.items()}
-        return web.json_response({"types": t})
+        types = {dt: result.result for dt, result in res.results.items()}
+        files = {dt: {"file": str(paths[result.source.file]), "tab": result.source.tab}
+            for dt, result in res.results.items()}
+        return web.json_response({"types": types, "files": files})
     errtypes = {e.error for e in res.errors}
     errtext = json.dumps({"errors": format_import_spec_errors(res.errors, paths)})
     if errtypes - {ErrorType.OTHER, ErrorType.FILE_NOT_FOUND}:

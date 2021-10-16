@@ -1052,23 +1052,33 @@ async def test_bulk_specification_success():
 
             resp = await cli.get(f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   ")
             jsn = await resp.json()
-            assert jsn == {"types": {
-                "genomes": [
-                    {"spec1": "val1", "spec2": "ꔆ", "spec3": 7},
-                    {"spec1": "val3", "spec2": "val4", "spec3": 1}
-                ],
-                "breakfastcereals": [
-                    {"s1": "froot loops", "s2": "puffin", "s3": "gross"},
-                    {"s1": "grape nuts", "s2": "dietary fiber", "s3": "also gross"},
-                ],
-                "fruit_bats": [
-                    {"bat_name": "George", "wing_count": 42},
-                    {"bat_name": "Fred", "wing_count": 1.5},
-                ],
-                "tree_sloths": [
-                    {"entity_id": "That which ends all", "preferred_food": "ꔆ"}
-                ]
-            }}
+            assert jsn == {
+                "types": {
+                    "genomes": [
+                        {"spec1": "val1", "spec2": "ꔆ", "spec3": 7},
+                        {"spec1": "val3", "spec2": "val4", "spec3": 1}
+                    ],
+                    "breakfastcereals": [
+                        {"s1": "froot loops", "s2": "puffin", "s3": "gross"},
+                        {"s1": "grape nuts", "s2": "dietary fiber", "s3": "also gross"},
+                    ],
+                    "fruit_bats": [
+                        {"bat_name": "George", "wing_count": 42},
+                        {"bat_name": "Fred", "wing_count": 1.5},
+                    ],
+                    "tree_sloths": [
+                        {"entity_id": "That which ends all", "preferred_food": "ꔆ"}
+                    ]
+                },
+                "files": {
+                    "genomes": {"file": "testuser/genomes.tsv", "tab": None},
+                    "breakfastcereals": {
+                        "file": "testuser/somefolder/breakfastcereals.csv",
+                        "tab": None},
+                    "fruit_bats": {"file": "testuser/importspec.xlsx", "tab": "bats"},
+                    "tree_sloths": {"file": "testuser/importspec.xlsx", "tab": "sloths"},
+                }
+            }
             assert resp.status == 200
 
 
