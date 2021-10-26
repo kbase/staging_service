@@ -1,3 +1,6 @@
+### Version 1.3.1
+- added the `files` key to the returned data from the `bulk_specification` endpoint.
+
 ### Version 1.3.0
 - Update to Python 3.9
 - Add `bulk_specification` endpoint for parsing import specifications
