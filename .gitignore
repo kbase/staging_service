@@ -104,3 +104,4 @@ data/
 .DS_Store
 .virtualenvs/
 test.env
+run_tests_single.sh
