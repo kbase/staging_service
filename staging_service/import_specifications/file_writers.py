@@ -3,29 +3,30 @@ Write an import specification to one or more files.
 
 The names of the files will be the datatype suffixed by the file extension unless the writer
 handles Excel or similar files that can contain multiple datatypes, in which case the
-file name will be {IMPORT_SPEC_FILE_NAME} suffixed by the extension.
+file name will be import_specification suffixed by the extension.
 
 All the write_* functions in this module have the same function signature:
 
 :param folder: Where the files should be written. The folder must exist.
 :param types: The import specifications to write. This is a dictionary of data types as strings
     to the specifications for the data type. Each specification has two required keys:
-    * `order_and_titles`: this is a list of tuples. Each iner tuple has two elements:
+    * `order_and_display`: this is a list of lists. Each inner list has two elements:
         * The parameter ID of a parameter. This is typically the `id` field from the
             KBase app `spec.json` file.
         * The display name of the parameter. This is typically the `ui-name` field from the
             KBase app `display.yaml` file.
-        The order of the inner tuples in the outer tuple defines the order of the columns
+        The order of the inner lists in the outer list defines the order of the columns
         in the resulting import specification files.
-    * `data`: this is a list of str->str dicts. The keys of the dicts are the parameter IDs
-        as described above, while the values are the values of the parameters. Each dict
-        must have exactly the same keys as the `order_and_titles` structure. Each entry in the
-        list corresponds to a row in the resulting import specification, and the order of
-        the list defines the order of the rows.
+    * `data`: this is a list of str->str or number dicts. The keys of the dicts are the
+        parameter IDs as described above, while the values are the values of the parameters.
+        Each dict must have exactly the same keys as the `order_and_display` structure. Each
+        entry in the list corresponds to a row in the resulting import specification,
+        and the order of the list defines the order of the rows.
     Leave the `data` list empty to write an empty template.
 :returns: A mapping of the data types to the files to which they were written. 
 """
-
+# note that we can't use an f string here to interpolate the variables below, e.g.
+# order_and_display, etc.
 
 import collections
 import csv
@@ -70,11 +71,11 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
                 KBase app `display.yaml` file.
             The order of the inner lists in the outer list defines the order of the columns
             in the resulting import specification files.
-        * {_DATA}: this is a list of str->str dicts. The keys of the dicts are the parameter IDs
-            as described above, while the values are the values of the parameters. Each dict
-            must have exactly the same keys as the {_ORDER_AND_DISPLAY} structure. Each entry in the
-            list corresponds to a row in the resulting import specification, and the order of
-            the list defines the order of the rows.
+        * {_DATA}: this is a list of str->str or number dicts. The keys of the dicts are the
+            parameter IDs as described above, while the values are the values of the parameters.
+            Each dict must have exactly the same keys as the {_ORDER_AND_DISPLAY} structure.
+            Each entry in the list corresponds to a row in the resulting import specification,
+            and the order of the list defines the order of the rows.
         Leave the {_DATA} list empty to write an empty template.
     """
     if not types:
