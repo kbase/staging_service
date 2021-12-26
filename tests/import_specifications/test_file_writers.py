@@ -59,14 +59,14 @@ def test_noop():
     assert write_tsv(Path("."), {}) == {}
 
 def test_write_csv(temp_dir: Path):
-    res = write_csv(Path(temp_dir), _TEST_DATA)
+    res = write_csv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": Path(temp_dir) / "type1.csv",
-        "type2": Path(temp_dir) / "type2.csv",
-        "type3": Path(temp_dir) / "type3.csv",
+        "type1": temp_dir / "type1.csv",
+        "type2": temp_dir / "type2.csv",
+        "type3": temp_dir / "type3.csv",
     }
     _check_contents(
-        Path(temp_dir) / "type1.csv",
+        temp_dir / "type1.csv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
             "id1,id2,id3\n",
@@ -76,7 +76,7 @@ def test_write_csv(temp_dir: Path):
         ]
     )
     _check_contents(
-        Path(temp_dir) / "type2.csv",
+        temp_dir / "type2.csv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
             "id1\n",
@@ -86,7 +86,7 @@ def test_write_csv(temp_dir: Path):
         ]
     )
     _check_contents(
-        Path(temp_dir) / "type3.csv",
+        temp_dir / "type3.csv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
             'some_id,tab\tid,"comma,id"\n',
@@ -96,14 +96,14 @@ def test_write_csv(temp_dir: Path):
 
 
 def test_write_tsv(temp_dir: Path):
-    res = write_tsv(Path(temp_dir), _TEST_DATA)
+    res = write_tsv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": Path(temp_dir) / "type1.tsv",
-        "type2": Path(temp_dir) / "type2.tsv",
-        "type3": Path(temp_dir) / "type3.tsv",
+        "type1": temp_dir / "type1.tsv",
+        "type2": temp_dir / "type2.tsv",
+        "type3": temp_dir / "type3.tsv",
     }
     _check_contents(
-        Path(temp_dir) / "type1.tsv",
+        temp_dir / "type1.tsv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
             "id1\tid2\tid3\n",
@@ -113,7 +113,7 @@ def test_write_tsv(temp_dir: Path):
         ]
     )
     _check_contents(
-        Path(temp_dir) / "type2.tsv",
+        temp_dir / "type2.tsv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
             "id1\n",
@@ -123,7 +123,7 @@ def test_write_tsv(temp_dir: Path):
         ]
     )
     _check_contents(
-        Path(temp_dir) / "type3.tsv",
+        temp_dir / "type3.tsv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
             'some_id\t"tab\tid"\tcomma,id\n',

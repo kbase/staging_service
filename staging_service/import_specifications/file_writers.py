@@ -130,10 +130,9 @@ def _check_is_sequence(tocheck: Any, errprefix: str):
         raise ValueError(errprefix + " is not a list")
 
 
-def write_csv(
-    folder: Path,
-    types: dict[str, dict[str, list[Any]]],
-) -> dict[str, Path]:
+# TODO WRITE_XSV look into server OOM protection if the user sends a huge JSON packet
+
+def write_csv(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str, Path]:
     """
     Writes import specifications to 1 or more csv files. All the writers in this module
     have the same function signatures; see the module level documentation.
@@ -141,10 +140,7 @@ def write_csv(
     return _write_xsv(folder, types, _EXT_CSV, _SEP_CSV)
 
 
-def write_tsv(
-    folder: Path,
-    types: dict[str, dict[str, list[Any]]],
-) -> dict[str, Path]:
+def write_tsv(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str, Path]:
     """
     Writes import specifications to 1 or more tsv files. All the writers in this module
     have the same function signatures; see the module level documentation.
@@ -153,11 +149,7 @@ def write_tsv(
 
 
 def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, sep: str):
-    if not folder:
-        raise ValueError("The folder cannot be null")
-    if type(types) != dict:
-        raise ValueError("The types value must be a mapping")
-    _check_import_specification(types)
+    _check_write_args(folder, types)
     res = {}
     for datatype in types:
         out = folder / (datatype + "." + ext)
@@ -174,3 +166,11 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
                 csvw.writerow([row[pid] for pid in pids])
         res[datatype] = out
     return res
+
+
+def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
+    if not folder:
+        raise ValueError("The folder cannot be null")
+    if type(types) != dict:
+        raise ValueError("The types value must be a mapping")
+    _check_import_specification(types)
