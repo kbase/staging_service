@@ -142,6 +142,7 @@ def test_file_writers_fail():
     p = Path()
     E = ImportSpecWriteException
     file_writers_fail(None, {}, ValueError("The folder cannot be null"))
+    file_writers_fail(p, None, E("The types value must be a mapping"))
     file_writers_fail(
         p, {None: 1}, E("A data type cannot be a non-string or a whitespace only string"))
     file_writers_fail(
