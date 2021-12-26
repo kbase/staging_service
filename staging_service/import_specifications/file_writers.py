@@ -85,16 +85,17 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         _check_string(datatype, "A data type")
         spec = types[datatype]
         if type(spec) != dict:
-            raise ValueError(f"The value for data type {datatype} must be a mapping")
+            raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
-            raise ValueError(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
+            raise ImportSpecWriteException(
+                f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
         _check_is_sequence(
             spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value")
         if not len(spec[_ORDER_AND_DISPLAY]):
-            raise ValueError(f"At least one entry is required for {_ORDER_AND_DISPLAY} "
-                             + f"for type {datatype}")
+            raise ImportSpecWriteException(
+                f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}")
         if _DATA not in spec:
-            raise ValueError(f"Data type {datatype} missing {_DATA} key")
+            raise ImportSpecWriteException(f"Data type {datatype} missing {_DATA} key")
         _check_is_sequence(spec[_DATA], f"Data type {datatype} {_DATA} value")
 
         param_ids = set()
@@ -103,7 +104,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
                     + f"at index {i} ")
             _check_is_sequence(id_display, err + "- the entry")
             if len(id_display) != 2:
-                raise ValueError(err + "- expected 2 item list")
+                raise ImportSpecWriteException(err + "- expected 2 item list")
             pid = id_display[0]
             _check_string(pid, err + "- parameter ID")
             _check_string(id_display[1], err + "- parameter display name")
@@ -111,23 +112,25 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         for i, datarow in enumerate(spec[_DATA]):
             err = f"Data type {datatype} {_DATA} row {i}"
             if type(datarow) != dict:
-                raise ValueError(err + " is not a mapping")
+                raise ImportSpecWriteException(err + " is not a mapping")
             if datarow.keys() != param_ids:
-                raise ValueError(err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
+                raise ImportSpecWriteException(
+                    err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
             for pid, v in datarow.items():
                 if v is not None and not isinstance(v, numbers.Number) and not isinstance(v, str):
-                    raise ValueError(
+                    raise ImportSpecWriteException(
                         err + f"'s value for parameter {pid} is not a number or a string")
 
 
 def _check_string(tocheck: Any, errprefix: str):
     if not isinstance(tocheck, str) or not tocheck.strip():
-        raise ValueError(errprefix + " cannot be a non-string or a whitespace only string")
+        raise ImportSpecWriteException(
+            errprefix + " cannot be a non-string or a whitespace only string")
 
 
 def _check_is_sequence(tocheck: Any, errprefix: str):
     if not (isinstance(tocheck, collections.abc.Sequence) and not isinstance(tocheck, str)):
-        raise ValueError(errprefix + " is not a list")
+        raise ImportSpecWriteException(errprefix + " is not a list")
 
 
 # TODO WRITE_XSV look into server OOM protection if the user sends a huge JSON packet
@@ -170,7 +173,16 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
 
 def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
     if not folder:
+        # this is a programming error, not a user input error, so not using the custom
+        # exception here
         raise ValueError("The folder cannot be null")
     if type(types) != dict:
-        raise ValueError("The types value must be a mapping")
+        raise ImportSpecWriteException("The types value must be a mapping")
     _check_import_specification(types)
+
+
+class ImportSpecWriteException(Exception):
+    """
+    An exception thrown when writing an import specification fails.
+    """
+    pass

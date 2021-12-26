@@ -8,6 +8,7 @@ from tests.test_app import FileUtil
 from staging_service.import_specifications.file_writers import (
     write_csv,
     write_tsv,
+    ImportSpecWriteException,
 )
 
 from tests.test_utils import assert_exception_correct
@@ -139,82 +140,82 @@ def _check_contents(file: Path, lines: list[str]):
 
 def test_file_writers_fail():
     p = Path()
+    E = ImportSpecWriteException
     file_writers_fail(None, {}, ValueError("The folder cannot be null"))
-    file_writers_fail(p, None, ValueError("The types value must be a mapping"))
     file_writers_fail(
-        p, {None: 1}, ValueError("A data type cannot be a non-string or a whitespace only string"))
+        p, {None: 1}, E("A data type cannot be a non-string or a whitespace only string"))
     file_writers_fail(
         p,
         {"  \t ": 1},
-        ValueError("A data type cannot be a non-string or a whitespace only string"))
-    file_writers_fail(p, {"t": []}, ValueError("The value for data type t must be a mapping"))
-    file_writers_fail(p, {"t": 1}, ValueError("The value for data type t must be a mapping"))
-    file_writers_fail(p, {"t": {}}, ValueError("Data type t missing order_and_display key"))
+        E("A data type cannot be a non-string or a whitespace only string"))
+    file_writers_fail(p, {"t": []}, E("The value for data type t must be a mapping"))
+    file_writers_fail(p, {"t": 1}, E("The value for data type t must be a mapping"))
+    file_writers_fail(p, {"t": {}}, E("Data type t missing order_and_display key"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": {}, "data": []}},
-        ValueError("Data type t order_and_display value is not a list"))
+        E("Data type t order_and_display value is not a list"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [], "data": []}},
-        ValueError("At least one entry is required for order_and_display for type t"))
+        E("At least one entry is required for order_and_display for type t"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"]]}},
-        ValueError("Data type t missing data key"))
+        E("Data type t missing data key"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"]], "data": "foo"}},
-        ValueError("Data type t data value is not a list"))
+        E("Data type t data value is not a list"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"], "baz"] , "data": []}},
-        ValueError("Invalid order_and_display entry for datatype t at index 1 - "
+        E("Invalid order_and_display entry for datatype t at index 1 - "
                    + "the entry is not a list"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("foo", "bar"), ["whee", "whoo"], ["baz"]] , "data": []}},
-        ValueError("Invalid order_and_display entry for datatype t at index 2 - "
+        E("Invalid order_and_display entry for datatype t at index 2 - "
                    + "expected 2 item list"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("foo", "bar", "whee"), ["whee", "whoo"]] , "data": []}},
-        ValueError("Invalid order_and_display entry for datatype t at index 0 - "
+        E("Invalid order_and_display entry for datatype t at index 0 - "
                    + "expected 2 item list"))
     for parm in [None, "  \t   ", 1]:
         file_writers_fail(
             p,
             {"t": {"order_and_display": [(parm, "foo"), ["whee", "whoo"]], "data": []}},
-            ValueError("Invalid order_and_display entry for datatype t at index 0 - "
+            E("Invalid order_and_display entry for datatype t at index 0 - "
                     + "parameter ID cannot be a non-string or a whitespace only string"))
         file_writers_fail(
             p,
             {"t": {"order_and_display": [("bar", "foo"), ["whee", parm]], "data": []}},
-            ValueError("Invalid order_and_display entry for datatype t at index 1 - "
+            E("Invalid order_and_display entry for datatype t at index 1 - "
                     + "parameter display name cannot be a non-string or a whitespace only string"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("bar", "foo"), ["whee", "whoo"]], "data": ["foo"]}},
-        ValueError("Data type t data row 0 is not a mapping"))
+        E("Data type t data row 0 is not a mapping"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("bar", "foo")], "data": [{"bar": 1}, []]}},
-        ValueError("Data type t data row 1 is not a mapping"))
+        E("Data type t data row 1 is not a mapping"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
                "data": [{"foo": 1, "whee": 2}, {"foo": 2}]}},
-        ValueError("Data type t data row 1 does not have the same keys as order_and_display"))
+        E("Data type t data row 1 does not have the same keys as order_and_display"))
     file_writers_fail(
         p,
         {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
                 "data": [{"foo": 2, "whee": 3, 5: 4}, {"foo": 1, "whee": 2}]}},
-        ValueError("Data type ty data row 0 does not have the same keys as order_and_display"))
+        E("Data type ty data row 0 does not have the same keys as order_and_display"))
     file_writers_fail(
         p,
         {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
                 "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}]}},
-        ValueError("Data type ty data row 1's value for parameter whee "
+        E("Data type ty data row 1's value for parameter whee "
                    + "is not a number or a string"))
 
 
