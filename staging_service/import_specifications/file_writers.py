@@ -32,8 +32,11 @@ import collections
 import csv
 import numbers
 
-from typing import Any
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.utils import get_column_letter
 from pathlib import Path
+from typing import Any
 
 # this version is synonymous to the versions in individual_parsers.py. However, this module
 # should only ever write the most recent format for import specifictions, while the parsers
@@ -179,6 +182,55 @@ def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
     if type(types) != dict:
         raise ImportSpecWriteException("The types value must be a mapping")
     _check_import_specification(types)
+
+
+def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str, Path]:
+    """
+    Writes import specifications to an Excel files. All the writers in this module
+    have the same function signatures; see the module level documentation.
+    """
+    _check_write_args(folder, types)
+    res = {}
+    outfile = folder / (_IMPORT_SPEC_FILE_NAME + "." + _EXT_EXCEL)
+    wb = Workbook()
+    for datatype in types:
+        dt = types[datatype]
+        cols = len(dt[_ORDER_AND_DISPLAY])
+        wb.create_sheet(datatype)
+        sheet = wb[datatype]
+        _write_excel_row(sheet, 3, [i[1] for i in dt[_ORDER_AND_DISPLAY]])
+        pids = [i[0] for i in dt[_ORDER_AND_DISPLAY]]
+        for xlrow, row in enumerate(dt[_DATA], start=4):
+            # order by parameter id in th order_and_display list
+            _write_excel_row(sheet, xlrow, [row[pid] for pid in pids])
+        _expand_excel_columns_to_max_width(sheet)
+        # Add the hidden data *after* expanding the columns
+        sheet['A1'] = (f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
+                       + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}")
+        _write_excel_row(sheet, 2, pids)
+        sheet.row_dimensions[1].hidden = True
+        sheet.row_dimensions[2].hidden = True
+        res[datatype] = outfile
+    # trash the automatically created sheet
+    wb.remove_sheet(wb[wb.sheetnames[0]])
+    wb.save(outfile)
+    return res
+
+
+def _write_excel_row(sheet: Worksheet, row: int, contents: list[Any]):
+    # https://stackoverflow.com/a/33921552/643675
+    for col, val in enumerate(contents, start=1):
+        sheet.cell(row=row, column=col).value = val
+
+def _expand_excel_columns_to_max_width(sheet: Worksheet):
+    # https://stackoverflow.com/a/40935194/643675
+    for column_cells in sheet.columns:
+        length = max(len(_as_text(cell.value)) for cell in column_cells)
+        sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
+
+
+def _as_text(value):
+    return "" if value is None else str(value)
 
 
 class ImportSpecWriteException(Exception):

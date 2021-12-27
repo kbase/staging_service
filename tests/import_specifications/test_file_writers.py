@@ -1,13 +1,19 @@
+import os
 import uuid
+
+import openpyxl
 
 from collections.abc import Generator
 from pathlib import Path
 from pytest import raises, fixture
+from typing import Any
+
 from tests.test_app import FileUtil
 
 from staging_service.import_specifications.file_writers import (
     write_csv,
     write_tsv,
+    write_excel,
     ImportSpecWriteException,
 )
 
@@ -138,6 +144,67 @@ def _check_contents(file: Path, lines: list[str]):
         assert f.readlines() == lines
 
 
+def test_write_excel(temp_dir: Path):
+    p = temp_dir / "somedir"
+    os.makedirs(p, exist_ok=True)
+    res = write_excel(p, _TEST_DATA)
+    assert res == {
+        "type1": p / "import_specification.xlsx",
+        "type2": p / "import_specification.xlsx",
+        "type3": p / "import_specification.xlsx",
+    }
+    wb = openpyxl.load_workbook(p / "import_specification.xlsx")
+    assert wb.sheetnames == ["type1", "type2", "type3"]
+    _check_excel_contents(
+        wb,
+        "type1",
+        [
+            ["Data type: type1; Columns: 3; Version: 1", None, None],
+            ["id1", "id2", "id3"],
+            ["thing,with,comma", "other", "thing\twith\ttabs"],
+            ["yay!\ttab", 42, "comma,comma"],
+            ["boo!", None, 56.78],
+        ],
+        [16.0, 5.0, 15.0],
+    )
+    _check_excel_contents(
+        wb,
+        "type2",
+        [
+            ["Data type: type2; Columns: 1; Version: 1"],
+            ["id1"],
+            ["oh no I only have one column"],
+            ["foo"],
+            [0],
+        ],
+        [28.0],
+    )
+    _check_excel_contents(
+        wb,
+        "type3",
+        [
+            ["Data type: type3; Columns: 3; Version: 1", None, None],
+            ["some_id","tab\tid","comma,id"],
+            ["hey this", "xsv is only", "a template"],
+        ],
+        [8.0, 11.0, 10.0],
+    )
+
+
+def _check_excel_contents(
+    wb: openpyxl.Workbook,
+    sheetname: str,
+    contents: list[list[Any]],
+    column_widths: list[int]
+):
+    sheet = wb[sheetname]
+    for i, row in enumerate(sheet.iter_rows()):
+        assert [cell.value for cell in row] == contents[i]
+    # presumably there's an easier way to do this, but it works so f it
+    dims = [sheet.column_dimensions[dim].width for dim in sheet.column_dimensions]
+    assert dims == column_widths
+
+
 def test_file_writers_fail():
     p = Path()
     E = ImportSpecWriteException
@@ -227,4 +294,7 @@ def file_writers_fail(path: Path, types: dict, expected: Exception):
     assert_exception_correct(got.value, expected)
     with raises(Exception) as got:
         write_tsv(path, types)
+    assert_exception_correct(got.value, expected)
+    with raises(Exception) as got:
+        write_excel(path, types)
     assert_exception_correct(got.value, expected)
