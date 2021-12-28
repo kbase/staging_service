@@ -17,7 +17,11 @@ from staging_service.import_specifications.file_writers import (
     ImportSpecWriteException,
 )
 
-from tests.test_utils import assert_exception_correct
+from tests.test_utils import (
+    assert_exception_correct,
+    check_file_contents,
+    check_excel_contents,
+)
 
 
 @fixture(scope="module")
@@ -72,7 +76,7 @@ def test_write_csv(temp_dir: Path):
         "type2": "type2.csv",
         "type3": "type3.csv",
     }
-    _check_contents(
+    check_file_contents(
         temp_dir / "type1.csv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -82,7 +86,7 @@ def test_write_csv(temp_dir: Path):
             "boo!,,56.78\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type2.csv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -92,7 +96,7 @@ def test_write_csv(temp_dir: Path):
             "0\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type3.csv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
@@ -109,7 +113,7 @@ def test_write_tsv(temp_dir: Path):
         "type2": "type2.tsv",
         "type3": "type3.tsv",
     }
-    _check_contents(
+    check_file_contents(
         temp_dir / "type1.tsv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -119,7 +123,7 @@ def test_write_tsv(temp_dir: Path):
             "boo!\t\t56.78\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type2.tsv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -129,7 +133,7 @@ def test_write_tsv(temp_dir: Path):
             "0\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type3.tsv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
@@ -137,11 +141,6 @@ def test_write_tsv(temp_dir: Path):
             "hey this\txsv is only\ta template\n",
         ]
     )
-
-
-def _check_contents(file: Path, lines: list[str]):
-    with open(file) as f:
-        assert f.readlines() == lines
 
 
 def test_write_excel(temp_dir: Path):
@@ -155,7 +154,7 @@ def test_write_excel(temp_dir: Path):
     }
     wb = openpyxl.load_workbook(p / "import_specification.xlsx")
     assert wb.sheetnames == ["type1", "type2", "type3"]
-    _check_excel_contents(
+    check_excel_contents(
         wb,
         "type1",
         [
@@ -167,7 +166,7 @@ def test_write_excel(temp_dir: Path):
         ],
         [16.0, 5.0, 15.0],
     )
-    _check_excel_contents(
+    check_excel_contents(
         wb,
         "type2",
         [
@@ -179,7 +178,7 @@ def test_write_excel(temp_dir: Path):
         ],
         [28.0],
     )
-    _check_excel_contents(
+    check_excel_contents(
         wb,
         "type3",
         [
@@ -189,20 +188,6 @@ def test_write_excel(temp_dir: Path):
         ],
         [8.0, 11.0, 10.0],
     )
-
-
-def _check_excel_contents(
-    wb: openpyxl.Workbook,
-    sheetname: str,
-    contents: list[list[Any]],
-    column_widths: list[int]
-):
-    sheet = wb[sheetname]
-    for i, row in enumerate(sheet.iter_rows()):
-        assert [cell.value for cell in row] == contents[i]
-    # presumably there's an easier way to do this, but it works so f it
-    dims = [sheet.column_dimensions[dim].width for dim in sheet.column_dimensions]
-    assert dims == column_widths
 
 
 def test_file_writers_fail():
