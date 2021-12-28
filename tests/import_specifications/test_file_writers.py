@@ -68,9 +68,9 @@ def test_noop():
 def test_write_csv(temp_dir: Path):
     res = write_csv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": temp_dir / "type1.csv",
-        "type2": temp_dir / "type2.csv",
-        "type3": temp_dir / "type3.csv",
+        "type1": "type1.csv",
+        "type2": "type2.csv",
+        "type3": "type3.csv",
     }
     _check_contents(
         temp_dir / "type1.csv",
@@ -105,9 +105,9 @@ def test_write_csv(temp_dir: Path):
 def test_write_tsv(temp_dir: Path):
     res = write_tsv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": temp_dir / "type1.tsv",
-        "type2": temp_dir / "type2.tsv",
-        "type3": temp_dir / "type3.tsv",
+        "type1": "type1.tsv",
+        "type2": "type2.tsv",
+        "type3": "type3.tsv",
     }
     _check_contents(
         temp_dir / "type1.tsv",
@@ -149,9 +149,9 @@ def test_write_excel(temp_dir: Path):
     os.makedirs(p, exist_ok=True)
     res = write_excel(p, _TEST_DATA)
     assert res == {
-        "type1": p / "import_specification.xlsx",
-        "type2": p / "import_specification.xlsx",
-        "type3": p / "import_specification.xlsx",
+        "type1": "import_specification.xlsx",
+        "type2": "import_specification.xlsx",
+        "type3": "import_specification.xlsx",
     }
     wb = openpyxl.load_workbook(p / "import_specification.xlsx")
     assert wb.sheetnames == ["type1", "type2", "type3"]
