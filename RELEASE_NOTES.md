@@ -1,3 +1,6 @@
+### Version 1.3.2
+- Add `write_bulk_specification` endpoint for writing bulk specifications
+
 ### Version 1.3.1
 - added the `files` key to the returned data from the `bulk_specification` endpoint.
 

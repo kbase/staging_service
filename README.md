@@ -727,10 +727,10 @@ Error Connecting to auth service ...
 }
 ```
 
-## Parse import specifications
+## Parse bulk specifications
 
-This endpoint parses one or more import specification files in the staging area into a data
-structure (close to) ready for insertion into the Narrative bulk import cell.
+This endpoint parses one or more bulk specification files in the staging area into a data
+structure (close to) ready for insertion into the Narrative bulk import or analysis cell.
 
 It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the currently
 supported data types are available in the [templates](./import_specifications/templates)
@@ -784,16 +784,16 @@ Reponse:
 
 * `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
   file and the Narrative staging area configuration file - it is a shared namespace between the
-  staging service and Narrative to specify import applications, and has a 1:1 mapping to an
-  import app. It is determined by the first header line from the import templates.
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  app. It is determined by the first header line from the templates.
 * `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
-  These are determined by the second header line from the import templates and will differ
+  These are determined by the second header line from the templates and will differ
   by the data type.
 * `<value for ID, row N>` is the user-provided value for the input for a given `spec.json` ID
-  and import instance, where an import instance is effectively a row in the data file. Each
-  data file row is provided in order for each type. Each row is provided in a mapping of
-  `spec.json` ID to the data for the row. Lines > 3 in the templates are user-provided data,
-  and each line corresponds to a single import.
+  and import or analysis instance, where an import/analysis instance is effectively a row
+  in the data file. Each data file row is provided in order for each type. Each row is
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
+  user-provided data, and each line corresponds to a single import or analysis.
   
 ### Error Response
 
@@ -887,6 +887,110 @@ The per error type data structures are:
     "message": <message regarding the error>
 }
 ```
+
+## Write bulk specifications
+
+This endpoint is the reverse of the parse bulk specifications endpoint - it takes a similar
+data structure to that which the parse endpoint returns and writes bulk specification templates.
+
+**URL** : `ci.kbase.us/services/staging_service/write_bulk_specification`
+
+**local URL** : `localhost:3000/write_bulk_specification`
+
+**Method** : `POST`
+
+**Headers** :
+* `Authorization: <Valid Auth token>`
+* `Content-Type: Application/JSON`
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+POST write_bulk_specification/
+{
+    "output_directory": <staging area directory in which to write output files>,
+    "output_file_type": <one of "CSV", "TSV", or "Excel">,
+    "types": {
+        <type 1>: {
+            "order_and_display: [
+                [<spec.json ID 1>, <display.yml name 1>],
+                [<spec.json ID 2>, <display.yml name 2>],
+                ...
+            ],
+            "data": [
+                {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+                {<spec.json ID 1>: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...}
+                ...
+            ]
+        },
+        <type 2>: {
+            "order_and_display: [
+                [<spec.json ID 1>, <display.yml name 1>],
+                ...
+            ],
+            "data": [
+                {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+                ...
+            ]
+        },
+        ...
+    }
+}
+```
+* `output_directory` specifies where the output files should be written in the user's staging area.
+* `output_file_type` specifies the format of the output files.
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  app. It is included inthe first header line in the templates.
+* `order_and_display` determines the ordering of the columns in the written templates, as well
+  as mapping the spec.json ID of the parameter to the human readable name of the parameter in
+  the display.yml file.
+* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
+  These are written to the second header line from the import templates and will differ
+  by the data type.
+* `data` contains any data to be written to the file as example data, and is analagous to the data
+  structure returned from the parse endpoint. To specify that no data should be written to the
+  template provide an empty list.
+* `<value for ID, row N>` is the value for the input for a given `spec.json` ID
+  and import or analysis instance, where an import/analysis instance is effectively a row
+  in the data file. Each data file row is provided in order for each type. Each row is
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
+  user-provided data, and each line corresponds to a single import or analysis.
+
+Reponse:
+```
+{
+    "output_file_type": <one of "CSV", "TSV", or "Excel">,
+    "files": {
+        <type 1>: <staging service path to file containg data for type 1>,
+        ...
+        <type N>: <staging service path to file containg data for type N>,
+    }
+}
+```
+
+* `output_file_type` has the same definition as above.
+* `files` contains a mapping of each provided data type to the output template file for that type.
+  In the case of Excel, all the file paths will be the same since the data types are all written
+  to different tabs in the same file.
+  
+### Error Response
+
+Method specific errors have the form:
+
+```
+{"error": <error message>}
+```
+The error code in this case will be a 4XX error.
+
+The AioHTTP server may also return built in errors that are not in JSON format - an example of
+this is overly large (> 1MB) request bodies.
+
 
 ## Get Importer Mappings
 

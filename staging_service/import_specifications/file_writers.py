@@ -203,7 +203,7 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
         _write_excel_row(sheet, 3, [i[1] for i in dt[_ORDER_AND_DISPLAY]])
         pids = [i[0] for i in dt[_ORDER_AND_DISPLAY]]
         for xlrow, row in enumerate(dt[_DATA], start=4):
-            # order by parameter id in th order_and_display list
+            # order by parameter id in the order_and_display list
             _write_excel_row(sheet, xlrow, [row[pid] for pid in pids])
         _expand_excel_columns_to_max_width(sheet)
         # Add the hidden data *after* expanding the columns
