@@ -22,6 +22,12 @@ from .import_specifications.file_parser import (
     parse_import_specifications,
 )
 from .import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel
+from .import_specifications.file_writers import (
+    write_csv,
+    write_tsv,
+    write_excel,
+    ImportSpecWriteException,
+)
 from .autodetect.Mappings import CSV, TSV, EXCEL
 
 
@@ -35,6 +41,12 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
+}
+
+_IMPSPEC_FILE_TO_WRITER = {
+    CSV: write_csv,
+    TSV: write_tsv,
+    EXCEL: write_excel,
 }
 
 
@@ -105,6 +117,44 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     # I don't think there's a good way to test this codepath
     return web.HTTPInternalServerError(text=errtext, content_type=_APP_JSON)
 
+
+@routes.post("/write_bulk_specification/")
+async def write_bulk_specification(request: web.Request) -> web.json_response:
+    username = await authorize_request(request)
+    if request.content_type != _APP_JSON:
+        # There should be a way to get aiohttp to handle this but I can't find it
+        return _createJSONErrorResponse(
+            f"Required content-type is {_APP_JSON}",
+            error_class=web.HTTPUnsupportedMediaType)
+    if not request.content_length:
+        return _createJSONErrorResponse(
+            "The content-length header is required and must be > 0",
+            error_class=web.HTTPLengthRequired)
+    # No need to check the max content length; the server already does that. See tests
+    data = await request.json()
+    if type(data) != dict:
+        return _createJSONErrorResponse("The top level JSON element must be a mapping")
+    folder = data.get('output_directory')
+    type_ = data.get('output_file_type')
+    if type(folder) != str:
+        return _createJSONErrorResponse("output_directory is required and must be a string")
+    writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
+    if not writer:
+        return _createJSONErrorResponse(f"Invalid output_file_type: {type_}")
+    folder = Path.validate_path(username, folder)
+    os.makedirs(folder.full_path, exist_ok=True)
+    try:
+        files = writer(PathPy(folder.full_path), data.get("types"))
+    except ImportSpecWriteException as e:
+        return _createJSONErrorResponse(e.args[0])
+    new_files = {ty: str(PathPy(folder.user_path) / files[ty]) for ty in files}
+    return web.json_response({"output_file_type": type_, "files_created": new_files})
+
+
+def _createJSONErrorResponse(error_text: str, error_class=web.HTTPBadRequest):
+    err = json.dumps({"error": error_text})
+    return error_class(text=err, content_type=_APP_JSON)
+    
 
 @routes.get("/add-acl-concierge")
 async def add_acl_concierge(request: web.Request):
