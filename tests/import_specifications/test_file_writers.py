@@ -6,7 +6,6 @@ import openpyxl
 from collections.abc import Generator
 from pathlib import Path
 from pytest import raises, fixture
-from typing import Any
 
 from tests.test_app import FileUtil
 
