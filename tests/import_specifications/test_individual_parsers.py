@@ -142,6 +142,45 @@ def _xsv_parse_success_with_mixed_column(
         )}
     ))
 
+def _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir: Path):
+    """
+    Test that leaving one or more empty lines in a csv/tsv file does not cause the
+    parse to fail. This is easy to do accidentally and so will annoy users.
+    """
+    _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir, ',', parse_csv)
+    _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir, '\t', parse_tsv)
+
+
+def _xsv_parse_success_with_internal_and_trailing_empty_lines(
+    temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]
+):
+    s = sep
+    input_ = temp_dir / str(uuid.uuid4())
+    with open(input_, "w") as test_file:
+        test_file.writelines([
+            "Data type: other_type; Columns: 4; Version: 1\n",
+            f"spec1{s} spec2{s} spec3{s} spec4\n",
+            f"Spec 1{s} Spec 2{s} Spec 3{s} Spec 4\n",
+            f"val3 {s} val4{s} 1{s} 8.9\n",
+            "\n",
+            f"val1 {s} val2{s}    7     {s} 3.2\n",
+            "\n",
+            "\n",
+            "\n",
+        ])
+
+    res = parser(input_)
+
+    assert res == ParseResults(frozendict(
+        {"other_type": ParseResult(SpecificationSource(input_),
+            tuple([
+                frozendict({"spec1": "val3", "spec4": "val2", "spec3": 1, "spec4": 8.9}),
+                frozendict({"spec1": "val1", "spec2": "val2", "spec3": 7, "spec4": 3.2}),
+            ])
+        )}
+    ))
+
+
 def test_xsv_parse_fail_no_file(temp_dir: Path):
     input_ = temp_dir / str(uuid.uuid4())
     with open(input_, "w") as test_file:
@@ -286,17 +325,6 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
         "1\t2\t3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
-
-    err = "Incorrect number of items in line 5, expected 3, got 0"
-    lines = [
-        "Data type: foo; Columns: 3; Version: 1\n"
-        "head1, head2, head 3\n",
-        "Head 1, Head 2, Head 3\n",
-        "1, 2, 3\n",
-        "\n",
-        "1, 2, 3\n",
-    ]
-    _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
 
 def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):

@@ -1,6 +1,9 @@
 ### Version 1.3.2
 - Add `write_bulk_specification` endpoint for writing bulk specifications
 - Add `import_filetypes` endpoint for getting datatype -> filetype -> extension mappings
+- Fixed a bug in the csv/tsv bulk specification parser that would throw an error on any empty
+  lines in the file, even at the end. The parser now ignores empty lines the same way the Excel
+  parser does.
 
 ### Version 1.3.1
 - added the `files` key to the returned data from the `bulk_specification` endpoint.

@@ -101,22 +101,25 @@ def _check_for_duplicate_headers(
         seen.add(name)
 
 
+# This method expects to be called from the _parse_xsv method, and therefore
+# * The first header line has been parsed
+# * There are at least 2 header lines
 def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
     with open(path) as input_:
         # since we parsed the first line in the main _parse_xsv method, just discard here
         next(input_)
         for i, line in enumerate(input_):
-            # I suppose we could count-- if the last entry is whitespace but f it
-            count = 0 if not line.strip() else len(line.split(sep))
-            if count != expected_count:
-                # could collect errors (first 10?) and throw an exception with a list
-                # lets wait and see if that's really needed
-                raise _ParseException(Error(
-                    ErrorType.INCORRECT_COLUMN_COUNT,
-                    f"Incorrect number of items in line {i + 2}, "
-                    + f"expected {expected_count}, got {count}",
-                    SpecificationSource(path)
-                ))
+            if line.strip():  # skip empty lines
+                count = len(line.split(sep))
+                if count != expected_count:
+                    # could collect errors (first 10?) and throw an exception with a list
+                    # lets wait and see if that's really needed
+                    raise _ParseException(Error(
+                        ErrorType.INCORRECT_COLUMN_COUNT,
+                        f"Incorrect number of items in line {i + 2}, "
+                        + f"expected {expected_count}, got {count}",
+                        SpecificationSource(path)
+                    ))
 
 def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, header_index=0
 ) -> ParseResult:
