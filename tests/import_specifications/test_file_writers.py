@@ -1,17 +1,27 @@
+import os
 import uuid
+
+import openpyxl
 
 from collections.abc import Generator
 from pathlib import Path
 from pytest import raises, fixture
+from typing import Any
+
 from tests.test_app import FileUtil
 
 from staging_service.import_specifications.file_writers import (
     write_csv,
     write_tsv,
+    write_excel,
     ImportSpecWriteException,
 )
 
-from tests.test_utils import assert_exception_correct
+from tests.test_utils import (
+    assert_exception_correct,
+    check_file_contents,
+    check_excel_contents,
+)
 
 
 @fixture(scope="module")
@@ -62,11 +72,11 @@ def test_noop():
 def test_write_csv(temp_dir: Path):
     res = write_csv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": temp_dir / "type1.csv",
-        "type2": temp_dir / "type2.csv",
-        "type3": temp_dir / "type3.csv",
+        "type1": "type1.csv",
+        "type2": "type2.csv",
+        "type3": "type3.csv",
     }
-    _check_contents(
+    check_file_contents(
         temp_dir / "type1.csv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -76,7 +86,7 @@ def test_write_csv(temp_dir: Path):
             "boo!,,56.78\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type2.csv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -86,7 +96,7 @@ def test_write_csv(temp_dir: Path):
             "0\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type3.csv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
@@ -99,11 +109,11 @@ def test_write_csv(temp_dir: Path):
 def test_write_tsv(temp_dir: Path):
     res = write_tsv(temp_dir, _TEST_DATA)
     assert res == {
-        "type1": temp_dir / "type1.tsv",
-        "type2": temp_dir / "type2.tsv",
-        "type3": temp_dir / "type3.tsv",
+        "type1": "type1.tsv",
+        "type2": "type2.tsv",
+        "type3": "type3.tsv",
     }
-    _check_contents(
+    check_file_contents(
         temp_dir / "type1.tsv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -113,7 +123,7 @@ def test_write_tsv(temp_dir: Path):
             "boo!\t\t56.78\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type2.tsv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -123,7 +133,7 @@ def test_write_tsv(temp_dir: Path):
             "0\n",
         ]
     )
-    _check_contents(
+    check_file_contents(
         temp_dir / "type3.tsv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
@@ -133,9 +143,51 @@ def test_write_tsv(temp_dir: Path):
     )
 
 
-def _check_contents(file: Path, lines: list[str]):
-    with open(file) as f:
-        assert f.readlines() == lines
+def test_write_excel(temp_dir: Path):
+    p = temp_dir / "somedir"
+    os.makedirs(p, exist_ok=True)
+    res = write_excel(p, _TEST_DATA)
+    assert res == {
+        "type1": "import_specification.xlsx",
+        "type2": "import_specification.xlsx",
+        "type3": "import_specification.xlsx",
+    }
+    wb = openpyxl.load_workbook(p / "import_specification.xlsx")
+    assert wb.sheetnames == ["type1", "type2", "type3"]
+    check_excel_contents(
+        wb,
+        "type1",
+        [
+            ["Data type: type1; Columns: 3; Version: 1", None, None],
+            ["id1", "id2", "id3"],
+            ["thing,with,comma", "other", "thing\twith\ttabs"],
+            ["yay!\ttab", 42, "comma,comma"],
+            ["boo!", None, 56.78],
+        ],
+        [16.0, 5.0, 15.0],
+    )
+    check_excel_contents(
+        wb,
+        "type2",
+        [
+            ["Data type: type2; Columns: 1; Version: 1"],
+            ["id1"],
+            ["oh no I only have one column"],
+            ["foo"],
+            [0],
+        ],
+        [28.0],
+    )
+    check_excel_contents(
+        wb,
+        "type3",
+        [
+            ["Data type: type3; Columns: 3; Version: 1", None, None],
+            ["some_id","tab\tid","comma,id"],
+            ["hey this", "xsv is only", "a template"],
+        ],
+        [8.0, 11.0, 10.0],
+    )
 
 
 def test_file_writers_fail():
@@ -227,4 +279,7 @@ def file_writers_fail(path: Path, types: dict, expected: Exception):
     assert_exception_correct(got.value, expected)
     with raises(Exception) as got:
         write_tsv(path, types)
+    assert_exception_correct(got.value, expected)
+    with raises(Exception) as got:
+        write_excel(path, types)
     assert_exception_correct(got.value, expected)
