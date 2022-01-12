@@ -11,6 +11,7 @@ from json import JSONDecoder
 from pathlib import Path
 from urllib.parse import urlencode,unquote
 from io import BytesIO
+from typing import Any
 
 
 from aiohttp import test_utils, FormData
@@ -1565,51 +1566,41 @@ async def test_write_bulk_specification_fail_large_input():
         assert resp.status == 413
 
 
-async def test_write_bulk_specification_fail_not_dict():
+async def _write_bulk_specification_json_fail(json: Any, err: str):
     async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json=["foo"])
+        resp = await cli.post("write_bulk_specification/", json=json)
         js = await resp.json()
-        assert js == {"error": "The top level JSON element must be a mapping"}
+        assert js == {"error": err}
         assert resp.status == 400
+
+
+async def test_write_bulk_specification_fail_not_dict():
+    await _write_bulk_specification_json_fail(
+        ["foo"], "The top level JSON element must be a mapping")
 
 
 async def test_write_bulk_specification_fail_no_output_dir():
-    async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json={})
-        js = await resp.json()
-        assert js == {"error": "output_directory is required and must be a string"}
-        assert resp.status == 400
+    await _write_bulk_specification_json_fail(
+        {}, "output_directory is required and must be a string")
 
 
 async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
-    async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json={"output_directory": 4})
-        js = await resp.json()
-        assert js == {"error": "output_directory is required and must be a string"}
-        assert resp.status == 400
+    await _write_bulk_specification_json_fail(
+        {"output_directory": 4}, "output_directory is required and must be a string")
 
 
 async def test_write_bulk_specification_fail_no_file_type():
-    async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json={"output_directory": "foo"})
-        js = await resp.json()
-        assert js == {"error": "Invalid output_file_type: None"}
-        assert resp.status == 400
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo"}, "Invalid output_file_type: None")
 
 
 async def test_write_bulk_specification_fail_wrong_file_type():
-    async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json=
-            {"output_directory": "foo", "output_file_type": "XSV"})
-        js = await resp.json()
-        assert js == {"error": "Invalid output_file_type: XSV"}
-        assert resp.status == 400
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV")
 
 
 async def test_write_bulk_specification_fail_invalid_type_value():
-    async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json=
-            {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}})
-        js = await resp.json()
-        assert js == {"error": "The value for data type a must be a mapping"}
-        assert resp.status == 400
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
+         "The value for data type a must be a mapping"
+    )
