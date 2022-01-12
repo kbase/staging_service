@@ -120,6 +120,32 @@ async def bulk_specification(request: web.Request) -> web.json_response:
 
 @routes.post("/write_bulk_specification/")
 async def write_bulk_specification(request: web.Request) -> web.json_response:
+    """
+    Write a bulk specification template to the user's staging area.
+
+    :param request: Expectes a JSON body as a mapping with the following keys:
+        output_directory - the location where the templates should be written.
+        output_file_type - one of CSV, TSV, or EXCEL. Specifies the template format.
+        types - specifies the contents of the templates. This is a dictionary of data types as
+            strings to the specifications for the data type. Each specification has two required
+            keys:
+            * `order_and_display`: this is a list of lists. Each inner list has two elements:
+                * The parameter ID of a parameter. This is typically the `id` field from the
+                    KBase app `spec.json` file.
+                * The display name of the parameter. This is typically the `ui-name` field from the
+                    KBase app `display.yaml` file.
+                The order of the inner lists in the outer list defines the order of the columns
+                in the resulting import specification files.
+            * `data`: this is a list of str->str or number dicts. The keys of the dicts are the
+                parameter IDs as described above, while the values are the values of the
+                parameters. Each dict must have exactly the same keys as the `order_and_display`
+                structure. Each entry in the list corresponds to a row in the resulting import
+                specification, and the order of the list defines the order of the rows.
+            Leave the `data` list empty to write an empty template.
+
+    :returns: A JSON mapping with the output_file_type key identical to the above, and a mapping
+        of the data types in the input "types" field to the file created for that type.
+    """
     username = await authorize_request(request)
     if request.content_type != _APP_JSON:
         # There should be a way to get aiohttp to handle this but I can't find it
