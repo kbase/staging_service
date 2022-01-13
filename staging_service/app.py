@@ -22,6 +22,12 @@ from .import_specifications.file_parser import (
     parse_import_specifications,
 )
 from .import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel
+from .import_specifications.file_writers import (
+    write_csv,
+    write_tsv,
+    write_excel,
+    ImportSpecWriteException,
+)
 from .autodetect.Mappings import CSV, TSV, EXCEL
 
 
@@ -35,6 +41,12 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
+}
+
+_IMPSPEC_FILE_TO_WRITER = {
+    CSV: write_csv,
+    TSV: write_tsv,
+    EXCEL: write_excel,
 }
 
 
@@ -105,6 +117,70 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     # I don't think there's a good way to test this codepath
     return web.HTTPInternalServerError(text=errtext, content_type=_APP_JSON)
 
+
+@routes.post("/write_bulk_specification/")
+async def write_bulk_specification(request: web.Request) -> web.json_response:
+    """
+    Write a bulk specification template to the user's staging area.
+
+    :param request: Expectes a JSON body as a mapping with the following keys:
+        output_directory - the location where the templates should be written.
+        output_file_type - one of CSV, TSV, or EXCEL. Specifies the template format.
+        types - specifies the contents of the templates. This is a dictionary of data types as
+            strings to the specifications for the data type. Each specification has two required
+            keys:
+            * `order_and_display`: this is a list of lists. Each inner list has two elements:
+                * The parameter ID of a parameter. This is typically the `id` field from the
+                    KBase app `spec.json` file.
+                * The display name of the parameter. This is typically the `ui-name` field from the
+                    KBase app `display.yaml` file.
+                The order of the inner lists in the outer list defines the order of the columns
+                in the resulting import specification files.
+            * `data`: this is a list of str->str or number dicts. The keys of the dicts are the
+                parameter IDs as described above, while the values are the values of the
+                parameters. Each dict must have exactly the same keys as the `order_and_display`
+                structure. Each entry in the list corresponds to a row in the resulting import
+                specification, and the order of the list defines the order of the rows.
+            Leave the `data` list empty to write an empty template.
+
+    :returns: A JSON mapping with the output_file_type key identical to the above, and a mapping
+        of the data types in the input "types" field to the file created for that type.
+    """
+    username = await authorize_request(request)
+    if request.content_type != _APP_JSON:
+        # There should be a way to get aiohttp to handle this but I can't find it
+        return _createJSONErrorResponse(
+            f"Required content-type is {_APP_JSON}",
+            error_class=web.HTTPUnsupportedMediaType)
+    if not request.content_length:
+        return _createJSONErrorResponse(
+            "The content-length header is required and must be > 0",
+            error_class=web.HTTPLengthRequired)
+    # No need to check the max content length; the server already does that. See tests
+    data = await request.json()
+    if type(data) != dict:
+        return _createJSONErrorResponse("The top level JSON element must be a mapping")
+    folder = data.get('output_directory')
+    type_ = data.get('output_file_type')
+    if type(folder) != str:
+        return _createJSONErrorResponse("output_directory is required and must be a string")
+    writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
+    if not writer:
+        return _createJSONErrorResponse(f"Invalid output_file_type: {type_}")
+    folder = Path.validate_path(username, folder)
+    os.makedirs(folder.full_path, exist_ok=True)
+    try:
+        files = writer(PathPy(folder.full_path), data.get("types"))
+    except ImportSpecWriteException as e:
+        return _createJSONErrorResponse(e.args[0])
+    new_files = {ty: str(PathPy(folder.user_path) / files[ty]) for ty in files}
+    return web.json_response({"output_file_type": type_, "files_created": new_files})
+
+
+def _createJSONErrorResponse(error_text: str, error_class=web.HTTPBadRequest):
+    err = json.dumps({"error": error_text})
+    return error_class(text=err, content_type=_APP_JSON)
+    
 
 @routes.get("/add-acl-concierge")
 async def add_acl_concierge(request: web.Request):

@@ -1,6 +1,7 @@
 import asyncio
 import configparser
 import hashlib
+import openpyxl
 import os
 import pandas
 import shutil
@@ -10,6 +11,7 @@ from json import JSONDecoder
 from pathlib import Path
 from urllib.parse import urlencode,unquote
 from io import BytesIO
+from typing import Any
 
 
 from aiohttp import test_utils, FormData
@@ -20,6 +22,8 @@ import staging_service.app as app
 import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
+
+from tests.test_utils import check_file_contents, check_excel_contents
 
 if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
     from tests.test_utils import bootstrap
@@ -1381,3 +1385,222 @@ async def test_bulk_specification_fail_multiple_specs_per_type_excel():
                  },
             ]}
             assert resp.status == 400
+
+
+_IMPORT_SPEC_TEST_DATA = {
+    "genome": {
+        "order_and_display": [
+            ["id1", "display1"],
+            ["id2", "display2"]
+        ],
+        "data": [
+            {"id1": 54, "id2": "boo"},
+            {"id1": 32, "id2": "yikes"},
+        ]
+    },
+    "reads": {
+        "order_and_display": [
+            ["name", "Reads File Name"],
+            ["inseam", "Reads inseam measurement in km"]
+        ],
+        "data": [
+            {"name": "myreads.fa", "inseam": 0.1},
+        ]
+    }
+}
+
+
+async def test_write_bulk_specification_success_csv():
+    # In other tests a username is passed to AppClient but AppClient completely ignores it...
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            resp = await cli.post("write_bulk_specification/", json=
+                {
+                    "output_directory": "specs",
+                    "output_file_type": "CSV",
+                    "types": _IMPORT_SPEC_TEST_DATA,
+                })
+            js = await resp.json()
+            assert js == {
+                "output_file_type": "CSV",
+                "files_created": {
+                    "genome": "testuser/specs/genome.csv",
+                    "reads": "testuser/specs/reads.csv"
+                }
+            }
+            base = Path(fu.base_dir) / "testuser"
+            check_file_contents(
+                base / "specs/genome.csv",
+                [
+                    "Data type: genome; Columns: 2; Version: 1\n",
+                    "id1,id2\n",
+                    "display1,display2\n",
+                    "54,boo\n",
+                    "32,yikes\n",
+                ]
+            )
+            check_file_contents(
+                base / "specs/reads.csv",
+                [
+                    "Data type: reads; Columns: 2; Version: 1\n",
+                    "name,inseam\n",
+                    "Reads File Name,Reads inseam measurement in km\n",
+                    "myreads.fa,0.1\n",
+                ]
+            )
+
+
+async def test_write_bulk_specification_success_tsv():
+    # In other tests a username is passed to AppClient but AppClient completely ignores it...
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            types = dict(_IMPORT_SPEC_TEST_DATA)
+            types['reads'] = dict(types['reads'])
+            types['reads']['data'] = []
+            resp = await cli.post("write_bulk_specification/", json=
+                {
+                    "output_directory": "tsvspecs",
+                    "output_file_type": "TSV",
+                    "types": types,
+                })
+            js = await resp.json()
+            assert js == {
+                "output_file_type": "TSV",
+                "files_created": {
+                    "genome": "testuser/tsvspecs/genome.tsv",
+                    "reads": "testuser/tsvspecs/reads.tsv"
+                }
+            }
+            base = Path(fu.base_dir) / "testuser"
+            check_file_contents(
+                base / "tsvspecs/genome.tsv",
+                [
+                    "Data type: genome; Columns: 2; Version: 1\n",
+                    "id1\tid2\n",
+                    "display1\tdisplay2\n",
+                    "54\tboo\n",
+                    "32\tyikes\n",
+                ]
+            )
+            check_file_contents(
+                base / "tsvspecs/reads.tsv",
+                [
+                    "Data type: reads; Columns: 2; Version: 1\n",
+                    "name\tinseam\n",
+                    "Reads File Name\tReads inseam measurement in km\n",
+                ]
+            )
+
+
+async def test_write_bulk_specification_success_excel():
+    # In other tests a username is passed to AppClient but AppClient completely ignores it...
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
+            resp = await cli.post("write_bulk_specification/", json=
+                {
+                    "output_directory": "",
+                    "output_file_type": "EXCEL",
+                    "types": _IMPORT_SPEC_TEST_DATA,
+                })
+            js = await resp.json()
+            assert js == {
+                "output_file_type": "EXCEL",
+                "files_created": {
+                    "genome": "testuser/import_specification.xlsx",
+                    "reads": "testuser/import_specification.xlsx",
+                }
+            }
+            wb = openpyxl.load_workbook(Path(fu.base_dir) / "testuser/import_specification.xlsx")
+            assert wb.sheetnames == ["genome", "reads"]
+            check_excel_contents(
+                wb,
+                "genome",
+                [
+                    ["Data type: genome; Columns: 2; Version: 1", None],
+                    ["id1", "id2"],
+                    ["display1", "display2"],
+                    [54, "boo"],
+                    [32, "yikes"],
+                ],
+                [8.0, 8.0],
+            )
+            check_excel_contents(
+                wb,
+                "reads",
+                [
+                    ["Data type: reads; Columns: 2; Version: 1", None],
+                    ["name", "inseam"],
+                    ["Reads File Name", "Reads inseam measurement in km"],
+                    ["myreads.fa", 0.1],
+                ],
+                [15.0, 30.0],
+            )
+
+
+async def test_write_bulk_specification_fail_wrong_data_type():
+    async with AppClient(config) as cli:
+        resp = await cli.post("write_bulk_specification/", data="foo")
+        js = await resp.json()
+        assert js == {"error": "Required content-type is application/json"}
+        assert resp.status == 415
+
+
+async def test_write_bulk_specification_fail_no_content_length():
+    async with AppClient(config) as cli:
+        resp = await cli.post(
+            "write_bulk_specification/", headers={"content-type": "application/json"})
+        js = await resp.json()
+        assert js == {"error": "The content-length header is required and must be > 0"}
+        assert resp.status == 411
+
+
+async def test_write_bulk_specification_fail_large_input():
+    async with AppClient(config) as cli:
+        resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
+        txt = await resp.text()
+        # this seems to be a built in (somewhat inaccurate) server feature
+        assert txt == "Maximum request body size 1048576 exceeded, actual body size 1048576"
+        assert resp.status == 413
+
+
+async def _write_bulk_specification_json_fail(json: Any, err: str):
+    async with AppClient(config) as cli:
+        resp = await cli.post("write_bulk_specification/", json=json)
+        js = await resp.json()
+        assert js == {"error": err}
+        assert resp.status == 400
+
+
+async def test_write_bulk_specification_fail_not_dict():
+    await _write_bulk_specification_json_fail(
+        ["foo"], "The top level JSON element must be a mapping")
+
+
+async def test_write_bulk_specification_fail_no_output_dir():
+    await _write_bulk_specification_json_fail(
+        {}, "output_directory is required and must be a string")
+
+
+async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
+    await _write_bulk_specification_json_fail(
+        {"output_directory": 4}, "output_directory is required and must be a string")
+
+
+async def test_write_bulk_specification_fail_no_file_type():
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo"}, "Invalid output_file_type: None")
+
+
+async def test_write_bulk_specification_fail_wrong_file_type():
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV")
+
+
+async def test_write_bulk_specification_fail_invalid_type_value():
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
+         "The value for data type a must be a mapping"
+    )
