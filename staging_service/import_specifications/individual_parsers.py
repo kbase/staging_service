@@ -101,10 +101,10 @@ def _check_for_duplicate_headers(
         seen.add(name)
 
 
-# This method expects to be called from the _parse_xsv method, and therefore
-# * The first header line has been parsed
-# * There are at least 2 header lines
 def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
+    # This method expects to be called from the _parse_xsv method, and therefore
+    # * The first header line has been parsed
+    # * There are at least 2 header lines
     with open(path) as input_:
         # since we parsed the first line in the main _parse_xsv method, just discard here
         next(input_)
