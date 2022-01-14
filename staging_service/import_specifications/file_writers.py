@@ -156,11 +156,10 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
     _check_write_args(folder, types)
     res = {}
     for datatype in types:
-        file_ = datatype + "." + ext
-        out = folder / file_
+        filename = datatype + "." + ext
         dt = types[datatype]
         cols = len(dt[_ORDER_AND_DISPLAY])
-        with open(out, "w", newline='') as f:
+        with open(folder / filename, "w", newline='') as f:
             csvw = csv.writer(f, delimiter=sep)  # handle sep escaping
             csvw.writerow([f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
                            + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"])
@@ -169,7 +168,7 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
             csvw.writerow([i[1] for i in dt[_ORDER_AND_DISPLAY]])
             for row in dt[_DATA]:
                 csvw.writerow([row[pid] for pid in pids])
-        res[datatype] = file_
+        res[datatype] = filename
     return res
 
 
@@ -190,8 +189,7 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
     """
     _check_write_args(folder, types)
     res = {}
-    file_ = _IMPORT_SPEC_FILE_NAME + "." + _EXT_EXCEL
-    outfile = folder / file_
+    filename = _IMPORT_SPEC_FILE_NAME + "." + _EXT_EXCEL
     wb = Workbook()
     for datatype in types:
         dt = types[datatype]
@@ -210,10 +208,10 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
         _write_excel_row(sheet, 2, pids)
         sheet.row_dimensions[1].hidden = True
         sheet.row_dimensions[2].hidden = True
-        res[datatype] = file_
+        res[datatype] = filename
     # trash the automatically created sheet
     wb.remove_sheet(wb[wb.sheetnames[0]])
-    wb.save(outfile)
+    wb.save(folder / filename)
     return res
 
 
