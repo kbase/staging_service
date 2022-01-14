@@ -136,8 +136,6 @@ def _check_is_sequence(tocheck: Any, errprefix: str):
         raise ImportSpecWriteException(errprefix + " is not a list")
 
 
-# TODO WRITE_XSV look into server OOM protection if the user sends a huge JSON packet
-
 def write_csv(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str, Path]:
     """
     Writes import specifications to 1 or more csv files. All the writers in this module

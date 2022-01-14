@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import sys
+from collections import defaultdict
 from urllib.parse import parse_qs
 from pathlib import Path as PathPy
 
@@ -35,6 +36,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
 VERSION = "1.3.2"
 
+_DATATYPE_MAPPINGS = None
+
 _APP_JSON = "application/json"
 
 _IMPSPEC_FILE_TO_PARSER = {
@@ -48,6 +51,20 @@ _IMPSPEC_FILE_TO_WRITER = {
     TSV: write_tsv,
     EXCEL: write_excel,
 }
+
+
+@routes.get("/importer_filetypes/")
+async def importer_filetypes(request: web.Request) -> web.json_response:
+    """
+    Returns the file types for the configured datatypes. The returned JSON contains two keys:
+    * datatype_to_filetype, which maps import datatypes (like gff_genome) to their accepted
+      filetypes (like [FASTA, GFF])
+    * filetype_to_extensions, which maps file types (e.g. FASTA) to their extensions (e.g. 
+      *.fa, *.fasta, *.fa.gz, etc.)
+
+    This information is currently static over the life of the server.
+    """
+    return web.json_response(data=_DATATYPE_MAPPINGS)
 
 
 @routes.get("/importer_mappings/{query:.*}")
@@ -639,9 +656,21 @@ def inject_config_dependencies(config):
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
-    else:
-        with open(FILE_EXTENSION_MAPPINGS) as f:
-            AutoDetectUtils._MAPPINGS = json.load(f)
+    with open(FILE_EXTENSION_MAPPINGS) as f:
+        AutoDetectUtils._MAPPINGS = json.load(f)
+        datatypes = defaultdict(set)
+        extensions = defaultdict(set)
+        for fileext, val in AutoDetectUtils._MAPPINGS["types"].items():
+            # if we start using the file ext type array for anything else this might need changes
+            filetype = val["file_ext_type"][0]
+            extensions[filetype].add(fileext)
+            for m in val['mappings']:
+                datatypes[m['id']].add(filetype)
+        global _DATATYPE_MAPPINGS
+        _DATATYPE_MAPPINGS = {
+            "datatype_to_filetype": {k: sorted(datatypes[k]) for k in datatypes},
+            "filetype_to_extensions": {k: sorted(extensions[k]) for k in extensions},
+        }
 
 
 def app_factory(config):

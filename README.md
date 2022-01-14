@@ -913,7 +913,7 @@ data structure to that which the parse endpoint returns and writes bulk specific
 POST write_bulk_specification/
 {
     "output_directory": <staging area directory in which to write output files>,
-    "output_file_type": <one of "CSV", "TSV", or "Excel">,
+    "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
     "types": {
         <type 1>: {
             "order_and_display: [
@@ -946,7 +946,7 @@ POST write_bulk_specification/
 * `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
   file and the Narrative staging area configuration file - it is a shared namespace between the
   staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
-  app. It is included inthe first header line in the templates.
+  app. It is included in the first header line in the templates.
 * `order_and_display` determines the ordering of the columns in the written templates, as well
   as mapping the spec.json ID of the parameter to the human readable name of the parameter in
   the display.yml file.
@@ -965,7 +965,7 @@ POST write_bulk_specification/
 Reponse:
 ```
 {
-    "output_file_type": <one of "CSV", "TSV", or "Excel">,
+    "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
     "files": {
         <type 1>: <staging service path to file containg data for type 1>,
         ...
@@ -1066,6 +1066,53 @@ Response:
 ```
 must provide file_list field 
 ```
+
+## Get importer filetypes
+
+This endpoint returns information about the file types associated with data types and the file
+extensions for those file types. It is primarily of use for creating UI elements describing
+which file extensions may be selected when performing bulk file selections.
+
+**URL** : `ci.kbase.us/services/staging_service/importer_filetypes`
+
+**local URL** : `localhost:3000/importer_filetypes`
+
+**Method** : `GET`
+
+**Headers** : Not Required
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+GET importer_filetypes/
+```
+Response:
+```
+{
+    "datatype_to_filetype": {
+        <type 1>: [<file type 1>, ... <file type N>],
+        ...
+        <type M>: [<file type 1>, ... <file type N>],
+    },
+    "filetype_to_extensions": {
+        <file type 1>: [<extension 1>, ..., <extension N>],
+        ...
+        <file type M>: [<extension 1>, ..., <extension N>],
+    }
+}
+```
+
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  import app. It is included in the first header line in the templates.
+* `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file types are listed
+  below.
+* `<extension N>` is a file extension like `*.fa` or `*.gbk`.
 
 # Autodetect App and File Type IDs
 

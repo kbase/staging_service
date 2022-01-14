@@ -1604,3 +1604,40 @@ async def test_write_bulk_specification_fail_invalid_type_value():
         {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
          "The value for data type a must be a mapping"
     )
+
+
+async def test_importer_filetypes():
+    """
+    Only checks a few example entries since the list may expand over time
+    """
+    async with AppClient(config) as cli:
+        resp = await cli.get("importer_filetypes/")
+        js = await resp.json()
+        assert set(js.keys()) == {"datatype_to_filetype", "filetype_to_extensions"}
+        a2f = js["datatype_to_filetype"]
+        assert a2f["assembly"] == ["FASTA"]
+        assert a2f["gff_genome"] == ["FASTA", "GFF"]
+        assert a2f["import_specification"] == ["CSV", "EXCEL", "TSV"]
+
+        f2e = js["filetype_to_extensions"]
+        assert f2e["FASTA"] == [
+            "fa",
+            "fa.gz",
+            "fa.gzip",
+            "faa",
+            "faa.gz",
+            "faa.gzip",
+            "fasta",
+            "fasta.gz",
+            "fasta.gzip",
+            "fna",
+            "fna.gz",
+            "fna.gzip",
+            "fsa",
+            "fsa.gz",
+            "fsa.gzip",
+        ]
+        assert f2e["EXCEL"] == ["xls", "xlsx"]
+        assert f2e["SRA"] == ["sra"]
+
+        assert resp.status == 200
