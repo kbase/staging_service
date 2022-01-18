@@ -893,9 +893,9 @@ The per error type data structures are:
 This endpoint is the reverse of the parse bulk specifications endpoint - it takes a similar
 data structure to that which the parse endpoint returns and writes bulk specification templates.
 
-**URL** : `ci.kbase.us/services/staging_service/write_bulk_specification`
+**URL** : `ci.kbase.us/services/staging_service/write_bulk_specification/`
 
-**local URL** : `localhost:3000/write_bulk_specification`
+**local URL** : `localhost:3000/write_bulk_specification/`
 
 **Method** : `POST`
 
