@@ -660,7 +660,7 @@ async def test_download_errors():
         with FileUtil() as fs:
             d = fs.make_dir(os.path.join(username, "test"))
 
-            res1 = await cli.get("download", headers={"Authorization": ""})
+            res1 = await cli.get("dwnload", headers={"Authorization": ""})
             assert res1.status == 404
             res2 = await cli.get(
                 os.path.join("download", "test", ""), headers={"Authorization": ""}
@@ -1459,7 +1459,7 @@ async def test_write_bulk_specification_success_tsv():
             types = dict(_IMPORT_SPEC_TEST_DATA)
             types['reads'] = dict(types['reads'])
             types['reads']['data'] = []
-            resp = await cli.post("write_bulk_specification/", json=
+            resp = await cli.post("write_bulk_specification", json=
                 {
                     "output_directory": "tsvspecs",
                     "output_file_type": "TSV",
@@ -1551,7 +1551,7 @@ async def test_write_bulk_specification_fail_wrong_data_type():
 async def test_write_bulk_specification_fail_no_content_length():
     async with AppClient(config) as cli:
         resp = await cli.post(
-            "write_bulk_specification/", headers={"content-type": "application/json"})
+            "write_bulk_specification", headers={"content-type": "application/json"})
         js = await resp.json()
         assert js == {"error": "The content-length header is required and must be > 0"}
         assert resp.status == 411
@@ -1568,7 +1568,7 @@ async def test_write_bulk_specification_fail_large_input():
 
 async def _write_bulk_specification_json_fail(json: Any, err: str):
     async with AppClient(config) as cli:
-        resp = await cli.post("write_bulk_specification/", json=json)
+        resp = await cli.post("write_bulk_specification", json=json)
         js = await resp.json()
         assert js == {"error": err}
         assert resp.status == 400
@@ -1611,7 +1611,7 @@ async def test_importer_filetypes():
     Only checks a few example entries since the list may expand over time
     """
     async with AppClient(config) as cli:
-        resp = await cli.get("importer_filetypes/")
+        resp = await cli.get("importer_filetypes")
         js = await resp.json()
         assert set(js.keys()) == {"datatype_to_filetype", "filetype_to_extensions"}
         a2f = js["datatype_to_filetype"]

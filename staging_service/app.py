@@ -674,7 +674,7 @@ def inject_config_dependencies(config):
 
 
 def app_factory(config):
-    app = web.Application()
+    app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(
         app,
