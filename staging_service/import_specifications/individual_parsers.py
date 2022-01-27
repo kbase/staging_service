@@ -142,7 +142,7 @@ def _check_for_duplicate_headers(
 
 def _normalize_headers(
     headers: list[str], line_number: int, spec_source: SpecificationSource
-):
+) -> list[str]:
     seen = set()
     ret = [s.strip() for s in headers]
     for i, name in enumerate(ret, start=1):
@@ -204,8 +204,8 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
             raise _ParseException(Error(
                 ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
         return ParseResults(frozendict(
-                    {datatype: ParseResult(spcsrc, tuple(results))}
-                ))
+            {datatype: ParseResult(spcsrc, tuple(results))}
+        ))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
