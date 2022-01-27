@@ -105,7 +105,6 @@ def _error(error: Error) -> ParseResults:
 
 
 def _normalize_pandas(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
-    # remove when pandas is completely out of this file
     if pandas.isna(val):  # NaN = missing values in pandas
         return None
     if isinstance(val, str):
@@ -128,7 +127,6 @@ def _normalize(val: str) -> PRIMITIVE_TYPE:
 def _check_for_duplicate_headers(
     headers: pandas.Index, spec_source: SpecificationSource, header_index=0
 ):
-    # remove when pandas is completely out of this file
     seen = set()
     for name in headers.get_level_values(header_index):
         if name in seen:
@@ -199,7 +197,8 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                         f"Incorrect number of items in line {i}, "
                         + f"expected {columns}, got {len(row)}",
                         spcsrc))
-                results.append({param_ids[j]: _normalize(row[j]) for j in range(len(row))})
+                results.append(frozendict(
+                    {param_ids[j]: _normalize(row[j]) for j in range(len(row))}))
         if not results:
             raise _ParseException(Error(
                 ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
@@ -232,6 +231,7 @@ def _load_excel_tab_to_dataframe(excel: pandas.ExcelFile, spcsrc: SpecificationS
         # ugh. https://github.com/pandas-dev/pandas/issues/43143
         # I really hope I'm not swallowing other pandas bugs here, but not really
         # any way to tell
+        # Not fixed as of pandas 1.4.0
         raise _ParseException(Error(
             ErrorType.PARSE_FAIL, "Missing expected header rows", spcsrc
         ))
