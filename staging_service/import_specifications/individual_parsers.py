@@ -2,6 +2,7 @@
 Contains parser functions for use with the file parser framework.
 """
 
+import csv
 import magic
 import pandas
 import re
@@ -9,7 +10,7 @@ import re
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import TextIO, Optional as O
+from typing import TextIO, Optional as O, Union, Any
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
@@ -62,21 +63,49 @@ def _parse_header(header: str, spec_source: SpecificationSource, maximum_version
     return match[1], int(match[2])
 
 
+def _required_next(
+    input_: Union[TextIO, Any],  # Any really means a csv reader object
+    spec_source: SpecificationSource,
+    error: str
+) -> Union[str, list[str]]:
+    # returns a string for a TextIO input or a list for a Reader input
+    try:
+        return next(input_)
+    except StopIteration:
+        raise _ParseException(Error(ErrorType.PARSE_FAIL, error, spec_source))
+
+def _csv_next(
+    input_: Union[TextIO, Any],  # Any really means a csv reader object
+    line_number: int,
+    expected_line_count: int,
+    spec_source: SpecificationSource,
+    error: str
+) -> list[str]:
+    line = _required_next(input_, spec_source, error)
+    if len(line) != expected_line_count:
+        raise _ParseException(Error(
+            ErrorType.INCORRECT_COLUMN_COUNT,
+            f"Incorrect number of items in line {line_number}, "
+            + f"expected {expected_line_count}, got {len(line)}",
+            spec_source))
+    return line
+
+
 def _get_datatype(input_: TextIO, spec_source: SpecificationSource, maximum_version: int
 ) -> tuple[str, int]:
     # return is (data type, column count)
-    try:
-        return _parse_header(next(input_).strip(), spec_source, maximum_version)
-    except StopIteration:
-        raise _ParseException(Error(
-            ErrorType.PARSE_FAIL, "Missing data type / version header", spec_source))
+    return _parse_header(
+        _required_next(input_, spec_source, "Missing data type / version header").strip(),
+        spec_source,
+        maximum_version)
 
 
 def _error(error: Error) -> ParseResults:
     return ParseResults(errors = tuple([error]))
 
 
-def _normalize(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
+def _normalize_pandas(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
+    # remove when pandas is completely out of this file
     if pandas.isna(val):  # NaN = missing values in pandas
         return None
     if isinstance(val, str):
@@ -87,9 +116,19 @@ def _normalize(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
     return val
 
 
+def _normalize(val: str) -> PRIMITIVE_TYPE:
+    val = val.strip()
+    try:
+        num = float(val)
+        return int(num) if num.is_integer() else num
+    except ValueError:
+        return val if val else None
+
+
 def _check_for_duplicate_headers(
     headers: pandas.Index, spec_source: SpecificationSource, header_index=0
 ):
+    # remove when pandas is completely out of this file
     seen = set()
     for name in headers.get_level_values(header_index):
         if name in seen:
@@ -101,25 +140,28 @@ def _check_for_duplicate_headers(
         seen.add(name)
 
 
-def _validate_xsv_row_count(path: Path, expected_count: int, sep: str):
-    # This method expects to be called from the _parse_xsv method, and therefore
-    # * The first header line has been parsed
-    # * There are at least 2 header lines
-    with open(path) as input_:
-        # since we parsed the first line in the main _parse_xsv method, just discard here
-        next(input_)
-        for i, line in enumerate(input_):
-            if line.strip():  # skip empty lines
-                count = len(line.split(sep))
-                if count != expected_count:
-                    # could collect errors (first 10?) and throw an exception with a list
-                    # lets wait and see if that's really needed
-                    raise _ParseException(Error(
-                        ErrorType.INCORRECT_COLUMN_COUNT,
-                        f"Incorrect number of items in line {i + 2}, "
-                        + f"expected {expected_count}, got {count}",
-                        SpecificationSource(path)
-                    ))
+def _normalize_headers(
+    headers: list[str], line_number: int, spec_source: SpecificationSource
+):
+    seen = set()
+    ret = [s.strip() for s in headers]
+    for i, name in enumerate(ret, start=1):
+        if not name:
+            raise _ParseException(Error(
+                ErrorType.PARSE_FAIL,
+                f"Missing header entry in row {line_number}, position {i}",
+                spec_source
+            ))
+
+        if name in seen:
+            raise _ParseException(Error(
+                ErrorType.PARSE_FAIL,
+                f"Duplicate header name in row {line_number}: {name}",
+                spec_source
+            ))
+        seen.add(name)
+    return ret
+
 
 def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, header_index=0
 ) -> ParseResult:
@@ -128,7 +170,7 @@ def _process_dataframe(df: pandas.DataFrame, spec_source: SpecificationSource, h
     for r in recs:
         results.append(frozendict(
             # headers is a tuple of the column headers
-            {headers[header_index].strip(): _normalize(val) for headers, val in r.items()}
+            {headers[header_index].strip(): _normalize_pandas(val) for headers, val in r.items()}
         ))
     if not results:
         raise _ParseException(Error(
@@ -141,42 +183,35 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
     try:
         if magic.from_file(str(path), mime=True) not in _MAGIC_TEXT_FILES:
             return _error(Error(ErrorType.PARSE_FAIL, "Not a text file", spcsrc))
-        with open(path) as input_:
+        with open(path, newline='') as input_:
             datatype, columns = _get_datatype(input_, spcsrc, _VERSION)
-            df = pandas.read_csv(
-                input_,
-                sep=sep,
-                header=[0, 1],
-                on_bad_lines="skip",
-                skipinitialspace=True,
-            )
-        # since pandas will autofill rows with missing entries, we check the counts
-        # manually
-        _validate_xsv_row_count(path, columns, sep)
-        _check_for_duplicate_headers(df.columns, spcsrc)
+            rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
+            hd1 = _csv_next(rdr, 2, columns, spcsrc, "Missing 2nd header line")
+            param_ids = _normalize_headers(hd1, 2, spcsrc)
+            _csv_next(rdr, 3, columns, spcsrc, "Missing 3rd header line")
+            results = []
+            for i, row in enumerate(rdr, start=4):
+                if row and len(row) != columns:  # skip empty rows
+                    # could collect errors (first 10?) and throw an exception with a list
+                    # lets wait and see if that's really needed
+                    raise _ParseException(Error(
+                        ErrorType.INCORRECT_COLUMN_COUNT,
+                        f"Incorrect number of items in line {i}, "
+                        + f"expected {columns}, got {len(row)}",
+                        spcsrc))
+                results.append({param_ids[j]: _normalize(row[j]) for j in range(len(row))})
+        if not results:
+            raise _ParseException(Error(
+                ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
         return ParseResults(frozendict(
-            {datatype: _process_dataframe(df, spcsrc)}
-        ))
+                    {datatype: ParseResult(spcsrc, tuple(results))}
+                ))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except _ParseException as e:
         return _error(e.args[0])
-    except pandas.errors.EmptyDataError as e:
-        if "No columns to parse from file" == str(e):
-            return _error(Error(ErrorType.PARSE_FAIL, "Expected 2 column header rows", spcsrc))
-        raise e  # bail out, not sure what's wrong, not sure how to test either
-    except pandas.errors.ParserError as e:
-        if "Passed header=[0,1]" in str(e):
-            return _error(Error(ErrorType.PARSE_FAIL, "Expected 2 column header rows", spcsrc))
-        raise e  # bail out, not sure what's wrong, not sure how to test either
-    except IndexError:
-        # ugh. https://github.com/pandas-dev/pandas/issues/43102
-        # I really hope I'm not swallowing other pandas bugs here, but not really any way to tell
-        return _error(Error(
-            ErrorType.INCORRECT_COLUMN_COUNT, "Header rows have unequal column counts", spcsrc
-        ))
 
 
 def parse_csv(path: Path) -> ParseResults:
