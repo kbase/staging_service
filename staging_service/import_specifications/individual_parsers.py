@@ -115,7 +115,12 @@ def _normalize_pandas(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
     return val
 
 
-def _normalize(val: str) -> PRIMITIVE_TYPE:
+def _normalize_xsv(val: str) -> PRIMITIVE_TYPE:
+    # Since csv and tsv rows are all parsed as list[str], regardless of the actual type, we
+    # 1) strip any whitespace that might be left around the entries
+    # 2) convert to numbers if the string represents a number
+    # 3) return None for empty strings, indicating a missing value in the csv
+    # If there's a non-numerical string left we return that
     val = val.strip()
     try:
         num = float(val)
@@ -198,7 +203,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                         + f"expected {columns}, got {len(row)}",
                         spcsrc))
                 results.append(frozendict(
-                    {param_ids[j]: _normalize(row[j]) for j in range(len(row))}))
+                    {param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))}))
         if not results:
             raise _ParseException(Error(
                 ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
