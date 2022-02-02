@@ -4,6 +4,10 @@
 - Fixed a bug in the csv/tsv bulk specification parser that would throw an error on any empty
   lines in the file, even at the end. The parser now ignores empty lines the same way the Excel
   parser does.
+- Fixed a bug in the `bulk_specification` endpoint where a missing header item in an `*.?sv`
+  file would cause it to be replaced with a strange name.
+- As part of the above fix, some error message text has changed due to the rewrite of the
+  parser.
 
 ### Version 1.3.1
 - added the `files` key to the returned data from the `bulk_specification` endpoint.
