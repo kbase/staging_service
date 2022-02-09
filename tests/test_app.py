@@ -1153,10 +1153,12 @@ async def test_bulk_specification_fail_parse_fail():
                     ["George", 42],
                 ])
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
-                # this one is missing the 3rd header line
+                # this one is missing a parameter ID
                 df = pandas.DataFrame([
                     ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["entity_id", "preferred_food"],
+                    ["", "preferred_food"],
+                    ["ID", "Foods I like"],
+                    ["Kevin Garibaldi", "Beeeaaaaans!"],
                 ])
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
@@ -1173,7 +1175,7 @@ async def test_bulk_specification_fail_parse_fail():
                  "tab": None,
                  },
                 {"type": "cannot_parse_file",
-                 "message": "Missing expected header rows",
+                 "message": "Missing header entry in row 2, position 1",
                  "file": "testuser/stuff.xlsx",
                  "tab": "sloths",
                  },
@@ -1258,7 +1260,7 @@ async def test_bulk_specification_fail_column_count():
                  "tab": None,
                  },
                 {"type": "incorrect_column_count",
-                 "message": "Expected 2 data columns, got 3",
+                 "message": "Incorrect number of items in line 4, expected 2, got 3",
                  "file": "testuser/stuff.xlsx",
                  "tab": "bats",
                  },

@@ -227,6 +227,9 @@ def test_xsv_parse_fail_missing_column_header_entries(temp_dir: Path):
     lines = ["Data type: foo; Columns: 3; Version: 1\n", "head1,  \t , head3\n"]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
+    lines = ["Data type: foo; Columns: 3; Version: 1\n", "head1,, head3\n"]
+    _xsv_parse_fail(temp_dir, lines, parse_csv, err)
+
 
 def test_xsv_parse_fail_missing_data(temp_dir: Path):
     err = "No non-header data in file"
@@ -328,8 +331,16 @@ def _get_test_file(filename: str):
 
 def test_excel_parse_success():
     """
-    Tests files with 3 different tabs with data, including empty cells and whitespace only
-    cells, 2 tabs with no data, and one completely empty tab.
+    Tests files with
+    * 3 different tabs with data, including
+        * numeric headers
+        * empty cells
+        * empty rows
+        * whitespace only cells
+    * 2 tabs with no data
+    * 1 tab with a single row, which should be ignored
+    * 1 tab with two rows, which should be ignored
+    * one completely empty tab
     """
 
     for ext in ["xls", "xlsx"]:
@@ -345,7 +356,7 @@ def test_excel_parse_success():
                 frozendict({"header1": "bat", "header2": 4, "header3": None}),
             )),
             "type2": ParseResult(SpecificationSource(ex, "tab2"), (
-                frozendict({"h1": "golly gee", "h2": 42, "h3": "super"}),
+                frozendict({"h1": "golly gee", "2": 42, "h3": "super"}),
             )),
             "type3": ParseResult(SpecificationSource(ex, "tab3"), (
                 frozendict({"head1": "some data", "head2": 1}),
@@ -359,6 +370,12 @@ def _excel_parse_fail(
     res = parse_excel(test_file)
     if print_res:
         print(res)
+        if res.errors:
+            for e in res.errors:
+                print(e.error)
+                print(e.message)
+                print(e.source_1)
+                print(e.source_2)
 
     if errors:
         assert res == ParseResults(errors=tuple(errors))
@@ -402,15 +419,6 @@ def test_excel_parse_1emptytab():
     _excel_parse_fail(_get_test_file("testtabs1empty.xls"), "No non-header data in file")
 
 
-def test_excel_parse_fail_missing_header():
-    f = _get_test_file("testmissingheaders.xlsx")
-    err = "Missing expected header rows"
-    _excel_parse_fail(f, errors=[
-        Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f, "badheader1")),
-        Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f, "badheader2")),
-    ])
-
-
 def test_excel_parse_fail_bad_datatype_header():
     f = _get_test_file("testbadinitialheader.xls")
     err1 = ('Invalid header; got "This header is wack, yo", expected "Data type: '
@@ -440,33 +448,44 @@ def test_excel_parse_fail_colliding_datatypes():
 
 def test_excel_parse_fail_duplicate_headers():
     f = _get_test_file("testduplicateheaders.xlsx")
-    l = lambda h: f"Duplicate column name: {h}"
+    l = lambda h: f"Duplicate header name in row 2: {h}"
     _excel_parse_fail(f, errors=[
         Error(ErrorType.PARSE_FAIL, l("head1"), SpecificationSource(f, "dt2")),
         Error(ErrorType.PARSE_FAIL, l("head2"), SpecificationSource(f, "dt3")),
     ])
 
 
+def test_excel_parse_fail_missing_header_item():
+    f = _get_test_file("testmissingheaderitem.xlsx")
+    err1 = "Missing header entry in row 2, position 3"
+    err2 = "Missing header entry in row 2, position 2"
+    _excel_parse_fail(f, errors=[
+        Error(ErrorType.PARSE_FAIL, err1, SpecificationSource(f, "missing header item error")),
+        Error(ErrorType.PARSE_FAIL, err2, SpecificationSource(f, "whitespace header item")),
+    ])
+
 def test_excel_parse_fail_unequal_rows():
     """
-    This test differs in a number of ways from the xSV unequal rows test above:
-    1) Not having a full row of entries for every column is fine, unlike for xSV files.
-       Spreadsheets provide a clear view of what entries are missing and the user doesn't have to
-       worry about off by one errors when filling in separator characters.
-    2) Since pandas silently duplicates missing header entries, a missing spec ID header (the
-       2nd row) will cause a header duplication error rather than the preferred row count
-       error. There doesn't seem to be an easy way around this.
-    3) For the above reason, a missing human readable error (row 3) will not cause an error at
-       all, since the parser doesn't care about that row other than to skip it.
+    This test differs from the xSV unequal rows test above in that not having a full row of
+    entries for every column is fine, unlike for xSV files.
+    Spreadsheets provide a clear view of what entries are missing and the user doesn't have to
+    worry about off by one errors when filling in separator characters.
     """
     f = _get_test_file("testunequalrows.xlsx")
     _excel_parse_fail(f, errors=[
-        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 2 data columns, got 3",
-            SpecificationSource(f, "2 cols, 3 human readable")),
-        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 2 data columns, got 3",
-            SpecificationSource(f, "2 cols, 3 spec IDs")),
-        Error(ErrorType.PARSE_FAIL, "Duplicate column name: head2",
-            SpecificationSource(f, "3 cols, 2 spec IDs, header dup error")),
-        Error(ErrorType.INCORRECT_COLUMN_COUNT, "Expected 3 data columns, got 4",
-            SpecificationSource(f, "3 cols, 4 data")),
+        Error(
+            ErrorType.INCORRECT_COLUMN_COUNT,
+            "Incorrect number of items in line 3, expected 2, got 3",
+            SpecificationSource(f, "2 cols, 3 human readable")
+        ),
+        Error(
+            ErrorType.INCORRECT_COLUMN_COUNT,
+            "Incorrect number of items in line 2, expected 2, got 3",
+            SpecificationSource(f, "2 cols, 3 spec IDs")
+        ),
+        Error(
+            ErrorType.INCORRECT_COLUMN_COUNT,
+            "Incorrect number of items in line 5, expected 3, got 4",
+            SpecificationSource(f, "3 cols, 4 data")
+        ),
     ])
