@@ -3,7 +3,6 @@ import configparser
 import json
 import logging
 import os
-import sys
 
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
@@ -59,8 +58,7 @@ class Path(object):
     def validate_path(username: str, path: str = ""):
         """
         @returns a path object based on path that must start with username
-        throws an exeception for an invalid path or username
-        starts path at first occurance of username"""
+        """
         if len(path) > 0:
             path = os.path.normpath(path)
             path = path.replace("..", "/")
@@ -93,7 +91,6 @@ class AclManager:
         """
         The ACLManager is used to add and remove acl endpoints for KBase Users on our Globus Share
         """
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         config = configparser.ConfigParser()
         config.read("/etc/globus.cfg")
         cf = config["globus"]

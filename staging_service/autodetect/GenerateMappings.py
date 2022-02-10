@@ -46,6 +46,7 @@ app_id_to_title = {
     fba_model_id: "FBA Model",
     phenotype_set_id: "Phenotype Set",
     escher_map_id: "EscherMap",
+    import_specification: "Import Specification",
 }
 
 
@@ -57,10 +58,11 @@ file_format_to_app_mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_
 file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
 file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
 file_format_to_app_mapping[ZIP] = [decompress_id]
-file_format_to_app_mapping[CSV] = [sample_set_id]
-file_format_to_app_mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id,
-                metabolic_annotations_bulk_id, fba_model_id, phenotype_set_id]
-file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id]
+file_format_to_app_mapping[CSV] = [sample_set_id, import_specification]
+file_format_to_app_mapping[TSV] = [
+    media_id, expression_matrix_id, metabolic_annotations_id, metabolic_annotations_bulk_id,
+    fba_model_id, phenotype_set_id, import_specification]
+file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id, import_specification]
 file_format_to_app_mapping[JSON] = [escher_map_id]
 file_format_to_app_mapping[SBML] = [fba_model_id]
 

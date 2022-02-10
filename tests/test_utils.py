@@ -1,8 +1,12 @@
 import configparser
+import traceback
 
 from dotenv import load_dotenv
+from pathlib import Path
+from typing import Any
 import os
 
+import openpyxl
 
 def bootstrap():
     test_env_0 = "../test.env"
@@ -25,3 +29,26 @@ def bootstrap_config():
     config = configparser.ConfigParser()
     config.read(config_filepath)
     return config
+
+
+def assert_exception_correct(got: Exception, expected: Exception):
+    err = "".join(traceback.TracebackException.from_exception(got).format())
+    assert got.args == expected.args, err
+    assert type(got) == type(expected)
+
+def check_file_contents(file: Path, lines: list[str]):
+    with open(file) as f:
+        assert f.readlines() == lines
+
+def check_excel_contents(
+    wb: openpyxl.Workbook,
+    sheetname: str,
+    contents: list[list[Any]],
+    column_widths: list[int]
+):
+    sheet = wb[sheetname]
+    for i, row in enumerate(sheet.iter_rows()):
+        assert [cell.value for cell in row] == contents[i]
+    # presumably there's an easier way to do this, but it works so f it
+    dims = [sheet.column_dimensions[dim].width for dim in sheet.column_dimensions]
+    assert dims == column_widths

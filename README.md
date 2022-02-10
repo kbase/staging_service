@@ -1,10 +1,7 @@
 # staging_service
 
-setup local development
 
-must have docker installed
-
-if you want to run it locally you must have python3.6 installed
+In order to setup local development, you must have docker installed and if you want to run it locally you must have python 3.9.6 or greater installed
 
 
 # setup
@@ -25,7 +22,13 @@ to run locally run /deployment/bin/entrypoint.sh
 
 to run inside docker run /run_in_docker.sh
 
-to run tests TODO
+# tests
+
+* to test use ./run_tests.sh
+* requires python 3.9.6 or higher
+* requires installation on mac of libmagic `brew install libmagic`
+
+
 
 # debugging
 
@@ -672,9 +675,6 @@ Error Connecting to auth service ...
 }
 ```
 
-
-
-
 ## Remove Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
@@ -727,6 +727,271 @@ Error Connecting to auth service ...
 }
 ```
 
+## Parse bulk specifications
+
+This endpoint parses one or more bulk specification files in the staging area into a data
+structure (close to) ready for insertion into the Narrative bulk import or analysis cell.
+
+It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the currently
+supported data types are available in the [templates](./import_specifications/templates)
+directory of this repo. See the [README.md](./import_specifications/templates/README.md) file
+for instructions on template usage.
+
+See the [import specification ADR document](./docs/import_specifications.ADR.md) for design
+details.
+
+**URL** : `ci.kbase.us/services/staging_service/bulk_specification`
+
+**local URL** : `localhost:3000/bulk_specification`
+
+**Method** : `GET`
+
+**Headers** : `Authorization: <Valid Auth token>`
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+GET bulk_specification/?files=file1.<ext>[,file2.<ext>,...]
+```
+`<ext>` is one of `csv`, `tsv`, `xls`, or `xlsx`.
+
+Reponse:
+```
+{
+    "types": {
+        <type 1>: [
+            {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            {<spec.json ID 1>: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...},
+            ...
+        ],
+        <type 2>: [
+            {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+            ...
+        ],
+        ...
+    },
+    "files": {
+        <type 1>: {"file": "<username>/file1.<ext>", "tab": "tabname"},
+        <type 2>: {"file": "<username>/file2.<ext>", "tab": null},
+        ...
+    }
+}
+```
+
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  app. It is determined by the first header line from the templates.
+* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
+  These are determined by the second header line from the templates and will differ
+  by the data type.
+* `<value for ID, row N>` is the user-provided value for the input for a given `spec.json` ID
+  and import or analysis instance, where an import/analysis instance is effectively a row
+  in the data file. Each data file row is provided in order for each type. Each row is
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
+  user-provided data, and each line corresponds to a single import or analysis.
+  
+### Error Response
+
+Error reponses are of the general form:
+```
+{
+    "errors": [
+        {"type": <error code string>,
+            ... other fields depending on the error code ...
+        },
+        ...
+    ]
+}
+```
+
+Existing error codes are currently:
+
+* `cannot_find_file` if an input file cannot be found
+* `cannot_parse_file` if an input file cannot be parsed
+* `incorrect_column_count` if the column count is not as expected
+    * For Excel files, this may mean there is a non-empty cell outside the bounds of the data area
+* `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
+* `no_files_provided` if no files were provided
+* `unexpected_error` if some other error occurs
+
+The HTTP code returned will be, in order of precedence:
+* 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
+* 404 if at least one error is `cannot_find_file` but there are no 400-type errors
+* 500 if all errors are `unexpected_error`
+
+The per error type data structures are:
+
+#### `cannot_find_file`
+
+```
+{
+    "type": "cannot_find_file",
+    "file": <filepath>
+}
+```
+
+#### `cannot_parse_file`
+
+```
+{
+    "type": "cannot_parse_file",
+    "file": <filepath>,
+    "tab": <spreadsheet tab if applicable, else null>,
+    "message": <message regarding the parse error>
+}
+```
+
+#### `incorrect_column_count`
+
+```
+{
+    "type": "incorrect_column_count",
+    "file": <filepath>,
+    "tab": <spreadsheet tab if applicable, else null>,
+    "message": <message regarding the error>
+}
+```
+
+#### `multiple_specifications_for_data_type`
+
+```
+{
+    "type": "multiple_specifications_for_data_type",
+    "file_1": <filepath for first file>,
+    "tab_1": <spreadsheet tab from first file if applicable, else null>,
+    "file_2": <filepath for second file>,
+    "tab_2": <spreadsheet tab for second file if applicable, else null>,
+    "message": <message regarding the multiple specification error>
+}
+```
+
+#### `no_files_provided`
+
+```
+{
+    "type": "no_files_provided"
+}
+```
+
+#### `unexpected_error`
+
+```
+{
+    "type": "unexpected_error",
+    "file": <filepath if applicable to a single file>
+    "message": <message regarding the error>
+}
+```
+
+## Write bulk specifications
+
+This endpoint is the reverse of the parse bulk specifications endpoint - it takes a similar
+data structure to that which the parse endpoint returns and writes bulk specification templates.
+
+**URL** : `ci.kbase.us/services/staging_service/write_bulk_specification`
+
+**local URL** : `localhost:3000/write_bulk_specification`
+
+**Method** : `POST`
+
+**Headers** :
+* `Authorization: <Valid Auth token>`
+* `Content-Type: Application/JSON`
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+POST write_bulk_specification/
+{
+    "output_directory": <staging area directory in which to write output files>,
+    "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
+    "types": {
+        <type 1>: {
+            "order_and_display: [
+                [<spec.json ID 1>, <display.yml name 1>],
+                [<spec.json ID 2>, <display.yml name 2>],
+                ...
+            ],
+            "data": [
+                {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+                {<spec.json ID 1>: <value for ID, row 2>, <spec.json ID 2>: <value for ID, row 2>, ...}
+                ...
+            ]
+        },
+        <type 2>: {
+            "order_and_display: [
+                [<spec.json ID 1>, <display.yml name 1>],
+                ...
+            ],
+            "data": [
+                {<spec.json ID 1>: <value for ID, row 1>, <spec.json ID 2>: <value for ID, row 1>, ...},
+                ...
+            ]
+        },
+        ...
+    }
+}
+```
+* `output_directory` specifies where the output files should be written in the user's staging area.
+* `output_file_type` specifies the format of the output files.
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  app. It is included in the first header line in the templates.
+* `order_and_display` determines the ordering of the columns in the written templates, as well
+  as mapping the spec.json ID of the parameter to the human readable name of the parameter in
+  the display.yml file.
+* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
+  These are written to the second header line from the import templates and will differ
+  by the data type.
+* `data` contains any data to be written to the file as example data, and is analagous to the data
+  structure returned from the parse endpoint. To specify that no data should be written to the
+  template provide an empty list.
+* `<value for ID, row N>` is the value for the input for a given `spec.json` ID
+  and import or analysis instance, where an import/analysis instance is effectively a row
+  in the data file. Each data file row is provided in order for each type. Each row is
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
+  user-provided data, and each line corresponds to a single import or analysis.
+
+Reponse:
+```
+{
+    "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
+    "files": {
+        <type 1>: <staging service path to file containg data for type 1>,
+        ...
+        <type N>: <staging service path to file containg data for type N>,
+    }
+}
+```
+
+* `output_file_type` has the same definition as above.
+* `files` contains a mapping of each provided data type to the output template file for that type.
+  In the case of Excel, all the file paths will be the same since the data types are all written
+  to different tabs in the same file.
+  
+### Error Response
+
+Method specific errors have the form:
+
+```
+{"error": <error message>}
+```
+The error code in this case will be a 4XX error.
+
+The AioHTTP server may also return built in errors that are not in JSON format - an example of
+this is overly large (> 1MB) request bodies.
+
+
 ## Get Importer Mappings
 
 This endpoint returns:
@@ -739,9 +1004,9 @@ This endpoint returns:
 
 For example,
  * if we pass in nothing we get a response with no mappings
- * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a response
- that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
- which represents the probability that this is the correct importer for you.
+ * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a
+   response that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
+   which represents the probability that this is the correct importer for you.
  * for files for which there is no predicted app, the return is a null value
  * this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
@@ -801,6 +1066,53 @@ Response:
 ```
 must provide file_list field 
 ```
+
+## Get importer filetypes
+
+This endpoint returns information about the file types associated with data types and the file
+extensions for those file types. It is primarily of use for creating UI elements describing
+which file extensions may be selected when performing bulk file selections.
+
+**URL** : `ci.kbase.us/services/staging_service/importer_filetypes`
+
+**local URL** : `localhost:3000/importer_filetypes`
+
+**Method** : `GET`
+
+**Headers** : Not Required
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Content example**
+
+```
+GET importer_filetypes/
+```
+Response:
+```
+{
+    "datatype_to_filetype": {
+        <type 1>: [<file type 1>, ... <file type N>],
+        ...
+        <type M>: [<file type 1>, ... <file type N>],
+    },
+    "filetype_to_extensions": {
+        <file type 1>: [<extension 1>, ..., <extension N>],
+        ...
+        <file type M>: [<extension 1>, ..., <extension N>],
+    }
+}
+```
+
+* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace between the
+  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
+  import app. It is included in the first header line in the templates.
+* `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file types are listed
+  below.
+* `<extension N>` is a file extension like `*.fa` or `*.gbk`.
 
 # Autodetect App and File Type IDs
 
