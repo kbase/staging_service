@@ -1,3 +1,7 @@
+### Version 1.3.3
+- Fixed a bug in the csv/tsv bulk specification parser that would include an empty entry for
+  each empty line in the file.
+
 ### Version 1.3.2
 - Add `write_bulk_specification` endpoint for writing bulk specifications
 - Add `import_filetypes` endpoint for getting datatype -> filetype -> extension mappings

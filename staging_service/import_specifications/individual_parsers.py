@@ -165,16 +165,17 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
             _csv_next(rdr, 3, columns, spcsrc, "Missing 3rd header line")
             results = []
             for i, row in enumerate(rdr, start=4):
-                if row and len(row) != columns:  # skip empty rows
-                    # could collect errors (first 10?) and throw an exception with a list
-                    # lets wait and see if that's really needed
-                    raise _ParseException(Error(
-                        ErrorType.INCORRECT_COLUMN_COUNT,
-                        f"Incorrect number of items in line {i}, "
-                        + f"expected {columns}, got {len(row)}",
-                        spcsrc))
-                results.append(frozendict(
-                    {param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))}))
+                if row:  # skip empty rows
+                    if len(row) != columns:
+                        # could collect errors (first 10?) and throw an exception with a list
+                        # lets wait and see if that's really needed
+                        raise _ParseException(Error(
+                            ErrorType.INCORRECT_COLUMN_COUNT,
+                            f"Incorrect number of items in line {i}, "
+                            + f"expected {columns}, got {len(row)}",
+                            spcsrc))
+                    results.append(frozendict(
+                        {param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))}))
         if not results:
             raise _ParseException(Error(
                 ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
