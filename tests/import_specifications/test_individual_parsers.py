@@ -103,7 +103,7 @@ def _xsv_parse_success_with_numeric_headers(
     ))
 
 
-def _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir: Path):
+def test_xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir: Path):
     """
     Test that leaving one or more empty lines in a csv/tsv file does not cause the
     parse to fail. This is easy to do accidentally and so will annoy users.
@@ -135,7 +135,7 @@ def _xsv_parse_success_with_internal_and_trailing_empty_lines(
     assert res == ParseResults(frozendict(
         {"other_type": ParseResult(SpecificationSource(input_),
             tuple([
-                frozendict({"spec1": "val3", "spec4": "val2", "spec3": 1, "spec4": 8.9}),
+                frozendict({"spec1": "val3", "spec2": "val4", "spec3": 1, "spec4": 8.9}),
                 frozendict({"spec1": "val1", "spec2": "val2", "spec3": 7, "spec4": 3.2}),
             ])
         )}
