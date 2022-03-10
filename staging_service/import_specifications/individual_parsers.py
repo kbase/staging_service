@@ -139,6 +139,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
     spcsrc = SpecificationSource(path)
     try:
         if magic.from_file(str(path), mime=True) not in _MAGIC_TEXT_FILES:
+            print("**** magic sez: ", magic.from_file(str(path), mime=True))
             return _error(Error(ErrorType.PARSE_FAIL, "Not a text file", spcsrc))
         with open(path, newline='') as input_:
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
