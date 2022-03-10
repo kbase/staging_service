@@ -10,7 +10,7 @@ import re
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
 from pathlib import Path
-from typing import TextIO, Optional as O, Union, Any
+from typing import Optional as O, Union, Any
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
