@@ -63,41 +63,24 @@ def _parse_header(header: str, spec_source: SpecificationSource, maximum_version
     return match[1], int(match[2])
 
 
-def _required_next(
-    input_: Union[TextIO, Any],  # Any really means a csv reader object
-    spec_source: SpecificationSource,
-    error: str
-) -> Union[str, list[str]]:
-    # returns a string for a TextIO input or a list for a Reader input
-    try:
-        return next(input_)
-    except StopIteration:
-        raise _ParseException(Error(ErrorType.PARSE_FAIL, error, spec_source))
-
 def _csv_next(
-    input_: Union[TextIO, Any],  # Any really means a csv reader object
+    input_: Any,  # Any really means a csv reader object
     line_number: int,
-    expected_line_count: int,
+    expected_line_count: Union[None, int],  # None = skip columns check
     spec_source: SpecificationSource,
     error: str
 ) -> list[str]:
-    line = _required_next(input_, spec_source, error)
-    if len(line) != expected_line_count:
+    try:
+        line = next(input_)
+    except StopIteration:
+        raise _ParseException(Error(ErrorType.PARSE_FAIL, error, spec_source))
+    if expected_line_count and len(line) != expected_line_count:
         raise _ParseException(Error(
             ErrorType.INCORRECT_COLUMN_COUNT,
             f"Incorrect number of items in line {line_number}, "
             + f"expected {expected_line_count}, got {len(line)}",
             spec_source))
     return line
-
-
-def _get_datatype(input_: TextIO, spec_source: SpecificationSource, maximum_version: int
-) -> tuple[str, int]:
-    # return is (data type, column count)
-    return _parse_header(
-        _required_next(input_, spec_source, "Missing data type / version header").strip(),
-        spec_source,
-        maximum_version)
 
 
 def _error(error: Error) -> ParseResults:
@@ -158,8 +141,9 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         if magic.from_file(str(path), mime=True) not in _MAGIC_TEXT_FILES:
             return _error(Error(ErrorType.PARSE_FAIL, "Not a text file", spcsrc))
         with open(path, newline='') as input_:
-            datatype, columns = _get_datatype(input_, spcsrc, _VERSION)
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
+            dthd = _csv_next(rdr, 1, None, spcsrc, "Missing data type / version header")
+            datatype, columns = _parse_header(dthd[0], spcsrc, _VERSION)
             hd1 = _csv_next(rdr, 2, columns, spcsrc, "Missing 2nd header line")
             param_ids = _normalize_headers(hd1, 2, spcsrc)
             _csv_next(rdr, 3, columns, spcsrc, "Missing 3rd header line")
