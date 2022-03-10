@@ -35,7 +35,7 @@ _EXPECTED_HEADER = (f"{_DATA_TYPE} <data_type>{_HEADER_SEP} "
 _HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
     + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
 
-_MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty"}
+_MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty", "application/csv"}
 
 
 class _ParseException(Exception):
