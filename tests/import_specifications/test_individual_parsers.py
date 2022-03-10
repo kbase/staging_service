@@ -169,7 +169,10 @@ def test_xsv_parse_fail_binary_file(temp_dir: Path):
     res = parse_csv(test_file)
 
     assert res == ParseResults(errors=tuple([
-        Error(ErrorType.PARSE_FAIL, "Not a text file", source_1=SpecificationSource(test_file))
+        Error(
+            ErrorType.PARSE_FAIL,
+            "Not a text file: application/vnd.ms-excel",
+            source_1=SpecificationSource(test_file))
     ]))
 
 
