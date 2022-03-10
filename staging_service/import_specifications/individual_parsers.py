@@ -141,8 +141,6 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         filetype = magic.from_file(str(path), mime=True)
         if filetype not in _MAGIC_TEXT_FILES:
             return _error(Error(ErrorType.PARSE_FAIL, "Not a text file: " + filetype, spcsrc))
-        if magic.from_file(str(path), mime=True) not in _MAGIC_TEXT_FILES:
-            return _error(Error(ErrorType.PARSE_FAIL, "Not a text file", spcsrc))
         with open(path, newline='') as input_:
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
             dthd = _csv_next(rdr, 1, None, spcsrc, "Missing data type / version header")
