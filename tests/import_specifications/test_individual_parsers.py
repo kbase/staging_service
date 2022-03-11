@@ -39,6 +39,9 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 def test_xsv_parse_success(temp_dir: Path):
+    # Tests a special case where if an xSV file is opened by Excel and then resaved, 
+    # Excel will add separators to the end of the 1st header line. This previously caused
+    # the parse to fail.
     _xsv_parse_success(temp_dir, ',', parse_csv)
     _xsv_parse_success(temp_dir, '\t', parse_tsv)
 
@@ -48,7 +51,7 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
     input_ = temp_dir / str(uuid.uuid4())
     with open(input_, "w") as test_file:
         test_file.writelines([
-            "Data type: some_type; Columns: 4; Version: 1\n",
+            f"Data type: some_type; Columns: 4; Version: 1{s}{s}{s}\n",
             f"spec1{s} spec2{s}   spec3   {s} spec4\n",    # test trimming
             f"Spec 1{s} Spec 2{s} Spec 3{s} Spec 4\n",
             f"val1 {s}   val2   {s}    7     {s} 3.2\n",   # test trimming
@@ -166,7 +169,10 @@ def test_xsv_parse_fail_binary_file(temp_dir: Path):
     res = parse_csv(test_file)
 
     assert res == ParseResults(errors=tuple([
-        Error(ErrorType.PARSE_FAIL, "Not a text file", source_1=SpecificationSource(test_file))
+        Error(
+            ErrorType.PARSE_FAIL,
+            "Not a text file: application/vnd.ms-excel",
+            source_1=SpecificationSource(test_file))
     ]))
 
 
