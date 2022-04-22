@@ -64,9 +64,6 @@ _TEST_DATA = {
     }
 }
 
-def test_noop():
-    assert write_csv(Path("."), {}) == {}
-    assert write_tsv(Path("."), {}) == {}
 
 def test_write_csv(temp_dir: Path):
     res = write_csv(temp_dir, _TEST_DATA)
