@@ -34,7 +34,7 @@ from .autodetect.Mappings import CSV, TSV, EXCEL
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.3.4"
+VERSION = "1.3.5"
 
 _DATATYPE_MAPPINGS = None
 
@@ -59,7 +59,7 @@ async def importer_filetypes(request: web.Request) -> web.json_response:
     Returns the file types for the configured datatypes. The returned JSON contains two keys:
     * datatype_to_filetype, which maps import datatypes (like gff_genome) to their accepted
       filetypes (like [FASTA, GFF])
-    * filetype_to_extensions, which maps file types (e.g. FASTA) to their extensions (e.g. 
+    * filetype_to_extensions, which maps file types (e.g. FASTA) to their extensions (e.g.
       *.fa, *.fasta, *.fa.gz, etc.)
 
     This information is currently static over the life of the server.
@@ -197,7 +197,7 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
 def _createJSONErrorResponse(error_text: str, error_class=web.HTTPBadRequest):
     err = json.dumps({"error": error_text})
     return error_class(text=err, content_type=_APP_JSON)
-    
+
 
 @routes.get("/add-acl-concierge")
 async def add_acl_concierge(request: web.Request):
