@@ -23,7 +23,7 @@ All the write_* functions in this module have the same function signature:
         entry in the list corresponds to a row in the resulting import specification,
         and the order of the list defines the order of the rows.
     Leave the `data` list empty to write an empty template.
-:returns: A mapping of the data types to the files to which they were written. 
+:returns: A mapping of the data types to the files to which they were written.
 """
 # note that we can't use an f string here to interpolate the variables below, e.g.
 # order_and_display, etc.
@@ -82,7 +82,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         Leave the {_DATA} list empty to write an empty template.
     """
     if not types:
-        return
+        raise ImportSpecWriteException("At least one data type must be specified")
     for datatype in types:
         # replace this with jsonschema? don't worry about it for now
         _check_string(datatype, "A data type")
