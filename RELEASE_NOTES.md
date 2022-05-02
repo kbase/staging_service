@@ -1,3 +1,10 @@
+### Version 1.3.4
+- Alter the behavior of the bulk specification file writers to return an error if the
+  input `types` parameter is empty.
+- Fixed a bug in the csv/tsv bulk specification parser that would case a failure if the
+  first header of a file had trailing separators. This occurs if a csv/tsv file is opened and
+  saved by Excel.
+
 ### Version 1.3.3
 - Fixed a bug in the csv/tsv bulk specification parser that would include an empty entry for
   each empty line in the file.
