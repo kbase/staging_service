@@ -34,7 +34,7 @@ from .autodetect.Mappings import CSV, TSV, EXCEL
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.3.4"
+VERSION = "1.3.5"
 
 _DATATYPE_MAPPINGS = None
 
