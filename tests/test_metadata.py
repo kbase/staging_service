@@ -3,7 +3,7 @@
 import json
 import uuid
 
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from pathlib import Path as PyPath
 from pytest import fixture
 
@@ -75,6 +75,6 @@ async def _incomplete_metadata_file_update(temp_dir, metadict, source):
         "path": "user_path",
         "size": 1280
         }
-    
+
 def make_test_lines(start, stop):
     return [str(i) + "a" * (256 - len(str(i)) - 1) + "\n" for i in range(start, stop)]
