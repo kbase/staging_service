@@ -1,3 +1,6 @@
+### Version 1.3.5
+- Fixed a bug that under some circumstances could cause incomplete file metadata to be returned.
+
 ### Version 1.3.4
 - Alter the behavior of the bulk specification file writers to return an error if the
   input `types` parameter is empty.

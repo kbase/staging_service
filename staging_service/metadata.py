@@ -48,7 +48,8 @@ async def _generate_metadata(path: Path, source: str):
     else:
         data = {}
     # first ouptut of md5sum is the checksum
-    data["source"] = source
+    if source:
+        data["source"] = source
     try:
         md5 = hashlib.md5(open(path.full_path, "rb").read()).hexdigest()
     except:
@@ -165,7 +166,7 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
         os.stat(path.metadata_path).st_mtime < file_stats["mtime"] / 1000
     ):
         # if metadata  does not exist or older than file: regenerate
-        if source is None:
+        if source is None:  # TODO BUGFIX this will overwrite any source in the file
             source = _determine_source(path)
         data = await _generate_metadata(path, source)
     else:  # metadata already exists and is up to date
@@ -174,9 +175,11 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
             data = await f.read()
             data = decoder.decode(data)
         # due to legacy code, some file has corrupted metadata file
+        # Also if a file is listed or checked for existence before the upload completes
+        # this code block will be triggered
         expected_keys = ["source", "md5", "lineCount", "head", "tail"]
-        if set(expected_keys) > set(data.keys()):
-            if source is None:
+        if not set(expected_keys) <= set(data.keys()):
+            if source is None and "source" not in data:
                 source = _determine_source(path)
             data = await _generate_metadata(path, source)
     data = {**data, **file_stats}
