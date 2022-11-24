@@ -217,6 +217,14 @@ async def add_acl_concierge(request: web.Request):
     return web.json_response(result)
 
 
+@routes.get("/acl-status")
+async def add_acl(request: web.Request):
+    username = await authorize_request(request)
+    user_dir = Path.validate_path(username).full_path
+    result = AclManager().acl_status(user_dir)
+    return web.json_response(result)
+
+
 @routes.get("/add-acl")
 async def add_acl(request: web.Request):
     username = await authorize_request(request)
