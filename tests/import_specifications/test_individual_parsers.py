@@ -405,6 +405,43 @@ def test_excel_parse_success():
         }))
 
 
+def test_excel_parse_success_nan_inf():
+    """
+    Tests file with nan, inf, and missing values. nan and inf should be treated as strings
+    to maintain consistency with the CSV parser and avoid making JSON parsers choke.
+    See https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
+    See https://kbase-jira.atlassian.net/browse/PTV-1866
+    """
+
+    ex = _get_test_file("test_nan_inf.xlsx")
+
+    res = parse_excel(ex)
+
+    assert res == ParseResults(frozendict({
+        "nan_type": ParseResult(SpecificationSource(ex, "tab1"), (
+            frozendict({"header1": 1, "header2": None}),
+            frozendict({"header1": 2, "header2": None}),
+            frozendict({"header1": 3, "header2": None}),
+            frozendict({"header1": 4, "header2": "-1.#IND"}),
+            frozendict({"header1": 5, "header2": "-1.#QNAN"}),
+            frozendict({"header1": 6, "header2": "-NaN"}),
+            frozendict({"header1": 7, "header2": "-nan"}),
+            frozendict({"header1": 8, "header2": "1.#IND"}),
+            frozendict({"header1": 9, "header2": "1.#QNAN"}),
+            frozendict({"header1": 10, "header2": None}),
+            frozendict({"header1": 11, "header2": None}),
+            frozendict({"header1": 12, "header2": None}),
+            frozendict({"header1": 13, "header2": None}),
+            frozendict({"header1": 14, "header2": "NaN"}),
+            frozendict({"header1": 15, "header2": None}),
+            frozendict({"header1": 16, "header2": "nan"}),
+            frozendict({"header1": 17, "header2": None}),
+            frozendict({"header1": 18, "header2": None}),
+            frozendict({"header1": 19, "header2": "some stuff"}),
+        )),
+    }))
+
+
 def _excel_parse_fail(
     test_file: str, message: str = None, errors: list[Error] = None, print_res=False
 ):

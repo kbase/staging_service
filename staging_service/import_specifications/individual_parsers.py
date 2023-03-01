@@ -39,6 +39,23 @@ _HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
 _MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty", "application/csv", "text/csv"}
 
 
+# by default the excel parser treats nan and inf as missing values, which it probably shouldn't.
+# See https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
+# See https://kbase-jira.atlassian.net/browse/PTV-1866
+_EXCEL_MISSING_VALUES = [
+    "",
+    "#N/A",
+    "#N/A N/A",
+    "#NA",
+    "<NA>",
+    "N/A",
+    "NA",
+    "NULL",
+    "n/a",
+    "null",
+]
+
+
 class _ParseException(Exception):
     pass
 
@@ -207,7 +224,7 @@ def _process_excel_row(
 
 def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
 ) -> (O[str], O[ParseResult]):
-    df = excel.parse(sheet_name=spcsrc.tab)
+    df = excel.parse(sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False)
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)
     # at this point we know that at least 4 lines are present - expecting the data type header,
