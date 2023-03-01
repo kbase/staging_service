@@ -93,7 +93,7 @@ def _xsv_parse_success_nan_inf(temp_dir: Path, sep: str, parser: Callable[[Path]
             f"Spec 1{s} inf{s} Spec 3{s} -inf\n",
             f"inf {s}   val2   {s}    NaN     {s} 3.2\n",
             f"Inf {s} val4{s} -inf{s} 8.9\n",
-            f"val5 {s}-Inf{s}{s} nan\n", 
+            f"val5 {s}-Inf{s}{s} nan\n",
         ])
 
     res = parser(input_)
