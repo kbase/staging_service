@@ -74,6 +74,41 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
     ))
 
 
+def test_xsv_parse_success_nan_inf(temp_dir: Path):
+    # Test that NaN and +/-Inf values are converted to strings. If they're not converted,
+    # they will be returned from the service as barewords in JSON and will cause errors in
+    # some parsers as the JSON spec does not support NaN and Inf (which it should but...)
+    # See https://kbase-jira.atlassian.net/browse/PTV-1866
+    _xsv_parse_success_nan_inf(temp_dir, ',', parse_csv)
+    _xsv_parse_success_nan_inf(temp_dir, '\t', parse_tsv)
+
+
+def _xsv_parse_success_nan_inf(temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]):
+    s = sep
+    input_ = temp_dir / str(uuid.uuid4())
+    with open(input_, "w") as test_file:
+        test_file.writelines([
+            f"Data type: some_nan_type; Columns: 4; Version: 1{s}{s}{s}\n",
+            f"spec1{s} -Inf{s}   nan   {s} inf\n",
+            f"Spec 1{s} inf{s} Spec 3{s} -inf\n",
+            f"inf {s}   val2   {s}    NaN     {s} 3.2\n",
+            f"Inf {s} val4{s} -inf{s} 8.9\n",
+            f"val5 {s}-Inf{s}{s} nan\n", 
+        ])
+
+    res = parser(input_)
+
+    assert res == ParseResults(frozendict(
+        {"some_nan_type": ParseResult(SpecificationSource(input_),
+            tuple([
+                frozendict({"spec1": "inf", "-Inf": "val2", "nan": "NaN", "inf": 3.2}),
+                frozendict({"spec1": "Inf", "-Inf": "val4", "nan": "-inf", "inf": 8.9}),
+                frozendict({"spec1": "val5", "-Inf": "-Inf", "nan": None, "inf": "nan"}),
+            ])
+        )}
+    ))
+
+
 def test_xsv_parse_success_with_numeric_headers(temp_dir: Path):
     """
     Not a use case we expect but good to check numeric headers don't cause an unexpected

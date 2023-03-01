@@ -4,6 +4,7 @@ Contains parser functions for use with the file parser framework.
 
 import csv
 import magic
+import math
 import pandas
 import re
 
@@ -102,11 +103,15 @@ def _normalize_xsv(val: str) -> PRIMITIVE_TYPE:
     # Since csv and tsv rows are all parsed as list[str], regardless of the actual type, we
     # 1) strip any whitespace that might be left around the entries
     # 2) convert to numbers if the string represents a number
-    # 3) return None for empty strings, indicating a missing value in the csv
+    # 3) if the number is inf or nan, which isn't representable in JSON, we turn that right back
+    #    to a string. See https://kbase-jira.atlassian.net/browse/PTV-1866
+    # 4) return None for empty strings, indicating a missing value in the csv
     # If there's a non-numerical string left we return that
     val = val.strip()
     try:
         num = float(val)
+        if math.isinf(num) or math.isnan(num):
+            return val
         return int(num) if num.is_integer() else num
     except ValueError:
         return val if val else None
