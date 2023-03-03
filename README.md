@@ -34,6 +34,13 @@ to run inside docker run /run_in_docker.sh
 
 Included configurations for the Visual Studio Code debugger for python that mirror what is in the entrypoint.sh and testing configuration to run locally in the debugger, set breakpoints and if you open the project in VSCode the debugger should be good to go. The provided configurations can run locally and run tests locally
 
+# development
+
+When releasing a new version:
+
+* Update the release notes
+* Update the version in [staging_service/app.py](staging_service/app.py).VERSION
+
 # expected command line utilities
 to run locally you will need all of these utils on your system: tar, unzip, zip, gzip, bzip2, md5sum, head, tail, wc
 
