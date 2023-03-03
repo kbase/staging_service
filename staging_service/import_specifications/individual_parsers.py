@@ -4,6 +4,7 @@ Contains parser functions for use with the file parser framework.
 
 import csv
 import magic
+import math
 import pandas
 import re
 
@@ -36,6 +37,23 @@ _HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
     + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
 
 _MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty", "application/csv", "text/csv"}
+
+
+# by default the excel parser treats nan and inf as missing values, which it probably shouldn't.
+# See https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
+# See https://kbase-jira.atlassian.net/browse/PTV-1866
+_EXCEL_MISSING_VALUES = [
+    "",
+    "#N/A",
+    "#N/A N/A",
+    "#NA",
+    "<NA>",
+    "N/A",
+    "NA",
+    "NULL",
+    "n/a",
+    "null",
+]
 
 
 class _ParseException(Exception):
@@ -102,11 +120,15 @@ def _normalize_xsv(val: str) -> PRIMITIVE_TYPE:
     # Since csv and tsv rows are all parsed as list[str], regardless of the actual type, we
     # 1) strip any whitespace that might be left around the entries
     # 2) convert to numbers if the string represents a number
-    # 3) return None for empty strings, indicating a missing value in the csv
+    # 3) if the number is inf or nan, which isn't representable in JSON, we turn that right back
+    #    to a string. See https://kbase-jira.atlassian.net/browse/PTV-1866
+    # 4) return None for empty strings, indicating a missing value in the csv
     # If there's a non-numerical string left we return that
     val = val.strip()
     try:
         num = float(val)
+        if math.isinf(num) or math.isnan(num):
+            return val
         return int(num) if num.is_integer() else num
     except ValueError:
         return val if val else None
@@ -202,7 +224,7 @@ def _process_excel_row(
 
 def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
 ) -> (O[str], O[ParseResult]):
-    df = excel.parse(sheet_name=spcsrc.tab)
+    df = excel.parse(sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False)
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)
     # at this point we know that at least 4 lines are present - expecting the data type header,

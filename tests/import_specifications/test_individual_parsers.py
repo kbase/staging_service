@@ -74,6 +74,41 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
     ))
 
 
+def test_xsv_parse_success_nan_inf(temp_dir: Path):
+    # Test that NaN and +/-Inf values are converted to strings. If they're not converted,
+    # they will be returned from the service as barewords in JSON and will cause errors in
+    # some parsers as the JSON spec does not support NaN and Inf (which it should but...)
+    # See https://kbase-jira.atlassian.net/browse/PTV-1866
+    _xsv_parse_success_nan_inf(temp_dir, ',', parse_csv)
+    _xsv_parse_success_nan_inf(temp_dir, '\t', parse_tsv)
+
+
+def _xsv_parse_success_nan_inf(temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]):
+    s = sep
+    input_ = temp_dir / str(uuid.uuid4())
+    with open(input_, "w") as test_file:
+        test_file.writelines([
+            f"Data type: some_nan_type; Columns: 4; Version: 1{s}{s}{s}\n",
+            f"spec1{s} -Inf{s}   nan   {s} inf\n",
+            f"Spec 1{s} inf{s} Spec 3{s} -inf\n",
+            f"inf {s}   val2   {s}    NaN     {s} 3.2\n",
+            f"Inf {s} val4{s} -inf{s} 8.9\n",
+            f"val5 {s}-Inf{s}{s} nan\n",
+        ])
+
+    res = parser(input_)
+
+    assert res == ParseResults(frozendict(
+        {"some_nan_type": ParseResult(SpecificationSource(input_),
+            tuple([
+                frozendict({"spec1": "inf", "-Inf": "val2", "nan": "NaN", "inf": 3.2}),
+                frozendict({"spec1": "Inf", "-Inf": "val4", "nan": "-inf", "inf": 8.9}),
+                frozendict({"spec1": "val5", "-Inf": "-Inf", "nan": None, "inf": "nan"}),
+            ])
+        )}
+    ))
+
+
 def test_xsv_parse_success_with_numeric_headers(temp_dir: Path):
     """
     Not a use case we expect but good to check numeric headers don't cause an unexpected
@@ -368,6 +403,43 @@ def test_excel_parse_success():
                 frozendict({"head1": "some data", "head2": 1}),
             )),
         }))
+
+
+def test_excel_parse_success_nan_inf():
+    """
+    Tests file with nan, inf, and missing values. nan and inf should be treated as strings
+    to maintain consistency with the CSV parser and avoid making JSON parsers choke.
+    See https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
+    See https://kbase-jira.atlassian.net/browse/PTV-1866
+    """
+
+    ex = _get_test_file("test_nan_inf.xlsx")
+
+    res = parse_excel(ex)
+
+    assert res == ParseResults(frozendict({
+        "nan_type": ParseResult(SpecificationSource(ex, "tab1"), (
+            frozendict({"header1": 1, "header2": None}),
+            frozendict({"header1": 2, "header2": None}),
+            frozendict({"header1": 3, "header2": None}),
+            frozendict({"header1": 4, "header2": "-1.#IND"}),
+            frozendict({"header1": 5, "header2": "-1.#QNAN"}),
+            frozendict({"header1": 6, "header2": "-NaN"}),
+            frozendict({"header1": 7, "header2": "-nan"}),
+            frozendict({"header1": 8, "header2": "1.#IND"}),
+            frozendict({"header1": 9, "header2": "1.#QNAN"}),
+            frozendict({"header1": 10, "header2": None}),
+            frozendict({"header1": 11, "header2": None}),
+            frozendict({"header1": 12, "header2": None}),
+            frozendict({"header1": 13, "header2": None}),
+            frozendict({"header1": 14, "header2": "NaN"}),
+            frozendict({"header1": 15, "header2": None}),
+            frozendict({"header1": 16, "header2": "nan"}),
+            frozendict({"header1": 17, "header2": None}),
+            frozendict({"header1": 18, "header2": None}),
+            frozendict({"header1": 19, "header2": "some stuff"}),
+        )),
+    }))
 
 
 def _excel_parse_fail(
