@@ -1,3 +1,9 @@
+### Version 1.3.6
+- Fixed a bug that would cause NaN and Inf values in xSV to be returned as JSON barewords,
+  which could cause some JSON parsers to fail. They are now returned as strings.
+- Changed the Excel parser to not consider NaN and Inf as missing values to maintain consistency
+  with the xSV parsers
+
 ### Version 1.3.5
 - Fixed a bug that under some circumstances could cause incomplete file metadata to be returned.
 
