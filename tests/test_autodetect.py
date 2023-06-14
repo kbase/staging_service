@@ -5,7 +5,7 @@ from staging_service.autodetect.GenerateMappings import (
 )
 from staging_service.AutoDetectUtils import AutoDetectUtils
 from staging_service.app import inject_config_dependencies
-from tests.test_utils import bootstrap_config
+from tests.test_helpers import bootstrap_config
 
 
 @pytest.fixture(autouse=True, scope="module")

@@ -1,12 +1,24 @@
 import configparser
+import os
+import shutil
 import traceback
-
-from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any
-import os
 
 import openpyxl
+from dotenv import load_dotenv
+
+test_config = configparser.ConfigParser()
+test_config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
+
+DATA_DIR = test_config["staging_service"]["DATA_DIR"]
+META_DIR = test_config["staging_service"]["META_DIR"]
+AUTH_URL = test_config["staging_service"]["AUTH_URL"]
+if DATA_DIR.startswith("."):
+    DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
+if META_DIR.startswith("."):
+    META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
+
 
 def bootstrap():
     test_env_0 = "../test.env"
@@ -36,15 +48,17 @@ def assert_exception_correct(got: Exception, expected: Exception):
     assert got.args == expected.args, err
     assert type(got) == type(expected)
 
+
 def check_file_contents(file: Path, lines: list[str]):
     with open(file) as f:
         assert f.readlines() == lines
+
 
 def check_excel_contents(
     wb: openpyxl.Workbook,
     sheetname: str,
     contents: list[list[Any]],
-    column_widths: list[int]
+    column_widths: list[int],
 ):
     sheet = wb[sheetname]
     for i, row in enumerate(sheet.iter_rows()):
@@ -52,3 +66,31 @@ def check_excel_contents(
     # presumably there's an easier way to do this, but it works so f it
     dims = [sheet.column_dimensions[dim].width for dim in sheet.column_dimensions]
     assert dims == column_widths
+
+
+class FileUtil:
+    def __init__(self, base_dir=DATA_DIR):
+        self.base_dir = base_dir
+
+    def __enter__(self):
+        os.makedirs(self.base_dir, exist_ok=True)
+        shutil.rmtree(self.base_dir)
+        os.makedirs(self.base_dir, exist_ok=False)
+        return self
+
+    def __exit__(self, *args):
+        shutil.rmtree(self.base_dir)
+
+    def make_file(self, path, contents):
+        path = os.path.join(self.base_dir, path)
+        with open(path, encoding="utf-8", mode="w") as f:
+            f.write(contents)
+        return path
+
+    def make_dir(self, path):
+        path = os.path.join(self.base_dir, path)
+        os.makedirs(path, exist_ok=True)
+        return path
+
+    def remove_dir(self, path):
+        shutil.rmtree(path)
