@@ -14,15 +14,16 @@ from aiohttp import MultipartReader, web
 from staging_service.config import (
     UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION,
     UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY,
-    get_config, get_max_content_length,
+    get_config,
+    get_max_content_length,
     get_max_file_size,
     get_read_chunk_size,
     get_save_strategy,
 )
-from .AutoDetectUtils import AutoDetectUtils
-from .JGIMetadata import read_metadata_for
+
 from .app_error_formatter import format_import_spec_errors
 from .autodetect.Mappings import CSV, EXCEL, TSV
+from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
     ErrorType,
@@ -36,6 +37,7 @@ from .import_specifications.file_writers import (
     write_tsv,
 )
 from .import_specifications.individual_parsers import parse_csv, parse_excel, parse_tsv
+from .JGIMetadata import read_metadata_for
 from .metadata import add_upa, dir_info, similar, some_metadata
 from .utils import AclManager, StagingPath, auth_client, run_command
 
@@ -472,7 +474,7 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
     max_file_size = get_max_file_size()
     if save_strategy == UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY:
         async with aiofiles.tempfile.NamedTemporaryFile(
-                "wb", delete=True
+            "wb", delete=True
         ) as output_file:
             # temp_file_name = output_file.name
             actual_size = 0
@@ -480,8 +482,8 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
                 if actual_size > max_file_size:
                     raise web.HTTPBadRequest(
                         text=(
-                                f"file size  reached {actual_size} bytes which exceeds "
-                                + f"the maximum allowed of {max_file_size} bytes"
+                            f"file size  reached {actual_size} bytes which exceeds "
+                            + f"the maximum allowed of {max_file_size} bytes"
                         )
                     )
 
@@ -497,10 +499,10 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
                 await output_file.write(chunk)
 
             async with aiofiles.tempfile.NamedTemporaryFile(
-                    "rb",
-                    delete=False,
-                    dir=os.path.dirname(destination_path.full_path),
-                    prefix=".upload.",
+                "rb",
+                delete=False,
+                dir=os.path.dirname(destination_path.full_path),
+                prefix=".upload.",
             ) as copied_file:
                 shutil.copyfile(output_file.name, copied_file.name)
 
@@ -508,10 +510,10 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
 
     elif save_strategy == UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION:
         async with aiofiles.tempfile.NamedTemporaryFile(
-                "wb",
-                delete=False,
-                dir=os.path.dirname(destination_path.full_path),
-                prefix=".upload.",
+            "wb",
+            delete=False,
+            dir=os.path.dirname(destination_path.full_path),
+            prefix=".upload.",
         ) as output_file:
             temp_file_name = output_file.name
             actual_size = 0
@@ -519,8 +521,8 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
                 if actual_size > max_file_size:
                     raise web.HTTPBadRequest(
                         text=(
-                                f"file size reached {actual_size:,} bytes which exceeds "
-                                + f"the maximum allowed of {max_file_size:,} bytes)"
+                            f"file size reached {actual_size:,} bytes which exceeds "
+                            + f"the maximum allowed of {max_file_size:,} bytes)"
                         )
                     )
 
@@ -589,8 +591,6 @@ async def upload_files_chunked(request: web.Request):
 
     if user_file_part.name != "uploads":
         raise web.HTTPBadRequest(text="must provide uploads in body")
-
-    file_content_length = user_file_part.headers.get("content-length")
 
     filename: str = unquote(user_file_part.filename)
 
@@ -739,11 +739,11 @@ async def decompress(request: web.Request):
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
     if (
-            upper_file_extension == ".tar" and file_extension == ".gz"
+        upper_file_extension == ".tar" and file_extension == ".gz"
     ) or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
     elif upper_file_extension == ".tar" and (
-            file_extension == ".bz" or file_extension == ".bz2"
+        file_extension == ".bz" or file_extension == ".bz2"
     ):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":

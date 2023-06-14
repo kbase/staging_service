@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo "Running server in development..."
 docker compose \

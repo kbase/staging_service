@@ -168,7 +168,7 @@ async def _generate_metadata(path: StagingPath, source: str = None):
 
     size = 0
 
-    md5 = hashlib.md5()
+    md5 = hashlib.md5()  # noqua: S303
     async with aiofiles.open(path.full_path, "rb") as fin:
         while True:
             chunk = await fin.read(READ_BUFFER_SIZE)
@@ -269,10 +269,7 @@ def _determine_source(path: StagingPath):
     currently this works for JGI imported files only
     """
     jgi_path = path.jgi_metadata
-    if (
-        os.path.exists(jgi_path)
-        and os.path.isfile(jgi_path)
-    ):
+    if os.path.exists(jgi_path) and os.path.isfile(jgi_path):
         return "JGI import"
     else:
         return "Unknown"

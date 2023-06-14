@@ -10,6 +10,6 @@ def generate_null_file(size: int, name: str):
     """
     with open(name, "wb") as out:
         bw = io.BufferedWriter(out, 10000000)
-        for i in range(size):
+        for _ in range(size):
             bw.write(b"\0")
         bw.flush()
