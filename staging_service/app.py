@@ -4,35 +4,42 @@ import os
 import shutil
 import sys
 from collections import defaultdict
-from urllib.parse import parse_qs
-from pathlib import Path as PathPy
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlencode, urlunparse
 
+import aiofiles
 import aiohttp_cors
-from aiohttp import web
+from aiohttp import MultipartReader, web
 
-from .app_error_formatter import format_import_spec_errors
+from staging_service.config import (
+    UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION,
+    UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY,
+    get_config, get_max_content_length,
+    get_max_file_size,
+    get_read_chunk_size,
+    get_save_strategy,
+)
 from .AutoDetectUtils import AutoDetectUtils
 from .JGIMetadata import read_metadata_for
-from .auth2Client import KBaseAuth2
+from .app_error_formatter import format_import_spec_errors
+from .autodetect.Mappings import CSV, EXCEL, TSV
 from .globus import assert_globusid_exists, is_globusid
-from .metadata import some_metadata, dir_info, add_upa, similar
-from .utils import Path, run_command, AclManager
 from .import_specifications.file_parser import (
     ErrorType,
     FileTypeResolution,
     parse_import_specifications,
 )
-from .import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel
 from .import_specifications.file_writers import (
-    write_csv,
-    write_tsv,
-    write_excel,
     ImportSpecWriteException,
+    write_csv,
+    write_excel,
+    write_tsv,
 )
-from .autodetect.Mappings import CSV, TSV, EXCEL
+from .import_specifications.individual_parsers import parse_csv, parse_excel, parse_tsv
+from .metadata import add_upa, dir_info, similar, some_metadata
+from .utils import AclManager, StagingPath, auth_client, run_command
 
-
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 routes = web.RouteTableDef()
 VERSION = "1.3.6"
 
@@ -80,21 +87,27 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     if len(file_list) == 0:
         raise web.HTTPBadRequest(
             text=f"must provide file_list field. Your provided qs: {request.query_string}",
-            )
+        )
 
     mappings = AutoDetectUtils.get_mappings(file_list)
     return web.json_response(data=mappings)
 
 
-def _file_type_resolver(path: PathPy) -> FileTypeResolution:
+def _file_type_resolver(path: Path) -> FileTypeResolution:
     fi = AutoDetectUtils.get_mappings([str(path)])["fileinfo"][0]
     # Here we assume that the first entry in the file_ext_type field is the entry
     # we want. Presumably secondary entries are less general.
-    ftype = fi['file_ext_type'][0] if fi['file_ext_type'] else None
+    ftype = fi["file_ext_type"][0] if fi["file_ext_type"] else None
     if ftype in _IMPSPEC_FILE_TO_PARSER:
         return FileTypeResolution(parser=_IMPSPEC_FILE_TO_PARSER[ftype])
     else:
-        ext = fi['suffix'] if fi['suffix'] else path.suffix[1:] if path.suffix else path.name
+        ext = (
+            fi["suffix"]
+            if fi["suffix"]
+            else path.suffix[1:]
+            if path.suffix
+            else path.name
+        )
         return FileTypeResolution(unsupported_type=ext)
 
 
@@ -113,17 +126,22 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     files = [f.strip() for f in files if f.strip()]
     paths = {}
     for f in files:
-        p = Path.validate_path(username, f)
-        paths[PathPy(p.full_path)] = PathPy(p.user_path)
+        p = StagingPath.validate_path(username, f)
+        paths[Path(p.full_path)] = Path(p.user_path)
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     res = parse_import_specifications(
         tuple(list(paths)),
         _file_type_resolver,
-        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e))
+        lambda e: logging.error(
+            "Unexpected error while parsing import specs", exc_info=e
+        ),
+    )
     if res.results:
         types = {dt: result.result for dt, result in res.results.items()}
-        files = {dt: {"file": str(paths[result.source.file]), "tab": result.source.tab}
-            for dt, result in res.results.items()}
+        files = {
+            dt: {"file": str(paths[result.source.file]), "tab": result.source.tab}
+            for dt, result in res.results.items()
+        }
         return web.json_response({"types": types, "files": files})
     errtypes = {e.error for e in res.errors}
     errtext = json.dumps({"errors": format_import_spec_errors(res.errors, paths)})
@@ -168,29 +186,33 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
         # There should be a way to get aiohttp to handle this but I can't find it
         return _createJSONErrorResponse(
             f"Required content-type is {_APP_JSON}",
-            error_class=web.HTTPUnsupportedMediaType)
+            error_class=web.HTTPUnsupportedMediaType,
+        )
     if not request.content_length:
         return _createJSONErrorResponse(
             "The content-length header is required and must be > 0",
-            error_class=web.HTTPLengthRequired)
+            error_class=web.HTTPLengthRequired,
+        )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
     if type(data) != dict:
         return _createJSONErrorResponse("The top level JSON element must be a mapping")
-    folder = data.get('output_directory')
-    type_ = data.get('output_file_type')
+    folder = data.get("output_directory")
+    type_ = data.get("output_file_type")
     if type(folder) != str:
-        return _createJSONErrorResponse("output_directory is required and must be a string")
+        return _createJSONErrorResponse(
+            "output_directory is required and must be a string"
+        )
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
         return _createJSONErrorResponse(f"Invalid output_file_type: {type_}")
-    folder = Path.validate_path(username, folder)
+    folder = StagingPath.validate_path(username, folder)
     os.makedirs(folder.full_path, exist_ok=True)
     try:
-        files = writer(PathPy(folder.full_path), data.get("types"))
+        files = writer(Path(folder.full_path), data.get("types"))
     except ImportSpecWriteException as e:
         return _createJSONErrorResponse(e.args[0])
-    new_files = {ty: str(PathPy(folder.user_path) / files[ty]) for ty in files}
+    new_files = {ty: str(Path(folder.user_path) / files[ty]) for ty in files}
     return web.json_response({"output_file_type": type_, "files_created": new_files})
 
 
@@ -202,8 +224,8 @@ def _createJSONErrorResponse(error_text: str, error_class=web.HTTPBadRequest):
 @routes.get("/add-acl-concierge")
 async def add_acl_concierge(request: web.Request):
     username = await authorize_request(request)
-    user_dir = Path.validate_path(username).full_path
-    concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
+    user_dir = StagingPath.validate_path(username).full_path
+    concierge_path = f"{StagingPath._CONCIERGE_PATH}/{username}/"
     aclm = AclManager()
     result = aclm.add_acl_concierge(
         shared_directory=user_dir, concierge_path=concierge_path
@@ -211,16 +233,20 @@ async def add_acl_concierge(request: web.Request):
     result[
         "msg"
     ] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
-    result[
-        "link"
-    ] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
+
+    params = {"destination_id": aclm.endpoint_id, "destination_path": concierge_path}
+
+    result["link"] = urlunparse(
+        ("https", "app.globus.org", "/file-manager", None, urlencode(params), None)
+    )
+
     return web.json_response(result)
 
 
 @routes.get("/add-acl")
 async def add_acl(request: web.Request):
     username = await authorize_request(request)
-    user_dir = Path.validate_path(username).full_path
+    user_dir = StagingPath.validate_path(username).full_path
     result = AclManager().add_acl(user_dir)
     return web.json_response(result)
 
@@ -228,7 +254,7 @@ async def add_acl(request: web.Request):
 @routes.get("/remove-acl")
 async def remove_acl(request: web.Request):
     username = await authorize_request(request)
-    user_dir = Path.validate_path(username).full_path
+    user_dir = StagingPath.validate_path(username).full_path
     result = AclManager().remove_acl(user_dir)
     return web.json_response(result)
 
@@ -253,14 +279,14 @@ async def file_lifetime(parameter_list):
 async def file_exists(request: web.Request):
     username = await authorize_request(request)
     query = request.match_info["query"]
-    user_dir = Path.validate_path(username)
+    user_dir = StagingPath.validate_path(username)
     try:
         show_hidden = request.query["showHidden"]
         if "true" == show_hidden or "True" == show_hidden:
             show_hidden = True
         else:
             show_hidden = False
-    except KeyError as no_query:
+    except KeyError:
         show_hidden = False
     # this scans the entire directory recursively just to see if one file exists... why?
     results = await dir_info(user_dir, show_hidden, query)
@@ -282,7 +308,9 @@ async def list_files(request: web.Request):
     lists the contents of a directory and some details about them
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info.get("path", ""))
+
+    path = StagingPath.validate_path(username, request.match_info.get("path", ""))
+
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(
             text="path {path} does not exist".format(path=path.user_path)
@@ -291,15 +319,11 @@ async def list_files(request: web.Request):
         raise web.HTTPBadRequest(
             text="{path} is a file not a directory".format(path=path.full_path)
         )
-    try:
-        show_hidden = request.query["showHidden"]
-        if "true" == show_hidden or "True" == show_hidden:
-            show_hidden = True
-        else:
-            show_hidden = False
-    except KeyError as no_query:
-        show_hidden = False
+
+    show_hidden = request.query.get("showHidden", "false").lower() == "true"
+
     data = await dir_info(path, show_hidden, recurse=True)
+
     return web.json_response(data)
 
 
@@ -309,7 +333,7 @@ async def download_files(request: web.Request):
     download a file
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info.get("path", ""))
+    path = StagingPath.validate_path(username, request.match_info.get("path", ""))
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(
             text="path {path} does not exist".format(path=path.user_path)
@@ -330,7 +354,7 @@ async def similar_files(request: web.Request):
     lists similar file path for given file
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(
             text="path {path} does not exist".format(path=path.user_path)
@@ -340,7 +364,7 @@ async def similar_files(request: web.Request):
             text="{path} is a directory not a file".format(path=path.full_path)
         )
 
-    root = Path.validate_path(username, "")
+    root = StagingPath.validate_path(username, "")
     files = await dir_info(root, show_hidden=False, recurse=True)
 
     similar_files = list()
@@ -363,14 +387,14 @@ async def search(request: web.Request):
     """
     username = await authorize_request(request)
     query = request.match_info["query"]
-    user_dir = Path.validate_path(username)
+    user_dir = StagingPath.validate_path(username)
     try:
         show_hidden = request.query["showHidden"]
         if "true" == show_hidden or "True" == show_hidden:
             show_hidden = True
         else:
             show_hidden = False
-    except KeyError as no_query:
+    except KeyError:
         show_hidden = False
     results = await dir_info(user_dir, show_hidden, query)
     results.sort(key=lambda x: x["mtime"], reverse=True)
@@ -384,7 +408,7 @@ async def get_metadata(request: web.Request):
     if it's a folder it returns stat data about the folder
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
         raise web.HTTPNotFound(
             text="path {path} does not exist".format(path=path.user_path)
@@ -398,8 +422,123 @@ async def get_jgi_metadata(request: web.Request):
     returns jgi metadata if associated with a file
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
     return web.json_response(await read_metadata_for(path))
+
+
+def _validate_filename(filename: str):
+    """
+    Ensure that a given filename is acceptable for usage in the staging area.
+
+    Raises http-response appropriate errors if the filename is invalid.
+    """
+    #
+    # TODO: Are these really all the rules for filenames? Or are they just specific to the staging
+    #       area?
+    #       In any case, we should capture this in a separate function - ensure_valid_filename
+    #
+    if filename.lstrip() != filename:
+        raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
+            text="cannot upload file with name beginning with space"
+        )
+
+    if "," in filename:
+        raise web.HTTPForbidden(  # for consistency, we use 403 again
+            text="cannot upload file with ',' in name"
+        )
+
+    # may want to make this configurable if we ever decide to add a hidden files toggle to
+    # the staging area UI
+    if filename.startswith("."):
+        raise web.HTTPForbidden(  # for consistency, we use 403 again
+            text="cannot upload file with name beginning with '.'"
+        )
+
+
+async def _handle_upload_save(stream: MultipartReader, destination_path: StagingPath):
+    """
+    Handles the file upload stream from the /upload endpoint, saving the stream, ultimately,
+    to the given destination path.
+
+    It honors a "save strategy", which is one of a set of defined methods for handling the upload.
+    See the function get_save_strategy() for details.
+
+    It also honors the "chunk size", which is used for reading up to the chunk size from the stream
+    before saving. This constrains memory commitment, especially important for handling large
+    files and concurrent file upload.
+    """
+    save_strategy = get_save_strategy()
+    chunk_size = get_read_chunk_size()
+    max_file_size = get_max_file_size()
+    if save_strategy == UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY:
+        async with aiofiles.tempfile.NamedTemporaryFile(
+                "wb", delete=True
+        ) as output_file:
+            # temp_file_name = output_file.name
+            actual_size = 0
+            while True:
+                if actual_size > max_file_size:
+                    raise web.HTTPBadRequest(
+                        text=(
+                                f"file size  reached {actual_size} bytes which exceeds "
+                                + f"the maximum allowed of {max_file_size} bytes"
+                        )
+                    )
+
+                chunk = await stream.read_chunk(size=chunk_size)
+
+                # Chunk is always a "bytes" object, but will be empty if there is nothing else
+                # to read, which is considered Falsy.
+                if not chunk:
+                    break
+
+                actual_size += len(chunk)
+
+                await output_file.write(chunk)
+
+            async with aiofiles.tempfile.NamedTemporaryFile(
+                    "rb",
+                    delete=False,
+                    dir=os.path.dirname(destination_path.full_path),
+                    prefix=".upload.",
+            ) as copied_file:
+                shutil.copyfile(output_file.name, copied_file.name)
+
+                shutil.move(copied_file.name, destination_path.full_path)
+
+    elif save_strategy == UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION:
+        async with aiofiles.tempfile.NamedTemporaryFile(
+                "wb",
+                delete=False,
+                dir=os.path.dirname(destination_path.full_path),
+                prefix=".upload.",
+        ) as output_file:
+            temp_file_name = output_file.name
+            actual_size = 0
+            while True:
+                if actual_size > max_file_size:
+                    raise web.HTTPBadRequest(
+                        text=(
+                                f"file size reached {actual_size:,} bytes which exceeds "
+                                + f"the maximum allowed of {max_file_size:,} bytes)"
+                        )
+                    )
+
+                # A chunk size of 1MB seems to be a bit faster than the default of 8Kb.
+                chunk = await stream.read_chunk(size=chunk_size)
+
+                # Chunk is always a "bytes" object, but will be empty if there is nothing else
+                # to read, which is considered Falsy.
+                if not chunk:
+                    break
+
+                actual_size += len(chunk)
+
+                await output_file.write(
+                    chunk,
+                )
+
+            shutil.move(temp_file_name, destination_path.full_path)
 
 
 @routes.post("/upload")
@@ -407,71 +546,87 @@ async def upload_files_chunked(request: web.Request):
     """
     uploads a file into the staging area
     """
+    # Ensures the current auth token is valid, and if so, returns the associated username.
+    # If not, will raise an exception
+    # Also, ensures that if there is a Globus account id available in the user's staging
+    # directory, it is valid.
     username = await authorize_request(request)
 
-    if not request.has_body:
-        raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
+    if not request.can_read_body:
+        raise web.HTTPBadRequest(
+            text="must provide destPath and uploads in body",
+        )
+
+    if request.content_length is None:
+        raise web.HTTPBadRequest(text="request must include a 'Content-Length' header")
+
+    max_content_length = get_max_content_length()
+    if request.content_length > max_content_length:
+        raise web.HTTPBadRequest(
+            text=f"overall content length exceeds the maximum allowable of {max_content_length:,} bytes"
+        )
 
     reader = await request.multipart()
-    counter = 0
-    user_file = None
-    destPath = None
-    while (
-        counter < 100
-    ):  # TODO this is arbitrary to keep an attacker from creating infinite loop
-        # This loop handles the null parts that come in inbetween destpath and file
-        part = await reader.next()
 
-        if part.name == "destPath":
-            destPath = await part.text()
-        elif part.name == "uploads":
-            user_file = part
-            break
-        else:
-            counter += 1
+    dest_path_part = await reader.next()
 
-    if not (user_file and destPath):
-        raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
+    #
+    # Get the destination path, which is actually the subdirectory in which the
+    # file should be placed within the user's staging directory.
+    # This field must be first, because the file must come last, in order to
+    # read the file stream.
+    #
+    if dest_path_part.name != "destPath":
+        raise web.HTTPBadRequest(text="must provide destPath in body")
 
-    filename: str = user_file.filename
-    if filename.lstrip() != filename:
-        raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
-            text="cannot upload file with name beginning with space"
-        )
-    if "," in filename:
-        raise web.HTTPForbidden(  # for consistency we use 403 again
-            text="cannot upload file with ',' in name"
-        )
-    # may want to make this configurable if we ever decide to add a hidden files toggle to
-    # the staging area UI
-    if filename.startswith("."):
-        raise web.HTTPForbidden(  # for consistency we use 403 again
-            text="cannot upload file with name beginning with '.'"
-        )
+    destination_directory = await dest_path_part.text()
 
-    size = 0
-    destPath = os.path.join(destPath, filename)
-    path = Path.validate_path(username, destPath)
+    #
+    # Get the upload file part. We read the header bits, the get the
+    # read and save the file stream.
+    #
+    user_file_part = await reader.next()
+
+    if user_file_part.name != "uploads":
+        raise web.HTTPBadRequest(text="must provide uploads in body")
+
+    file_content_length = user_file_part.headers.get("content-length")
+
+    filename: str = unquote(user_file_part.filename)
+
+    _validate_filename(filename)
+
+    destination_path = os.path.join(destination_directory, filename)
+    path = StagingPath.validate_path(username, destination_path)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
-    with open(path.full_path, "wb") as f:  # TODO should we handle partial file uploads?
-        while True:
-            chunk = await user_file.read_chunk()
-            if not chunk:
-                break
-            size += len(chunk)
-            f.write(chunk)
 
+    # NB: errors result in an error response ... but the upload will be
+    # read until the end. This is just built into aiohttp web.
+    # From what I've read, it is considered unstable to have a server close
+    # the request stream if an error is encountered, thus aiohttp invokes the
+    # "release()" method to read the stream to completion, but does nothing with
+    # the results (other than read into the buffer and).
+    # It would require a more sophisticated implementation to work around this.
+    # E.g. an upload stream and a progress stream - they could be plain https
+    # requests - which would allow the progress stream to report errors which would
+    # then abort the upload stream. The upload stream could also spin upon an error,
+    # to avoid the useless bandwidth and cpu usage. This would also work with fetch,
+    # allowing us to ditch XHR.
+    await _handle_upload_save(user_file_part, path)
+
+    # TODO: is this really necessary? Would a write failure possibly get here?
     if not os.path.exists(path.full_path):
-        error_msg = "We are sorry but upload was interrupted. Please try again.".format(
-            path=path.full_path
-        )
+        error_msg = "We are sorry but upload was interrupted. Please try again."
         raise web.HTTPNotFound(text=error_msg)
 
     response = await some_metadata(
         path,
+        # these are fields to include in the result - the metadata stored
+        # in the file system has other fields too.
         desired_fields=["name", "path", "mtime", "size", "isFolder"],
         source="KBase upload",
     )
+
     return web.json_response([response])
 
 
@@ -481,22 +636,22 @@ async def define_UPA(request: web.Request):
     creates an UPA as a field in the metadata file corresponding to the filepath given
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
         raise web.HTTPNotFound(
             text="no file found found on path {}".format(path.user_path)
         )
-    if not request.has_body:
-        raise web.HTTPBadRequest(text="must provide UPA field in body")
+    if not request.can_read_body:
+        raise web.HTTPBadRequest(text="must provide 'UPA' field in body")
     body = await request.post()
     try:
         UPA = body["UPA"]
-    except KeyError as wrong_key:
-        raise web.HTTPBadRequest(text="must provide UPA field in body")
+    except KeyError:
+        raise web.HTTPBadRequest(text="must provide 'UPA' field in body")
     await add_upa(path, UPA)
     return web.Response(
-        text="succesfully updated UPA {UPA} for file {path}".format(
+        text="successfully updated UPA {UPA} for file {path}".format(
             UPA=UPA, path=path.user_path
         )
     )
@@ -508,45 +663,51 @@ async def delete(request: web.Request):
     allows deletion of both directories and files
     """
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
+
     # make sure directory isn't home
     if path.user_path == username:
         raise web.HTTPForbidden(text="cannot delete home directory")
+
     if is_globusid(path, username):
         raise web.HTTPForbidden(text="cannot delete protected file")
+
     if os.path.isfile(path.full_path):
         os.remove(path.full_path)
         if os.path.exists(path.metadata_path):
             os.remove(path.metadata_path)
+
     elif os.path.isdir(path.full_path):
         shutil.rmtree(path.full_path)
         if os.path.exists(path.metadata_path):
             shutil.rmtree(path.metadata_path)
+
     else:
         raise web.HTTPNotFound(
             text="could not delete {path}".format(path=path.user_path)
         )
+
     return web.Response(text="successfully deleted {path}".format(path=path.user_path))
 
 
 @routes.patch("/mv/{path:.+}")
 async def rename(request: web.Request):
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
 
     # make sure directory isn't home
     if path.user_path == username:
         raise web.HTTPForbidden(text="cannot rename or move home directory")
     if is_globusid(path, username):
         raise web.HTTPForbidden(text="cannot rename or move protected file")
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide newPath field in body")
     body = await request.post()
     try:
         new_path = body["newPath"]
-    except KeyError as wrong_key:
+    except KeyError:
         raise web.HTTPBadRequest(text="must provide newPath field in body")
-    new_path = Path.validate_path(username, new_path)
+    new_path = StagingPath.validate_path(username, new_path)
     if os.path.exists(path.full_path):
         if not os.path.exists(new_path.full_path):
             shutil.move(path.full_path, new_path.full_path)
@@ -554,7 +715,7 @@ async def rename(request: web.Request):
                 shutil.move(path.metadata_path, new_path.metadata_path)
         else:
             raise web.HTTPConflict(
-                text="{new_path} allready exists".format(new_path=new_path.user_path)
+                text="{new_path} already exists".format(new_path=new_path.user_path)
             )
     else:
         raise web.HTTPNotFound(text="{path} not found".format(path=path.user_path))
@@ -568,7 +729,7 @@ async def rename(request: web.Request):
 @routes.patch("/decompress/{path:.+}")
 async def decompress(request: web.Request):
     username = await authorize_request(request)
-    path = Path.validate_path(username, request.match_info["path"])
+    path = StagingPath.validate_path(username, request.match_info["path"])
     # make sure the file can be decompressed
     filename, file_extension = os.path.splitext(path.full_path)
     filename, upper_file_extension = os.path.splitext(filename)
@@ -578,11 +739,11 @@ async def decompress(request: web.Request):
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
     if (
-        upper_file_extension == ".tar" and file_extension == ".gz"
+            upper_file_extension == ".tar" and file_extension == ".gz"
     ) or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
     elif upper_file_extension == ".tar" and (
-        file_extension == ".bz" or file_extension == ".bz2"
+            file_extension == ".bz" or file_extension == ".bz2"
     ):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":
@@ -612,7 +773,7 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
-    username = await auth_client.get_user(token)
+    username = await auth_client().get_user(token)
     await assert_globusid_exists(username, token)
     return username
 
@@ -641,17 +802,19 @@ def inject_config_dependencies(config):
             os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
         )
 
-    Path._DATA_DIR = DATA_DIR
-    Path._META_DIR = META_DIR
-    Path._CONCIERGE_PATH = CONCIERGE_PATH
+    StagingPath._DATA_DIR = DATA_DIR
+    StagingPath._META_DIR = META_DIR
+    StagingPath._CONCIERGE_PATH = CONCIERGE_PATH
 
-    if Path._DATA_DIR is None:
+    # TODO: why make these attributes "private" if they are not used that way?
+    #       either provide a static setter method, or make them public, I'd say.
+    if StagingPath._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
 
-    if Path._META_DIR is None:
+    if StagingPath._META_DIR is None:
         raise Exception("Please provide META_DIR in the config file ")
 
-    if Path._CONCIERGE_PATH is None:
+    if StagingPath._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
 
     if FILE_EXTENSION_MAPPINGS is None:
@@ -664,8 +827,8 @@ def inject_config_dependencies(config):
             # if we start using the file ext type array for anything else this might need changes
             filetype = val["file_ext_type"][0]
             extensions[filetype].add(fileext)
-            for m in val['mappings']:
-                datatypes[m['id']].add(filetype)
+            for m in val["mappings"]:
+                datatypes[m["id"]].add(filetype)
         global _DATATYPE_MAPPINGS
         _DATATYPE_MAPPINGS = {
             "datatype_to_filetype": {k: sorted(datatypes[k]) for k in datatypes},
@@ -673,9 +836,13 @@ def inject_config_dependencies(config):
         }
 
 
-def app_factory(config):
+def app_factory():
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
+
+    # TODO: IMO (eap) cors should not be configured here, as this app should
+    #       never be exposed directly to the public. The proxy should control
+    #       the CORS policy.
     cors = aiohttp_cors.setup(
         app,
         defaults={
@@ -688,8 +855,8 @@ def app_factory(config):
     for route in list(app.router.routes()):
         cors.add(route)
 
+    # Saves config values into various global things; see the implementation.
+    config = get_config()
     inject_config_dependencies(config)
 
-    global auth_client
-    auth_client = KBaseAuth2(config["staging_service"]["AUTH_URL"])
     return app
