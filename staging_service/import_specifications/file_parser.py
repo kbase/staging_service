@@ -7,13 +7,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional as O
-from typing import Union
+from typing import Optional, Union
 
-# TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
-from frozendict.core import frozendict
-
-# TODO should get mypy working at some point
+from frozendict import frozendict
 
 PRIMITIVE_TYPE = Union[str, int, float, bool, None]
 
@@ -42,7 +38,7 @@ class SpecificationSource:
     """
 
     file: Path
-    tab: O[str] = None
+    tab: Optional[str] = None
 
     def __post_init__(self):
         if not self.file:
@@ -89,9 +85,9 @@ class Error:
 
     """
     error: ErrorType
-    message: O[str] = None
-    source_1: O[SpecificationSource] = None
-    source_2: O[SpecificationSource] = None
+    message: Optional[str] = None
+    source_1: Optional[SpecificationSource] = None
+    source_2: Optional[SpecificationSource] = None
 
     def __post_init__(self):
         if not self.error:
@@ -150,8 +146,8 @@ class ParseResults:
     parse_import_specifications method to create an instance of this class.
     """
 
-    results: O[frozendict[str, ParseResult]] = None
-    errors: O[tuple[Error, ...]] = None
+    results: Optional[frozendict[str, ParseResult]] = None
+    errors: Optional[tuple[Error, ...]] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -170,8 +166,8 @@ class FileTypeResolution:
     unsupported_type - the file type if the type is not a supported type.
     """
 
-    parser: O[Callable[[Path], ParseResults]] = None
-    unsupported_type: O[str] = None
+    parser: Optional[Callable[[Path], ParseResults]] = None
+    unsupported_type: Optional[str] = None
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor

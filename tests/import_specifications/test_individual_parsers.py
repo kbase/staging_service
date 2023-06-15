@@ -3,8 +3,7 @@ import uuid
 from collections.abc import Callable, Generator
 from pathlib import Path
 
-# TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
-from frozendict.core import frozendict
+from frozendict import frozendict
 from pytest import fixture
 
 from staging_service.import_specifications.individual_parsers import (
@@ -21,9 +20,12 @@ from tests.test_helpers import FileUtil
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
 
+# Most test functions don't have docstrings, and probably never will.
+# pylint: disable=C0116
 
-@fixture(scope="module")
-def temp_dir() -> Generator[Path, None, None]:
+
+@fixture(scope="module", name="temp_dir")
+def temp_dir_fixture() -> Generator[Path, None, None]:
     with FileUtil() as fu:
         childdir = Path(fu.make_dir(str(uuid.uuid4()))).resolve()
 
@@ -50,7 +52,7 @@ def _xsv_parse_success(
 ):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(
             [
                 f"Data type: some_type; Columns: 4; Version: 1{s}{s}{s}\n",
@@ -126,7 +128,7 @@ def _xsv_parse_success_nan_inf(
 ):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(
             [
                 f"Data type: some_nan_type; Columns: 4; Version: 1{s}{s}{s}\n",
@@ -193,7 +195,7 @@ def _xsv_parse_success_with_numeric_headers(
 ):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(
             [
                 "Data type: some_type; Columns: 4; Version: 1\n",
@@ -237,7 +239,7 @@ def _xsv_parse_success_with_internal_and_trailing_empty_lines(
 ):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(
             [
                 "Data type: other_type; Columns: 4; Version: 1\n",
@@ -287,7 +289,7 @@ def _xsv_parse_success_with_internal_and_trailing_empty_lines(
 
 def test_xsv_parse_fail_no_file(temp_dir: Path):
     input_ = temp_dir / str(uuid.uuid4())
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(
             [
                 "Data type: other_type; Columns: 4; Version: 1\n",
@@ -307,7 +309,7 @@ def test_xsv_parse_fail_no_file(temp_dir: Path):
     )
 
 
-def test_xsv_parse_fail_binary_file(temp_dir: Path):
+def test_xsv_parse_fail_binary_file():
     test_file = _TEST_DATA_DIR / "testtabs3full2nodata1empty.xls"
 
     res = parse_csv(test_file)
@@ -353,7 +355,7 @@ def _xsv_parse_fail(
     extension: str = "",
 ):
     input_ = temp_dir / (str(uuid.uuid4()) + extension)
-    with open(input_, "w") as test_file:
+    with open(input_, "w", encoding="utf-8") as test_file:
         test_file.writelines(lines)
 
     res = parser(input_)
@@ -405,7 +407,8 @@ def test_xsv_parse_fail_missing_column_header_entries(temp_dir: Path):
 def test_xsv_parse_fail_missing_data(temp_dir: Path):
     err = "No non-header data in file"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head3\n",
         "Head 1, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
@@ -414,35 +417,40 @@ def test_xsv_parse_fail_missing_data(temp_dir: Path):
 def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
     err = "Incorrect number of items in line 3, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 3, expected 2, got 3"
     lines = [
-        "Data type: foo; Columns: 2; Version: 1\n" "head1\thead2\n",
+        "Data type: foo; Columns: 2; Version: 1\n",
+        "head1\thead2\n",
         "Head 1\tHead 2\tHead 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 2, expected 2, got 3"
     lines = [
-        "Data type: foo; Columns: 2; Version: 1\n" "head1, head2, head3\n",
+        "Data type: foo; Columns: 2; Version: 1\n",
+        "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 2, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1\thead2\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1\thead2\n",
         "Head 1\tHead 2\tHead 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 5, expected 3, got 4"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head 3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head 3\n",
         "Head 1, Head 2, Head 3\n",
         "1, 2, 3\n",
         "1, 2, 3, 4\n",
@@ -452,7 +460,8 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
 
     err = "Incorrect number of items in line 6, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1\thead2\thead 3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1\thead2\thead 3\n",
         "Head 1\tHead 2\tHead 3\n",
         "1\t2\t3\n",
         "1\t2\t3\n",
@@ -465,14 +474,16 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
 def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
     err = "Duplicate header name in row 2: head3"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head3, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head3, head2, head3\n",
         "Head 1, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
     # test with duplicate dual headers
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head3, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head3, head2, head3\n",
         "Head 3, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
@@ -641,7 +652,8 @@ def test_excel_parse_fail_empty_file(temp_dir: Path):
 
 def test_excel_parse_fail_non_excel_file(temp_dir: Path):
     lines = [
-        "Data type: foo; Version: 1\n" "head1, head2, head 3\n",
+        "Data type: foo; Version: 1\n",
+        "head1, head2, head 3\n",
         "Head 1, Head 2, Head 3\n",
         "1, 2, 3\n",
     ]
@@ -683,26 +695,29 @@ def test_excel_parse_fail_headers_only():
 
 def test_excel_parse_fail_colliding_datatypes():
     f = _get_test_file("testdatatypecollisions.xls")
-    l = lambda t: f"Found datatype {t} in multiple tabs"
+
+    def error_message(data_type_name):
+        return f"Found datatype {data_type_name} in multiple tabs"
+
     err = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     _excel_parse_fail(
         f,
         errors=[
             Error(
                 err,
-                l("type2"),
+                error_message("type2"),
                 SpecificationSource(f, "dt2"),
                 SpecificationSource(f, "dt2_2"),
             ),
             Error(
                 err,
-                l("type3"),
+                error_message("type3"),
                 SpecificationSource(f, "dt3"),
                 SpecificationSource(f, "dt3_2"),
             ),
             Error(
                 err,
-                l("type2"),
+                error_message("type2"),
                 SpecificationSource(f, "dt2"),
                 SpecificationSource(f, "dt2_3"),
             ),
@@ -712,12 +727,23 @@ def test_excel_parse_fail_colliding_datatypes():
 
 def test_excel_parse_fail_duplicate_headers():
     f = _get_test_file("testduplicateheaders.xlsx")
-    l = lambda h: f"Duplicate header name in row 2: {h}"
+
+    def error_message(header_name):
+        return f"Duplicate header name in row 2: {header_name}"
+
     _excel_parse_fail(
         f,
         errors=[
-            Error(ErrorType.PARSE_FAIL, l("head1"), SpecificationSource(f, "dt2")),
-            Error(ErrorType.PARSE_FAIL, l("head2"), SpecificationSource(f, "dt3")),
+            Error(
+                ErrorType.PARSE_FAIL,
+                error_message("head1"),
+                SpecificationSource(f, "dt2"),
+            ),
+            Error(
+                ErrorType.PARSE_FAIL,
+                error_message("head2"),
+                SpecificationSource(f, "dt3"),
+            ),
         ],
     )
 

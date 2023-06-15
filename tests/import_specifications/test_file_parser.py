@@ -20,8 +20,12 @@ from staging_service.import_specifications.file_parser import (
 )
 from tests.test_helpers import assert_exception_correct
 
+# some test functions include "SpecificationSource" in the name, which violates
+# snake_case rules, but is meaningful in this context.
+# pylint: disable=C0103
 
-def spcsrc(path: str, tab: Optional[str] = None):
+
+def specification_source(path: str, tab: Optional[str] = None):
     return SpecificationSource(Path(path), tab)
 
 
@@ -84,39 +88,45 @@ def fileTypeResolution_init_fail(
 
 def test_Error_init_w_FILE_NOT_FOUND_success():
     # minimal
-    e = Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo"))
+    e = Error(ErrorType.FILE_NOT_FOUND, source_1=specification_source("foo"))
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message is None
-    assert e.source_1 == spcsrc("foo")
+    assert e.source_1 == specification_source("foo")
     assert e.source_2 is None
 
     # all
-    e = Error(ErrorType.FILE_NOT_FOUND, message="bar", source_1=spcsrc("foo"))
+    e = Error(
+        ErrorType.FILE_NOT_FOUND, message="bar", source_1=specification_source("foo")
+    )
 
     assert e.error == ErrorType.FILE_NOT_FOUND
     assert e.message == "bar"
-    assert e.source_1 == spcsrc("foo")
+    assert e.source_1 == specification_source("foo")
     assert e.source_2 is None
 
 
 def test_Error_init_w_PARSE_FAIL_success():
-    e = Error(ErrorType.PARSE_FAIL, message="foo", source_1=spcsrc("foo2"))
+    e = Error(
+        ErrorType.PARSE_FAIL, message="foo", source_1=specification_source("foo2")
+    )
 
     assert e.error == ErrorType.PARSE_FAIL
     assert e.message == "foo"
-    assert e.source_1 == spcsrc("foo2")
+    assert e.source_1 == specification_source("foo2")
     assert e.source_2 is None
 
 
 def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
     e = Error(
-        ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile")
+        ErrorType.INCORRECT_COLUMN_COUNT,
+        message="42",
+        source_1=specification_source("somefile"),
     )
 
     assert e.error == ErrorType.INCORRECT_COLUMN_COUNT
     assert e.message == "42"
-    assert e.source_1 == spcsrc("somefile")
+    assert e.source_1 == specification_source("somefile")
     assert e.source_2 is None
 
 
@@ -124,14 +134,14 @@ def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
     e = Error(
         ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
         "foo",
-        spcsrc("foo2"),
-        spcsrc("yay"),
+        specification_source("foo2"),
+        specification_source("yay"),
     )
 
     assert e.error == ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     assert e.message == "foo"
-    assert e.source_1 == spcsrc("foo2")
-    assert e.source_2 == spcsrc("yay")
+    assert e.source_1 == specification_source("foo2")
+    assert e.source_2 == specification_source("yay")
 
 
 def test_Error_init_w_NO_FILES_PROVIDED_success():
@@ -153,11 +163,11 @@ def test_Error_init_w_OTHER_success():
     assert e.source_2 is None
 
     # all
-    e = Error(ErrorType.OTHER, message="foo", source_1=spcsrc("wooo"))
+    e = Error(ErrorType.OTHER, message="foo", source_1=specification_source("wooo"))
 
     assert e.error == ErrorType.OTHER
     assert e.message == "foo"
-    assert e.source_1 == spcsrc("wooo")
+    assert e.source_1 == specification_source("wooo")
     assert e.source_2 is None
 
 
@@ -172,11 +182,17 @@ def test_Error_init_fail():
         ValueError("source_1 is required for a FILE_NOT_FOUND error"),
     )
     err = "message, source_1 is required for a PARSE_FAIL error"
-    error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
+    error_init_fail(
+        ErrorType.PARSE_FAIL, None, specification_source("wooo"), None, ValueError(err)
+    )
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
     err = "message, source_1 is required for a INCORRECT_COLUMN_COUNT error"
     error_init_fail(
-        ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err)
+        ErrorType.INCORRECT_COLUMN_COUNT,
+        None,
+        specification_source("whee"),
+        None,
+        ValueError(err),
     )
     error_init_fail(
         ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err)
@@ -187,9 +203,15 @@ def test_Error_init_fail():
         + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
     )
     error_init_fail(ms, None, None, None, ValueError(err))
-    error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
-    error_init_fail(ms, "msg", None, spcsrc("bar"), ValueError(err))
-    error_init_fail(ms, "msg", spcsrc("foo"), None, ValueError(err))
+    error_init_fail(
+        ms,
+        None,
+        specification_source("foo"),
+        specification_source("bar"),
+        ValueError(err),
+    )
+    error_init_fail(ms, "msg", None, specification_source("bar"), ValueError(err))
+    error_init_fail(ms, "msg", specification_source("foo"), None, ValueError(err))
     error_init_fail(
         ErrorType.OTHER,
         None,
@@ -212,9 +234,9 @@ def error_init_fail(
 
 
 def test_ParseResult_init_success():
-    pr = ParseResult(spcsrc("bar"), (frozendict({"foo": "bar"}),))
+    pr = ParseResult(specification_source("bar"), (frozendict({"foo": "bar"}),))
 
-    assert pr.source == spcsrc("bar")
+    assert pr.source == specification_source("bar")
     assert pr.result == (frozendict({"foo": "bar"}),)
 
 
@@ -223,7 +245,9 @@ def test_ParseResult_init_fail():
     parseResult_init_fail(
         None, (frozendict({"foo": "bar"}),), ValueError("source is required")
     )
-    parseResult_init_fail(spcsrc("foo"), None, ValueError("result is required"))
+    parseResult_init_fail(
+        specification_source("foo"), None, ValueError("result is required")
+    )
 
 
 def parseResult_init_fail(
@@ -239,7 +263,7 @@ def parseResult_init_fail(
 PR_RESULTS = frozendict(
     {
         "data_type": ParseResult(
-            spcsrc("some_file", "tab"),
+            specification_source("some_file", "tab"),
             (frozendict({"fasta_file": "foo.fa", "do_thing": 1}),),  # make a tuple!
         )
     }
@@ -247,7 +271,11 @@ PR_RESULTS = frozendict(
 
 PR_ERROR = (
     Error(ErrorType.OTHER, message="foo"),
-    Error(ErrorType.PARSE_FAIL, message="bar", source_1=spcsrc("some_file", "tab3")),
+    Error(
+        ErrorType.PARSE_FAIL,
+        message="bar",
+        source_1=specification_source("some_file", "tab3"),
+    ),
 )
 
 
@@ -306,11 +334,11 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    spcsrc("myfile.xlsx", "tab1"),
+                    specification_source("myfile.xlsx", "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(
-                    spcsrc("myfile.xlsx", "tab2"),
+                    specification_source("myfile.xlsx", "tab2"),
                     (frozendict({"whee": "whoo"}),),  # tuple!
                 ),
             }
@@ -321,7 +349,7 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type_other": ParseResult(
-                    spcsrc("somefile.csv"),
+                    specification_source("somefile.csv"),
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 )
             }
@@ -336,15 +364,15 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    spcsrc("myfile.xlsx", "tab1"),
+                    specification_source("myfile.xlsx", "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(
-                    spcsrc("myfile.xlsx", "tab2"),
+                    specification_source("myfile.xlsx", "tab2"),
                     (frozendict({"whee": "whoo"}),),  # tuple!
                 ),
                 "type_other": ParseResult(
-                    spcsrc("somefile.csv"),
+                    specification_source("somefile.csv"),
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 ),
             }
@@ -406,12 +434,20 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
         errors=tuple(
             [
                 Error(ErrorType.OTHER, "foo"),
-                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv")),
+                Error(
+                    ErrorType.FILE_NOT_FOUND, source_1=specification_source("foo.csv")
+                ),
             ]
         )
     )
     parser2.return_value = ParseResults(
-        frozendict({"foo": ParseResult(spcsrc("a"), tuple([frozendict({"a": "b"})]))})
+        frozendict(
+            {
+                "foo": ParseResult(
+                    specification_source("a"), tuple([frozendict({"a": "b"})])
+                )
+            }
+        )
     )
 
     res = parse_import_specifications(
@@ -422,11 +458,13 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
         errors=tuple(
             [
                 Error(ErrorType.OTHER, "foo"),
-                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv")),
+                Error(
+                    ErrorType.FILE_NOT_FOUND, source_1=specification_source("foo.csv")
+                ),
                 Error(
                     ErrorType.PARSE_FAIL,
                     "JPEG is not a supported file type for import specifications",
-                    spcsrc(Path("x.jpeg")),
+                    specification_source("x.jpeg"),
                 ),
             ]
         )
@@ -463,25 +501,40 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         errors=tuple(
             [
                 Error(ErrorType.OTHER, "other"),
-                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx")),
+                Error(
+                    ErrorType.FILE_NOT_FOUND,
+                    source_1=specification_source("myfile.xlsx"),
+                ),
             ]
         )
     )
     parser2.return_value = ParseResults(
         frozendict(
             {
-                "foo": ParseResult(spcsrc("a1"), tuple([frozendict({"a": "b"})])),
-                "bar": ParseResult(spcsrc("b1"), tuple([frozendict({"a": "b"})])),
-                "baz": ParseResult(spcsrc("c1"), tuple([frozendict({"a": "b"})])),
+                "foo": ParseResult(
+                    specification_source("a1"), tuple([frozendict({"a": "b"})])
+                ),
+                "bar": ParseResult(
+                    specification_source("b1"), tuple([frozendict({"a": "b"})])
+                ),
+                "baz": ParseResult(
+                    specification_source("c1"), tuple([frozendict({"a": "b"})])
+                ),
             },
         )
     )
     parser3.return_value = ParseResults(
         frozendict(
             {
-                "foo2": ParseResult(spcsrc("a2"), tuple([frozendict({"a": "b"})])),
-                "bar": ParseResult(spcsrc("b2"), tuple([frozendict({"a": "b"})])),
-                "baz": ParseResult(spcsrc("c2"), tuple([frozendict({"a": "b"})])),
+                "foo2": ParseResult(
+                    specification_source("a2"), tuple([frozendict({"a": "b"})])
+                ),
+                "bar": ParseResult(
+                    specification_source("b2"), tuple([frozendict({"a": "b"})])
+                ),
+                "baz": ParseResult(
+                    specification_source("c2"), tuple([frozendict({"a": "b"})])
+                ),
             },
         )
     )
@@ -494,18 +547,21 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         errors=tuple(
             [
                 Error(ErrorType.OTHER, "other"),
-                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx")),
+                Error(
+                    ErrorType.FILE_NOT_FOUND,
+                    source_1=specification_source("myfile.xlsx"),
+                ),
                 Error(
                     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
                     "Data type bar appears in two importer specification sources",
-                    spcsrc("b1"),
-                    spcsrc("b2"),
+                    specification_source("b1"),
+                    specification_source("b2"),
                 ),
                 Error(
                     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
                     "Data type baz appears in two importer specification sources",
-                    spcsrc("c1"),
-                    spcsrc("c2"),
+                    specification_source("c1"),
+                    specification_source("c2"),
                 ),
             ]
         )

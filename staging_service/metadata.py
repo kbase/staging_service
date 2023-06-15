@@ -14,6 +14,7 @@ encoder = JSONEncoder()
 
 READ_BUFFER_SIZE = buffer_size = 1 * 1000 * 1000
 FILE_SNIPPET_SIZE = 1024
+NOT_TEXT_FILE_VALUE = "not a text file"
 
 
 async def stat_data(path: StagingPath) -> dict:
@@ -51,7 +52,7 @@ def _file_read_from_tail(file_path):
             return file.read()
         except UnicodeError:
             # Note that this string propagates all the way to the ui.
-            return "not a text file"
+            return NOT_TEXT_FILE_VALUE
 
 
 def _file_read_from_head(file_path):
@@ -69,7 +70,7 @@ def _file_read_from_head(file_path):
             return file.read(FILE_SNIPPET_SIZE)
         except UnicodeError:
             # Note that this string propagates all the way to the ui.
-            return "not a text file"
+            return NOT_TEXT_FILE_VALUE
 
 
 async def _read_metadata(metadata_path: str):
