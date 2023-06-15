@@ -6,7 +6,7 @@ import csv
 import math
 import re
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Tuple, Union
 
 import magic
 import pandas
@@ -173,20 +173,28 @@ def _normalize_headers(
 
 
 def _parse_xsv(path: Path, sep: str) -> ParseResults:
-    spcsrc = SpecificationSource(path)
+    specification_source = SpecificationSource(path)
     try:
         filetype = magic.from_file(str(path), mime=True)
         if filetype not in _MAGIC_TEXT_FILES:
             return _error(
-                Error(ErrorType.PARSE_FAIL, "Not a text file: " + filetype, spcsrc)
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Not a text file: " + filetype,
+                    specification_source,
+                )
             )
-        with open(path, newline="") as input_:
+        with open(path, newline="", encoding="utf-8") as input_:
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
-            dthd = _csv_next(rdr, 1, None, spcsrc, "Missing data type / version header")
-            datatype, columns = _parse_header(dthd[0], spcsrc, _VERSION)
-            hd1 = _csv_next(rdr, 2, columns, spcsrc, "Missing 2nd header line")
-            param_ids = _normalize_headers(hd1, 2, spcsrc)
-            _csv_next(rdr, 3, columns, spcsrc, "Missing 3rd header line")
+            dthd = _csv_next(
+                rdr, 1, None, specification_source, "Missing data type / version header"
+            )
+            datatype, columns = _parse_header(dthd[0], specification_source, _VERSION)
+            hd1 = _csv_next(
+                rdr, 2, columns, specification_source, "Missing 2nd header line"
+            )
+            param_ids = _normalize_headers(hd1, 2, specification_source)
+            _csv_next(rdr, 3, columns, specification_source, "Missing 3rd header line")
             results = []
             for i, row in enumerate(rdr, start=4):
                 if row:  # skip empty rows
@@ -198,7 +206,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                                 ErrorType.INCORRECT_COLUMN_COUNT,
                                 f"Incorrect number of items in line {i}, "
                                 + f"expected {columns}, got {len(row)}",
-                                spcsrc,
+                                specification_source,
                             )
                         )
                     results.append(
@@ -211,14 +219,24 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                     )
         if not results:
             raise _ParseException(
-                Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc)
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "No non-header data in file",
+                    specification_source,
+                )
             )
-        return ParseResults(frozendict({datatype: ParseResult(spcsrc, tuple(results))}))
+        return ParseResults(
+            frozendict({datatype: ParseResult(specification_source, tuple(results))})
+        )
     except FileNotFoundError:
-        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=specification_source))
     except IsADirectoryError:
         return _error(
-            Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc)
+            Error(
+                ErrorType.PARSE_FAIL,
+                "The given path is a directory",
+                specification_source,
+            )
         )
     except _ParseException as e:
         return _error(e.args[0])
@@ -235,7 +253,10 @@ def parse_tsv(path: Path) -> ParseResults:
 
 
 def _process_excel_row(
-    row: tuple[Any], rownum: int, expected_columns: int, spcsrc: SpecificationSource
+    row: tuple[Any],
+    rownum: int,
+    expected_columns: int,
+    specification_source: SpecificationSource,
 ) -> list[Any]:
     while len(row) > expected_columns:
         if pandas.isna(row[-1]):  # inefficient, but premature optimization...
@@ -246,38 +267,40 @@ def _process_excel_row(
                     ErrorType.INCORRECT_COLUMN_COUNT,
                     f"Incorrect number of items in line {rownum}, "
                     + f"expected {expected_columns}, got {len(row)}",
-                    spcsrc,
+                    specification_source,
                 )
             )
     return row
 
 
 def _process_excel_tab(
-    excel: pandas.ExcelFile, spcsrc: SpecificationSource
-) -> (Optional[str], Optional[ParseResult]):
+    excel: pandas.ExcelFile, specification_source: SpecificationSource
+) -> Tuple[Optional[str], Optional[ParseResult]]:
     df = excel.parse(
-        sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False
+        sheet_name=specification_source.tab,
+        na_values=_EXCEL_MISSING_VALUES,
+        keep_default_na=False,
     )
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)
     # at this point we know that at least 4 lines are present - expecting the data type header,
     # parameter ID header, display name header, and at least one data row
     header = df.columns.get_level_values(0)[0]
-    datatype, columns = _parse_header(header, spcsrc, _VERSION)
+    datatype, columns = _parse_header(header, specification_source, _VERSION)
     it = df.itertuples(index=False, name=None)
-    hd1 = _process_excel_row(next(it), 2, columns, spcsrc)
-    param_ids = _normalize_headers(hd1, 2, spcsrc)
-    _process_excel_row(next(it), 3, columns, spcsrc)
+    hd1 = _process_excel_row(next(it), 2, columns, specification_source)
+    param_ids = _normalize_headers(hd1, 2, specification_source)
+    _process_excel_row(next(it), 3, columns, specification_source)
     results = []
     for i, row in enumerate(it, start=4):
-        row = _process_excel_row(row, i, columns, spcsrc)
+        row = _process_excel_row(row, i, columns, specification_source)
         if any(map(lambda x: not pandas.isna(x), row)):  # skip empty rows
             results.append(
                 frozendict(
                     {param_ids[j]: _normalize_pandas(row[j]) for j in range(len(row))}
                 )
             )
-    return datatype, ParseResult(spcsrc, tuple(results))
+    return datatype, ParseResult(specification_source, tuple(results))
 
 
 def parse_excel(path: Path) -> ParseResults:

@@ -23,6 +23,7 @@ from tests.test_helpers import assert_exception_correct
 # some test functions include "SpecificationSource" in the name, which violates
 # snake_case rules, but is meaningful in this context.
 # pylint: disable=C0103
+# pylint: disable=C0116
 
 
 def specification_source(path: str, tab: Optional[str] = None):
@@ -55,10 +56,12 @@ def specificationSource_init_fail(file_: Optional[str], expected: Exception):
 
 
 def test_FileTypeResolution_init_w_parser_success():
-    p = lambda path: ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
-    ftr = FileTypeResolution(p)
+    def parser(_: str):
+        return ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
 
-    assert ftr.parser is p  # Here only identity equality makes sense
+    ftr = FileTypeResolution(parser)
+
+    assert ftr.parser is parser  # Here only identity equality makes sense
     assert ftr.unsupported_type is None
 
 

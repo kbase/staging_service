@@ -358,7 +358,7 @@ async def test_metadata(get_user):
 
 @pytest.mark.asyncio
 @patch("staging_service.auth2Client.KBaseAuth2.get_user")
-async def test_define_UPA(get_user):
+async def test_define_UPA(get_user):  # pylint: disable=C0103
     txt = "testing text\n"
     username = "testuser"
     get_user.return_value = username

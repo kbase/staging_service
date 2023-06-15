@@ -8,6 +8,8 @@ Mappings = dict[str, Any]
 
 MappingsConfig = dict[str, Mappings]
 
+# pylint: disable=C0115,C0116
+
 
 class AutoDetectUtils:
     _MAPPINGS: None | dict[str, Any] = None  # expects to be set by config
@@ -21,10 +23,6 @@ class AutoDetectUtils:
         if cls._MAPPINGS is not None:
             return True
         return False
-
-    # @classmethod
-    # def get_mappings(cls) -> dict[str, Any]:
-    #     return cls._MAPPINGS
 
     @classmethod
     def get_mappings_by_extension(cls, extension: str):

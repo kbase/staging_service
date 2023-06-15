@@ -305,8 +305,6 @@ async def dir_info(
         elif entry.is_file():
             if query == "" or specific_path.user_path.find(query) != -1:
                 metadata, file_stats = await _ensure_metadata(specific_path)
-                # data = await stat_data(specific_path)
-                # data["source"] = await _only_source(specific_path)
                 file_stats["source"] = metadata["source"]
                 response.append(file_stats)
 
