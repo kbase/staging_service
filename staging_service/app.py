@@ -11,32 +11,23 @@ import aiofiles
 import aiohttp_cors
 from aiohttp import MultipartReader, web
 
-from staging_service.config import (
-    UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION,
-    UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY,
-    get_config,
-    get_max_content_length,
-    get_max_file_size,
-    get_read_chunk_size,
-    get_save_strategy,
-)
+from staging_service.config import (UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION,
+                                    UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY,
+                                    get_config, get_max_content_length,
+                                    get_max_file_size, get_read_chunk_size,
+                                    get_save_strategy)
 
 from .app_error_formatter import format_import_spec_errors
 from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
-from .import_specifications.file_parser import (
-    ErrorType,
-    FileTypeResolution,
-    parse_import_specifications,
-)
-from .import_specifications.file_writers import (
-    ImportSpecWriteException,
-    write_csv,
-    write_excel,
-    write_tsv,
-)
-from .import_specifications.individual_parsers import parse_csv, parse_excel, parse_tsv
+from .import_specifications.file_parser import (ErrorType, FileTypeResolution,
+                                                parse_import_specifications)
+from .import_specifications.file_writers import (ImportSpecWriteException,
+                                                 write_csv, write_excel,
+                                                 write_tsv)
+from .import_specifications.individual_parsers import (parse_csv, parse_excel,
+                                                       parse_tsv)
 from .JGIMetadata import read_metadata_for
 from .metadata import add_upa, dir_info, similar, some_metadata
 from .utils import AclManager, StagingPath, auth_client, run_command
@@ -274,7 +265,7 @@ async def test_auth(request: web.Request):
 
 
 @routes.get("/file-lifetime")
-async def file_lifetime(parameter_list):
+async def file_lifetime(_: web.Request):
     return web.Response(text=os.environ["FILE_LIFETIME"])
 
 
