@@ -12,6 +12,7 @@ from aiohttp import web
 from pytest import fixture, raises
 
 from staging_service.metadata import (
+    FILE_SNIPPET_SIZE,
     _determine_source,
     _file_read_from_head,
     _file_read_from_tail,
@@ -257,15 +258,7 @@ def temp_dir2() -> Generator[Path, None, None]:
 
 
 def make_random_string(string_length: str) -> str:
-    possible_letters = string.ascii_letters
-    return "".join(random.choice(possible_letters) for i in range(string_length))
-
-
-def make_random_non_text_bytes(string_length: str) -> bytes:
-    """
-    We consider non-text to be invalid utf-8, or unicode
-    control characters other than 9, 10, 10.
-    """
+    random.seed(42)
     possible_letters = string.ascii_letters
     return "".join(random.choice(possible_letters) for i in range(string_length))
 
@@ -276,11 +269,11 @@ def test_read_from_head_happy(tmp_path: Path):
     """
     cases = [1, 10, 100, 1000, 10000, 100000]
     # we just happen to know this from metadata.py...
-    snippet_length = 1024
+    snippet_length = FILE_SNIPPET_SIZE
     for case in cases:
         file_path = os.path.join(tmp_path, "foo.txt")
         file_content = make_random_string(case)
-        with open(file_path, "w") as output_file:
+        with open(file_path, "w", encoding="utf-8") as output_file:
             output_file.write(file_content)
         snippet = _file_read_from_head(file_path)
         assert snippet == file_content[:snippet_length]
@@ -292,11 +285,11 @@ def test_read_from_tail_happy(tmp_path: Path):
     """
     cases = [1, 10, 100, 1000, 10000, 100000]
     # we just happen to know this from metadata.py...
-    snippet_length = 1024
+    snippet_length = FILE_SNIPPET_SIZE
     for case in cases:
         file_path = os.path.join(tmp_path, "foo.txt")
         file_content = make_random_string(case)
-        with open(file_path, "w") as output_file:
+        with open(file_path, "w", encoding="utf-8") as output_file:
             output_file.write(file_content)
         snippet = _file_read_from_tail(file_path)
         assert snippet == file_content[-snippet_length:]
