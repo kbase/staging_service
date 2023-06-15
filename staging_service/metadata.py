@@ -12,8 +12,10 @@ from .utils import StagingPath
 decoder = JSONDecoder()
 encoder = JSONEncoder()
 
-READ_BUFFER_SIZE = buffer_size = 1 * 1000 * 1000
+READ_BUFFER_SIZE = 1 * 1000 * 1000
 FILE_SNIPPET_SIZE = 1024
+
+# Set as the value for snippets for a non-text file
 NOT_TEXT_FILE_VALUE = "not a text file"
 
 
@@ -137,19 +139,16 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     file_stats = os.stat(path.full_path)
     additional_metadata["mtime"] = int(file_stats.st_mtime * 1000)
 
-    # If source is missing (why would that be?), supply it with the one
+    # If source is missing (why woudld that be?), supply it with the one
     # provided, or attempt to determine it.
-    if "source" not in existing_metadata:
-        if source is None:
-            source = _determine_source(path)
-            additional_metadata["source"] = source
+    if "source" not in existing_metadata and source is None:
+        source = _determine_source(path)
+        additional_metadata["source"] = source
 
     metadata = existing_metadata | additional_metadata
 
-    #
     # We want to know, roughly, if this is a text file or not ("binary");
     # setting to true initially is just part of the logic in the loop below.
-    #
     is_text = True
 
     # A word on counting lines. We simply count line endings. With a catch.
@@ -162,9 +161,7 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     # Keeping the previous chunk of bytes read from the file is necessary for accurate
     # line counting.
     last_chunk_read = None
-
     chunk_count = 0
-
     size = 0
 
     md5 = hashlib.md5()  # noqua: S303
@@ -172,31 +169,20 @@ async def _generate_metadata(path: StagingPath, source: str = None):
         while True:
             chunk = await fin.read(READ_BUFFER_SIZE)
 
-            #
             # If attempt to read past end of file, a 0-length bytes is returned
-            #
             if len(chunk) == 0:
                 break
 
             last_chunk_read = chunk
-
             size += len(chunk)
-
             chunk_count += 1
-
             md5.update(chunk)
 
-            #
             # We use the first chunk to determine if the file is valid utf-8 text.
             # The first chunk is 1MB, so this should be safe.
-            #
             if chunk_count == 1:
                 is_text = is_text_string(chunk)
 
-            #
-            # Let us not waste time counting lines if we already think this is not
-            # text.
-            #
             if is_text:
                 line_count += chunk.count(b"\n")
 
@@ -207,19 +193,16 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     if last_chunk_read is not None and last_chunk_read[-1] != ord(b"\n"):
         line_count += 1
 
-    if is_text:
-        metadata["lineCount"] = line_count
-    else:
-        metadata["lineCount"] = None
+    metadata["lineCount"] = line_count if is_text else None
 
     metadata["md5"] = md5.hexdigest()
 
-    if is_text:
-        metadata["head"] = _file_read_from_head(path.full_path)
-        metadata["tail"] = _file_read_from_tail(path.full_path)
-    else:
-        metadata["head"] = "not a text file"
-        metadata["tail"] = "not a text file"
+    metadata["head"] = (
+        _file_read_from_head(path.full_path) if is_text else NOT_TEXT_FILE_VALUE
+    )
+    metadata["tail"] = (
+        _file_read_from_tail(path.full_path) if is_text else NOT_TEXT_FILE_VALUE
+    )
 
     # Save metadata file
     await _save_metadata(path, metadata)
