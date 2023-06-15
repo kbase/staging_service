@@ -23,9 +23,14 @@ import staging_service.app as app
 import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
-from tests.test_helpers import (DATA_DIR, META_DIR, FileUtil,
-                                assert_file_contents, bootstrap,
-                                check_excel_contents)
+from tests.test_helpers import (
+    DATA_DIR,
+    META_DIR,
+    FileUtil,
+    assert_file_contents,
+    bootstrap,
+    check_excel_contents,
+)
 
 if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
     bootstrap()
@@ -358,15 +363,15 @@ async def test_metadata(get_user):
 
 @pytest.mark.asyncio
 @patch("staging_service.auth2Client.KBaseAuth2.get_user")
-async def test_define_UPA(get_user):  # pylint: disable=C0103
+async def test_define_upa(get_user):
     txt = "testing text\n"
     username = "testuser"
     get_user.return_value = username
 
     async with AppClient() as cli:
-        with FileUtil() as fs:
-            fs.make_dir(os.path.join(username, "test"))
-            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+        with FileUtil() as file_util:
+            file_util.make_dir(os.path.join(username, "test"))
+            file_util.make_file(os.path.join(username, "test", "test_file_1"), txt)
             # generating metadata file
             res1 = await cli.get(
                 os.path.join("metadata", "test", "test_file_1"),

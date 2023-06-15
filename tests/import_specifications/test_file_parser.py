@@ -46,10 +46,10 @@ def test_SpecificationSource_init_success():
 
 def test_SpecificationSource_init_fail():
     # could inline this, but might as well follow the same pattern as all the other tests
-    specificationSource_init_fail(None, ValueError("file is required"))
+    assert_SpecificationSource_init_fail(None, ValueError("file is required"))
 
 
-def specificationSource_init_fail(file_: Optional[str], expected: Exception):
+def assert_SpecificationSource_init_fail(file_: Optional[str], expected: Exception):
     with raises(Exception) as got:
         SpecificationSource(file_)
     assert_exception_correct(got.value, expected)
