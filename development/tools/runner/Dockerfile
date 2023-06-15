@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 SHELL ["/bin/bash", "-c"]
 
-RUN mkdir -p /app && chmod -R a+rw /app
+RUN mkdir -p /app
 
 WORKDIR /app
 
@@ -15,10 +15,12 @@ WORKDIR /app
 COPY ./requirements.txt /app/requirements.txt
 RUN python -m pip install "pip==23.1.2" && pip install -r /app/requirements.txt
 
-COPY ./globus.cfg /etc/globus.cfg
-RUN touch /var/log/globus.log && chmod 777 /var/log/globus.log    
-
 ENV PATH="/app:${PATH}"
+
+# Run as a regular user, not root.
+RUN addgroup --system kbapp && \
+    adduser --system --ingroup kbapp kbapp && \
+    chown -R kbapp:kbapp /app
 
 ENTRYPOINT [ "/app/development/tools/runner/entrypoint.sh" ]
 
