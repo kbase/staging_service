@@ -50,8 +50,7 @@ def _file_read_from_tail(file_path):
         try:
             return file.read()
         except UnicodeError:
-            # TODO: should just return None, and let the
-            # ui determine the message.
+            # Note that this string propagates all the way to the ui.
             return "not a text file"
 
 
@@ -69,8 +68,7 @@ def _file_read_from_head(file_path):
         try:
             return file.read(FILE_SNIPPET_SIZE)
         except UnicodeError:
-            # TODO: should just return None, and let the
-            # ui determine the message.
+            # Note that this string propagates all the way to the ui.
             return "not a text file"
 
 
@@ -382,8 +380,6 @@ async def some_metadata(path: StagingPath, desired_fields=False, source=None):
         try:
             result[key] = data[key]
         except KeyError as no_data:
-            raise web.HTTPBadRequest(
-                text="no data exists for key {key}".format(key=no_data.args)
-            )  # TODO check this exception message
+            raise web.HTTPBadRequest(text=f"no data exists for key {no_data.args}")
 
     return result

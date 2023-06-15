@@ -23,8 +23,13 @@ from staging_service.utils import StagingPath
 from tests.test_helpers import FileUtil
 
 
-@fixture(scope="function")
-def temp_dir() -> Generator[Path, None, None]:
+@fixture(scope="function", name="temp_dir")
+def temp_dir_fixture() -> Generator[Path, None, None]:
+    """
+    A fixture to generate a unique subdirectory within the DATA_DIR
+    directory set in the test configuration (which defaults to the "data"
+    directory in the root of the repo)
+    """
     with FileUtil() as fu:
         childdir = Path(fu.make_dir(str(uuid.uuid4()))).resolve()
 
@@ -57,9 +62,10 @@ async def _incomplete_metadata_file_update(temp_dir, metadict, source):
         "super_fake_jgi_path",
     )
 
-    with open(target.full_path, "w") as p:
+    with open(target.full_path, "w", encoding="utf-8") as p:
         p.writelines(make_test_lines(1, 6))
-    with open(target.metadata_path, "w") as p:
+
+    with open(target.metadata_path, "w", encoding="utf-8") as p:
         p.write(json.dumps(metadict))
 
     res = await some_metadata(target)
@@ -138,7 +144,7 @@ async def test_determine_source_jgi_metadata_source_exists(temp_dir: Path):
 
     # In this test, the actual data doesn't matter, just the
     # fact that a file exists.
-    with open(staging_path.jgi_metadata, "w") as data_file:
+    with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write("foo")
 
     assert _determine_source(staging_path) == "JGI import"
@@ -177,7 +183,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical(temp_dir: Path):
     file_path = "foo.bar"
     filename_base = os.path.basename(file_path)
     staging_path = _create_validated_staging_path(temp_dir, file_path)
-    with open(staging_path.jgi_metadata, "w") as data_file:
+    with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
     assert _determine_source(staging_path) == "JGI import"
@@ -190,7 +196,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical_subdir(temp_dir: 
     file_path = "some/foo.bar"
     filename_base = os.path.basename(file_path)
     staging_path = _create_validated_staging_path(temp_dir, file_path)
-    with open(staging_path.jgi_metadata, "w") as data_file:
+    with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
     assert _determine_source(staging_path) == "JGI import"
@@ -205,7 +211,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical_deepsubdir(
     file_path = "some/deep/dark/scary/foo.bar"
     filename_base = os.path.basename(file_path)
     staging_path = _create_validated_staging_path(temp_dir, file_path)
-    with open(staging_path.jgi_metadata, "w") as data_file:
+    with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
     assert _determine_source(staging_path) == "JGI import"
@@ -338,7 +344,7 @@ async def test_invalid_desired_fields(temp_dir: Path):
         "",
     )
 
-    with open(staging_path.full_path, "w") as p:
+    with open(staging_path.full_path, "w", encoding="utf-8") as p:
         p.write("foo")
 
     with raises(web.HTTPBadRequest) as ex:

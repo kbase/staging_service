@@ -4,15 +4,16 @@ import json
 import logging
 import os
 
-from staging_service.auth2Client import KBaseAuth2
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
 
+from staging_service.auth2Client import KBaseAuth2
 from staging_service.config import get_config
 
 
 def auth_client():
     return KBaseAuth2(get_config()["staging_service"]["AUTH_URL"])
+
 
 async def run_command(*args):
     """Run command in subprocess

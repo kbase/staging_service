@@ -23,13 +23,8 @@ import staging_service.app as app
 import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
-from tests.test_helpers import (
-    DATA_DIR,
-    META_DIR,
-    FileUtil,
-    check_excel_contents,
-    check_file_contents,
-)
+from tests.test_helpers import (DATA_DIR, META_DIR, FileUtil,
+                                check_excel_contents, check_file_contents)
 
 if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
     from tests.test_helpers import bootstrap
@@ -1104,7 +1099,7 @@ async def test_bulk_specification_success(get_user):
             fu.make_dir(f"{username}/somefolder")
             base = Path(fu.base_dir) / username
             tsv = "genomes.tsv"
-            with open(base / tsv, "w") as f:
+            with open(base / tsv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1115,7 +1110,7 @@ async def test_bulk_specification_success(get_user):
                     ]
                 )
             csv = "somefolder/breakfastcereals.csv"
-            with open(base / csv, "w") as f:
+            with open(base / csv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1207,7 +1202,7 @@ async def test_bulk_specification_fail_not_found(get_user):
             fu.make_dir(f"{username}/otherfolder")
             base = Path(fu.base_dir) / username
             tsv = "otherfolder/genomes.tsv"
-            with open(base / tsv, "w") as f:
+            with open(base / tsv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1241,7 +1236,7 @@ async def test_bulk_specification_fail_parse_fail(get_user):
             base = Path(fu.base_dir) / username
             tsv = "otherfolder/genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w") as f:
+            with open(base / tsv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1252,7 +1247,7 @@ async def test_bulk_specification_fail_parse_fail(get_user):
                 )
             csv = "otherfolder/thing.csv"
             # this one has a misspelling in the header
-            with open(base / csv, "w") as f:
+            with open(base / csv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1352,7 +1347,7 @@ async def test_bulk_specification_fail_column_count(get_user):
             base = Path(fu.base_dir) / username
             tsv = "genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w") as f:
+            with open(base / tsv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1363,7 +1358,7 @@ async def test_bulk_specification_fail_column_count(get_user):
                 )
             csv = "thing.csv"
             # this one is missing a column in the last row
-            with open(base / csv, "w") as f:
+            with open(base / csv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1427,7 +1422,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type(get_user):
             base = Path(fu.base_dir) / username
             tsv = "genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w") as f:
+            with open(base / tsv, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
@@ -1438,7 +1433,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type(get_user):
                 )
             csv1 = "thing.csv"
             # this is the first of the breakfastcereals data sources, so fine
-            with open(base / csv1, "w") as f:
+            with open(base / csv1, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
@@ -1449,7 +1444,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type(get_user):
                 )
             csv2 = "thing2.csv"
             # this data type is also breakfastcereals, so will cause an error
-            with open(base / csv2, "w") as f:
+            with open(base / csv2, "w", encoding="utf-8") as f:
                 f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 2; Version: 1\n",

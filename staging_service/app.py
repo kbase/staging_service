@@ -103,13 +103,12 @@ def _file_type_resolver(path: Path) -> FileTypeResolution:
     if ftype in _IMPSPEC_FILE_TO_PARSER:
         return FileTypeResolution(parser=_IMPSPEC_FILE_TO_PARSER[ftype])
     else:
-        ext = (
-            fi["suffix"]
-            if fi["suffix"]
-            else path.suffix[1:]
-            if path.suffix
-            else path.name
-        )
+        if fi["suffix"]:
+            ext = fi["suffix"]
+        elif path.suffix:
+            ext = path.suffix[1:]
+        else:
+            ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
 
@@ -434,11 +433,7 @@ def _validate_filename(filename: str):
 
     Raises http-response appropriate errors if the filename is invalid.
     """
-    #
-    # TODO: Are these really all the rules for filenames? Or are they just specific to the staging
-    #       area?
-    #       In any case, we should capture this in a separate function - ensure_valid_filename
-    #
+
     if filename.lstrip() != filename:
         raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
             text="cannot upload file with name beginning with space"
@@ -457,6 +452,85 @@ def _validate_filename(filename: str):
         )
 
 
+async def _handle_upload_save_to_destination(
+    stream: MultipartReader,
+    destination_path: StagingPath,
+    chunk_size: int,
+    max_file_size: int,
+):
+    async with aiofiles.tempfile.NamedTemporaryFile(
+        "wb",
+        delete=False,
+        dir=os.path.dirname(destination_path.full_path),
+        prefix=".upload.",
+    ) as output_file:
+        temp_file_name = output_file.name
+        actual_size = 0
+        while True:
+            if actual_size > max_file_size:
+                raise web.HTTPBadRequest(
+                    text=(
+                        f"file size reached {actual_size:,} bytes which exceeds "
+                        + f"the maximum allowed of {max_file_size:,} bytes)"
+                    )
+                )
+
+            # A chunk size of 1MB seems to be a bit faster than the default of 8Kb.
+            chunk = await stream.read_chunk(size=chunk_size)
+
+            # Chunk is always a "bytes" object, but will be empty if there is nothing else
+            # to read, which is considered Falsy.
+            if not chunk:
+                break
+
+            actual_size += len(chunk)
+
+            await output_file.write(
+                chunk,
+            )
+
+        shutil.move(temp_file_name, destination_path.full_path)
+
+
+async def _handle_upload_save_to_temp(
+    stream: MultipartReader,
+    destination_path: StagingPath,
+    chunk_size: int,
+    max_file_size: int,
+):
+    async with aiofiles.tempfile.NamedTemporaryFile("wb", delete=True) as output_file:
+        actual_size = 0
+        while True:
+            if actual_size > max_file_size:
+                raise web.HTTPBadRequest(
+                    text=(
+                        f"file size  reached {actual_size} bytes which exceeds "
+                        + f"the maximum allowed of {max_file_size} bytes"
+                    )
+                )
+
+            chunk = await stream.read_chunk(size=chunk_size)
+
+            # Chunk is always a "bytes" object, but will be empty if there is nothing else
+            # to read, which is considered Falsy.
+            if not chunk:
+                break
+
+            actual_size += len(chunk)
+
+            await output_file.write(chunk)
+
+        async with aiofiles.tempfile.NamedTemporaryFile(
+            "rb",
+            delete=False,
+            dir=os.path.dirname(destination_path.full_path),
+            prefix=".upload.",
+        ) as copied_file:
+            shutil.copyfile(output_file.name, copied_file.name)
+
+            shutil.move(copied_file.name, destination_path.full_path)
+
+
 async def _handle_upload_save(stream: MultipartReader, destination_path: StagingPath):
     """
     Handles the file upload stream from the /upload endpoint, saving the stream, ultimately,
@@ -469,89 +543,31 @@ async def _handle_upload_save(stream: MultipartReader, destination_path: Staging
     before saving. This constrains memory commitment, especially important for handling large
     files and concurrent file upload.
     """
-    save_strategy = get_save_strategy()
     chunk_size = get_read_chunk_size()
     max_file_size = get_max_file_size()
+    save_strategy = get_save_strategy()
     if save_strategy == UPLOAD_SAVE_STRATEGY_TEMP_THEN_COPY:
-        async with aiofiles.tempfile.NamedTemporaryFile(
-            "wb", delete=True
-        ) as output_file:
-            # temp_file_name = output_file.name
-            actual_size = 0
-            while True:
-                if actual_size > max_file_size:
-                    raise web.HTTPBadRequest(
-                        text=(
-                            f"file size  reached {actual_size} bytes which exceeds "
-                            + f"the maximum allowed of {max_file_size} bytes"
-                        )
-                    )
-
-                chunk = await stream.read_chunk(size=chunk_size)
-
-                # Chunk is always a "bytes" object, but will be empty if there is nothing else
-                # to read, which is considered Falsy.
-                if not chunk:
-                    break
-
-                actual_size += len(chunk)
-
-                await output_file.write(chunk)
-
-            async with aiofiles.tempfile.NamedTemporaryFile(
-                "rb",
-                delete=False,
-                dir=os.path.dirname(destination_path.full_path),
-                prefix=".upload.",
-            ) as copied_file:
-                shutil.copyfile(output_file.name, copied_file.name)
-
-                shutil.move(copied_file.name, destination_path.full_path)
-
+        await _handle_upload_save_to_temp(
+            stream, destination_path, chunk_size, max_file_size
+        )
     elif save_strategy == UPLOAD_SAVE_STRATEGY_SAVE_TO_DESTINATION:
-        async with aiofiles.tempfile.NamedTemporaryFile(
-            "wb",
-            delete=False,
-            dir=os.path.dirname(destination_path.full_path),
-            prefix=".upload.",
-        ) as output_file:
-            temp_file_name = output_file.name
-            actual_size = 0
-            while True:
-                if actual_size > max_file_size:
-                    raise web.HTTPBadRequest(
-                        text=(
-                            f"file size reached {actual_size:,} bytes which exceeds "
-                            + f"the maximum allowed of {max_file_size:,} bytes)"
-                        )
-                    )
-
-                # A chunk size of 1MB seems to be a bit faster than the default of 8Kb.
-                chunk = await stream.read_chunk(size=chunk_size)
-
-                # Chunk is always a "bytes" object, but will be empty if there is nothing else
-                # to read, which is considered Falsy.
-                if not chunk:
-                    break
-
-                actual_size += len(chunk)
-
-                await output_file.write(
-                    chunk,
-                )
-
-            shutil.move(temp_file_name, destination_path.full_path)
+        await _handle_upload_save_to_destination(
+            stream, destination_path, chunk_size, max_file_size
+        )
 
 
 @routes.post("/upload")
 async def upload_files_chunked(request: web.Request):
     """
-    uploads a file into the staging area
+    Uploads a file into the staging area.
+
+    Ensures the current auth token is valid, and if so, returns the associated username.
+    If not, will raise an exception
+
+    Also, ensures that if there is a Globus account id available in the user's staging
+    directory, it is valid.
     """
-    # Ensures the current auth token is valid, and if so, returns the associated username.
-    # If not, will raise an exception
-    # Also, ensures that if there is a Globus account id available in the user's staging
-    # directory, it is valid.
+
     username = await authorize_request(request)
 
     if not request.can_read_body:
@@ -614,7 +630,6 @@ async def upload_files_chunked(request: web.Request):
     # allowing us to ditch XHR.
     await _handle_upload_save(user_file_part, path)
 
-    # TODO: is this really necessary? Would a write failure possibly get here?
     if not os.path.exists(path.full_path):
         error_msg = "We are sorry but upload was interrupted. Please try again."
         raise web.HTTPNotFound(text=error_msg)
@@ -638,10 +653,8 @@ async def define_UPA(request: web.Request):
     username = await authorize_request(request)
     path = StagingPath.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
-        # TODO the security model here is to not care if someone wants to put in a false upa
-        raise web.HTTPNotFound(
-            text="no file found found on path {}".format(path.user_path)
-        )
+        # The security model here is to not care if someone wants to put in a false upa
+        raise web.HTTPNotFound(text=f"no file found found on path {path.user_path}")
     if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide 'UPA' field in body")
     body = await request.post()
@@ -837,6 +850,11 @@ def inject_config_dependencies(config):
 
 
 def app_factory():
+    """
+    Creates an aiohttp web application, with routes and configuration, and returns it.
+
+    Used by the gunicorn server to spawn new workers.
+    """
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
 
