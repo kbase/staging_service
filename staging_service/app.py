@@ -63,11 +63,13 @@ _IMPSPEC_FILE_TO_WRITER = {
 
 
 @routes.get("/importer_filetypes/")
-async def importer_filetypes(request: web.Request) -> web.json_response:
+async def importer_filetypes(_: web.Request) -> web.json_response:
     """
     Returns the file types for the configured datatypes. The returned JSON contains two keys:
+
     * datatype_to_filetype, which maps import datatypes (like gff_genome) to their accepted
       filetypes (like [FASTA, GFF])
+
     * filetype_to_extensions, which maps file types (e.g. FASTA) to their extensions (e.g.
       *.fa, *.fasta, *.fa.gz, etc.)
 
@@ -350,7 +352,7 @@ async def download_files(request: web.Request):
 
 
 @routes.get("/similar/{path:.+}")
-async def similar_files(request: web.Request):
+async def get_similar_files(request: web.Request):
     """
     lists similar file path for given file
     """
@@ -832,11 +834,13 @@ def inject_config_dependencies(config):
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
-    with open(FILE_EXTENSION_MAPPINGS) as f:
-        AutoDetectUtils._MAPPINGS = json.load(f)
+    with open(
+        FILE_EXTENSION_MAPPINGS, encoding="utf-8"
+    ) as file_extension_mappings_file:
+        AutoDetectUtils.set_mappings(json.load(file_extension_mappings_file))
         datatypes = defaultdict(set)
         extensions = defaultdict(set)
-        for fileext, val in AutoDetectUtils._MAPPINGS["types"].items():
+        for fileext, val in AutoDetectUtils.get_extension_mappings().items():
             # if we start using the file ext type array for anything else this might need changes
             filetype = val["file_ext_type"][0]
             extensions[filetype].add(fileext)

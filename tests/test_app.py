@@ -24,11 +24,10 @@ import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
 from tests.test_helpers import (DATA_DIR, META_DIR, FileUtil,
-                                check_excel_contents, check_file_contents)
+                                assert_file_contents, bootstrap,
+                                check_excel_contents)
 
 if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
-    from tests.test_helpers import bootstrap
-
     bootstrap()
 
 decoder = JSONDecoder()
@@ -39,7 +38,7 @@ utils.StagingPath._META_DIR = META_DIR
 
 
 def asyncgiven(**kwargs):
-    """alterantive to hypothesis.given decorator for async"""
+    """alternative to hypothesis.given decorator for async"""
 
     def real_decorator(fn):
         @given(**kwargs)
@@ -54,15 +53,9 @@ def asyncgiven(**kwargs):
     return real_decorator
 
 
-# TODO: replace with real unittest mocking; this approach forces a bad design for the auth client; it is
-# literally used in only one place in the codebase!
-def mock_auth_app():
+# TODO: replace with real unittest mocking
+def mock_app():
     application = app.app_factory()
-
-    # async def mock_auth(*args, **kwargs):
-    #     return "testuser"
-    #
-    # auth_client().get_user = mock_auth
 
     async def mock_globus_id(*args, **kwargs):
         return ["testuser@globusid.org"]
@@ -73,14 +66,10 @@ def mock_auth_app():
     return application
 
 
-async def mock_get_user(username):
-    return username
-
-
 class AppClient:
-    # TODO: the constructor params are unused ... probably can be removed ... try later.
     def __init__(self):
-        self.server = test_utils.TestServer(mock_auth_app())
+        self.server = test_utils.TestServer(mock_app())
+        self.client = None
 
     async def __aenter__(self):
         await self.server.start_server(loop=asyncio.get_event_loop())
@@ -89,7 +78,8 @@ class AppClient:
 
     async def __aexit__(self, *args):
         await self.server.close()
-        await self.client.close()
+        if self.client is not None:
+            await self.client.close()
 
 
 first_letter_alphabet = [c for c in string.ascii_lowercase + string.ascii_uppercase]
@@ -1053,7 +1043,10 @@ async def test_importer_mappings(get_user):
         # Or we need to reload json file itself
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
-        assert mappings[1][0] == AutoDetectUtils._MAPPINGS["types"]["gz"]["mappings"][0]
+        assert (
+            mappings[1][0]
+            == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
+        )
 
     # A dict is passed in
     data = {"file_list": [{}]}
@@ -1610,7 +1603,7 @@ async def test_write_bulk_specification_success_csv(get_user):
                 },
             }
             base = Path(fu.base_dir) / username
-            check_file_contents(
+            assert_file_contents(
                 base / "specs/genome.csv",
                 [
                     "Data type: genome; Columns: 2; Version: 1\n",
@@ -1620,7 +1613,7 @@ async def test_write_bulk_specification_success_csv(get_user):
                     "32,yikes\n",
                 ],
             )
-            check_file_contents(
+            assert_file_contents(
                 base / "specs/reads.csv",
                 [
                     "Data type: reads; Columns: 2; Version: 1\n",
@@ -1660,7 +1653,7 @@ async def test_write_bulk_specification_success_tsv(get_user):
                 },
             }
             base = Path(fu.base_dir) / username
-            check_file_contents(
+            assert_file_contents(
                 base / "tsvspecs/genome.tsv",
                 [
                     "Data type: genome; Columns: 2; Version: 1\n",
@@ -1670,7 +1663,7 @@ async def test_write_bulk_specification_success_tsv(get_user):
                     "32\tyikes\n",
                 ],
             )
-            check_file_contents(
+            assert_file_contents(
                 base / "tsvspecs/reads.tsv",
                 [
                     "Data type: reads; Columns: 2; Version: 1\n",

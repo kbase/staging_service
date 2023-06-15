@@ -21,7 +21,7 @@ def test_config():
     #TODO Can test PATH injections as well
     :return:
     """
-    mappings = AutoDetectUtils._MAPPINGS
+    mappings = AutoDetectUtils.has_mappings()
     assert mappings
 
 
@@ -71,7 +71,7 @@ def test_reasonable_filenames():
             expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
             assert (
                 possible_importers
-                == AutoDetectUtils._MAPPINGS["types"][expected_suffix.lower()][
+                == AutoDetectUtils.get_mappings_by_extension(expected_suffix.lower())[
                     "mappings"
                 ]
             ), filename_variant

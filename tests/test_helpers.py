@@ -21,14 +21,20 @@ if META_DIR.startswith("."):
 
 
 def bootstrap():
+    """
+    Attempts to load environment variables from a number of potentially
+    present files
+
+    Not sure it actually does anything useful.
+    """
     test_env_0 = "../test.env"
     test_env_1 = "test.env"
     test_env_2 = "test/test.env"
 
-    for item in [test_env_0, test_env_1, test_env_2]:
+    for potential_env_file in [test_env_0, test_env_1, test_env_2]:
         try:
-            load_dotenv(item, verbose=True)
-        except Exception:
+            load_dotenv(potential_env_file, verbose=True)
+        except IOError:
             pass
 
 
@@ -49,8 +55,8 @@ def assert_exception_correct(got: Exception, expected: Exception):
     assert type(got) == type(expected)
 
 
-def check_file_contents(file: Path, lines: list[str]):
-    with open(file) as f:
+def assert_file_contents(file: Path, lines: list[str]):
+    with open(file, "r", encoding="utf-8") as f:
         assert f.readlines() == lines
 
 

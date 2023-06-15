@@ -15,8 +15,8 @@ from staging_service.import_specifications.file_writers import (
 from tests.test_helpers import (
     FileUtil,
     assert_exception_correct,
+    assert_file_contents,
     check_excel_contents,
-    check_file_contents,
 )
 
 
@@ -69,7 +69,7 @@ def test_write_csv(temp_dir: Path):
         "type2": "type2.csv",
         "type3": "type3.csv",
     }
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type1.csv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -79,7 +79,7 @@ def test_write_csv(temp_dir: Path):
             "boo!,,56.78\n",
         ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type2.csv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -89,7 +89,7 @@ def test_write_csv(temp_dir: Path):
             "0\n",
         ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type3.csv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
@@ -106,7 +106,7 @@ def test_write_tsv(temp_dir: Path):
         "type2": "type2.tsv",
         "type3": "type3.tsv",
     }
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type1.tsv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -116,7 +116,7 @@ def test_write_tsv(temp_dir: Path):
             "boo!\t\t56.78\n",
         ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type2.tsv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -126,7 +126,7 @@ def test_write_tsv(temp_dir: Path):
             "0\n",
         ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type3.tsv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
