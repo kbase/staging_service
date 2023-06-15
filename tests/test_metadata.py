@@ -279,7 +279,7 @@ def test_read_from_head_happy(tmp_path: Path):
     # we just happen to know this from metadata.py...
     snippet_length = FILE_SNIPPET_SIZE
     for case in cases:
-        file_path = os.path.join(tmp_path, "foo.txt")
+        file_path = os.path.join(tmp_path, "happy_head.txt")
         file_content = make_random_string(case)
         with open(file_path, "w", encoding="utf-8") as output_file:
             output_file.write(file_content)
@@ -295,7 +295,7 @@ def test_read_from_tail_happy(tmp_path: Path):
     # we just happen to know this from metadata.py...
     snippet_length = FILE_SNIPPET_SIZE
     for case in cases:
-        file_path = os.path.join(tmp_path, "foo.txt")
+        file_path = os.path.join(tmp_path, "happy_tail.txt")
         file_content = make_random_string(case)
         with open(file_path, "w", encoding="utf-8") as output_file:
             output_file.write(file_content)
@@ -312,7 +312,7 @@ def test_read_from_head_sad(tmp_path: Path):
     # we just happen to know this from metadata.py...
     # snippet_length = 1024
     for case in cases:
-        file_path = os.path.join(tmp_path, "foo.txt")
+        file_path = os.path.join(tmp_path, "sad_head.txt")
         file_content = case
         with open(file_path, "wb") as output_file:
             output_file.write(file_content)
@@ -329,7 +329,7 @@ def test_read_from_tail_sad(tmp_path: Path):
     # we just happen to know this from metadata.py...
     # snippet_length = 1024
     for case in cases:
-        file_path = os.path.join(tmp_path, "foo.txt")
+        file_path = os.path.join(tmp_path, "sad_tail.txt")
         file_content = case
         with open(file_path, "wb") as output_file:
             output_file.write(file_content)

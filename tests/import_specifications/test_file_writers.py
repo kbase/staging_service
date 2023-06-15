@@ -19,6 +19,8 @@ from tests.test_helpers import (
     check_excel_contents,
 )
 
+# pylint: disable=C0116
+
 
 @fixture(scope="module")
 def temp_dir() -> Generator[Path, None, None]:
@@ -323,7 +325,7 @@ def test_file_writers_fail():
     )
 
 
-def file_writers_fail(path: Path, types: dict, expected: Exception):
+def file_writers_fail(path: Path | None, types: dict | None, expected: Exception):
     with raises(Exception) as got:
         write_csv(path, types)
     assert_exception_correct(got.value, expected)

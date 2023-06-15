@@ -41,6 +41,8 @@ decoder = JSONDecoder()
 utils.StagingPath._DATA_DIR = DATA_DIR
 utils.StagingPath._META_DIR = META_DIR
 
+# pylint: disable=C0116
+
 
 def asyncgiven(**kwargs):
     """alternative to hypothesis.given decorator for async"""
@@ -641,7 +643,7 @@ async def test_list(get_user):
 
             # testing list dot-files
             fs.make_file(os.path.join(username, "test", ".test_file_1"), txt)
-            # f5 = fs.make_file(os.path.join(username, 'test', '.globus_id'), txt)
+
             res6 = await cli.get("/list/", headers={"Authorization": ""})
             assert res6.status == 200
             json_text = await res6.text()
@@ -1047,7 +1049,6 @@ async def test_importer_mappings(get_user):
         # As we update the app mappings this test may need to be changed
         # Or we need to reload json file itself
 
-        # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
         assert (
             mappings[1][0]
             == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
@@ -1119,7 +1120,7 @@ async def test_bulk_specification_success(get_user):
                     ]
                 )
             excel = "importspec.xlsx"
-            with pandas.ExcelWriter(base / excel) as exw:
+            with pandas.ExcelWriter(base / excel) as exw:  # pylint: disable=E0110
                 df = pandas.DataFrame(
                     [
                         ["Data type: fruit_bats; Columns: 2; Version: 1"],
@@ -1255,7 +1256,7 @@ async def test_bulk_specification_fail_parse_fail(get_user):
                     ]
                 )
             excel = "stuff.xlsx"
-            with pandas.ExcelWriter(base / excel) as exw:
+            with pandas.ExcelWriter(base / excel) as exw:  # pylint: disable=E0110
                 # this one is fine
                 df = pandas.DataFrame(
                     [
@@ -1366,7 +1367,7 @@ async def test_bulk_specification_fail_column_count(get_user):
                     ]
                 )
             excel = "stuff.xlsx"
-            with pandas.ExcelWriter(base / excel) as exw:
+            with pandas.ExcelWriter(base / excel) as exw:  # pylint: disable=E0110
                 # this one has an extra column in the last row
                 df = pandas.DataFrame(
                     [
@@ -1452,7 +1453,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type(get_user):
                     ]
                 )
             excel = "stuff.xlsx"
-            with pandas.ExcelWriter(base / excel) as exw:
+            with pandas.ExcelWriter(base / excel) as exw:  # pylint: disable=E0110
                 # this data type is also breakfastcereals, so will cause an error
                 df = pandas.DataFrame(
                     [
@@ -1516,7 +1517,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type_excel(get_user):
             fu.make_dir(username)
             base = Path(fu.base_dir) / username
             excel = "stuff.xlsx"
-            with pandas.ExcelWriter(base / excel) as exw:
+            with pandas.ExcelWriter(base / excel) as exw:  # pylint: disable=E0110
                 df = pandas.DataFrame(
                     [
                         ["Data type: breakfastcereals; Columns: 2; Version: 1"],
@@ -1734,7 +1735,7 @@ async def test_write_bulk_specification_success_excel(get_user):
 @pytest.mark.asyncio
 @patch("staging_service.auth2Client.KBaseAuth2.get_user")
 async def test_write_bulk_specification_fail_wrong_data_type(get_user):
-    get_user.return_value = "dontcare"
+    get_user.return_value = "do_not_care"
     async with AppClient() as cli:
         resp = await cli.post("write_bulk_specification/", data="foo")
         js = await resp.json()
@@ -1758,7 +1759,7 @@ async def test_write_bulk_specification_fail_no_content_length(get_user):
 @pytest.mark.asyncio
 @patch("staging_service.auth2Client.KBaseAuth2.get_user")
 async def test_write_bulk_specification_fail_large_input(get_user):
-    get_user.return_value = "idont"
+    get_user.return_value = "i_do_not"
     async with AppClient() as cli:
         resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
         txt = await resp.text()
