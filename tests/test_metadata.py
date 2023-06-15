@@ -268,7 +268,9 @@ def temp_dir2() -> Generator[Path, None, None]:
 def make_random_string(string_length: str) -> str:
     random.seed(42)
     possible_letters = string.ascii_letters
-    return "".join(random.choice(possible_letters) for _ in range(string_length))
+    return "".join(
+        random.choice(possible_letters) for _ in range(string_length)  # NOSONAR
+    )
 
 
 def test_read_from_head_happy(tmp_path: Path):
