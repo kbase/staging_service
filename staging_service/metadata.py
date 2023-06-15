@@ -24,13 +24,13 @@ async def stat_data(path: StagingPath) -> dict:
     only call this on a validated full path
     """
     file_stats = os.stat(path.full_path)
-    isFolder = os.path.isdir(path.full_path)
+    is_folder = os.path.isdir(path.full_path)
     return {
         "name": path.name,
         "path": path.user_path,
         "mtime": int(file_stats.st_mtime * 1000),  # given in seconds, want ms
         "size": file_stats.st_size,
-        "isFolder": isFolder,
+        "isFolder": is_folder,
     }
 
 

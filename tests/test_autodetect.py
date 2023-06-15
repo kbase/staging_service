@@ -223,7 +223,7 @@ def test_zip_mappings():
 def test_get_mappings():
     """
     Basic test of the get mappings logic. Most of the logic is in determine_possible_importers
-    which is throughly tested above.
+    which is thoroughly tested above.
     """
     assert AutoDetectUtils.get_mappings(
         ["filename", "file.name.Gz", "some.dots.gff3.gz"]

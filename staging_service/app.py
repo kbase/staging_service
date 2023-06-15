@@ -821,19 +821,22 @@ def inject_config_dependencies(config):
     StagingPath._META_DIR = META_DIR
     StagingPath._CONCIERGE_PATH = CONCIERGE_PATH
 
-    # TODO: why make these attributes "private" if they are not used that way?
-    #       either provide a static setter method, or make them public, I'd say.
     if StagingPath._DATA_DIR is None:
-        raise Exception("Please provide DATA_DIR in the config file ")
+        raise web.HTTPInternalServerError(text="DATA_DIR missing in the config file ")
 
     if StagingPath._META_DIR is None:
-        raise Exception("Please provide META_DIR in the config file ")
+        raise web.HTTPInternalServerError(text="META_DIR missing in the config file ")
 
     if StagingPath._CONCIERGE_PATH is None:
-        raise Exception("Please provide CONCIERGE_PATH in the config file ")
+        raise web.HTTPInternalServerError(
+            text="CONCIERGE_PATH missing in the config file "
+        )
 
     if FILE_EXTENSION_MAPPINGS is None:
-        raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
+        raise web.HTTPInternalServerError(
+            text="FILE_EXTENSION_MAPPINGS missing in the config file "
+        )
+
     with open(
         FILE_EXTENSION_MAPPINGS, encoding="utf-8"
     ) as file_extension_mappings_file:
