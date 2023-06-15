@@ -18,6 +18,9 @@ FILE_SNIPPET_SIZE = 1024
 # Set as the value for snippets for a non-text file
 NOT_TEXT_FILE_VALUE = "not a text file"
 
+SOURCE_JGI_IMPORT = "JGI import"
+SOURCE_UNKNOWN = "Unknown"
+
 
 async def stat_data(path: StagingPath) -> dict:
     """
@@ -116,7 +119,7 @@ def is_text_string(bytes_to_check):
         # use this to enable line counting and snippets.
         # We allow TAB (9), LF (10), CR (13) for obvious reasons.
         for character in decoded:
-            if unicodedata.category(character) == "Cc" and not ord(character) in [
+            if unicodedata.category(character) == "Cc" and ord(character) not in [
                 9,
                 10,
                 13,
@@ -170,7 +173,6 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     # line counting.
     last_chunk_read = None
     chunk_count = 0
-    size = 0
 
     md5 = hashlib.md5()  # noqua: S303
     async with aiofiles.open(path.full_path, "rb") as fin:
@@ -182,7 +184,6 @@ async def _generate_metadata(path: StagingPath, source: str = None):
                 break
 
             last_chunk_read = chunk
-            size += len(chunk)
             chunk_count += 1
             md5.update(chunk)
 
@@ -243,14 +244,14 @@ async def _update_metadata(path: StagingPath, additional_metadata: dict) -> dict
     return new_metdata
 
 
-async def add_upa(path: StagingPath, UPA: str):
+async def add_upa(path: StagingPath, upa: str):
     """
     Adds the provided UPA to the metadata for the given path.
 
     If the metadata does not yet exist, the metadata is generated.
     """
     await _ensure_metadata(path)
-    await _update_metadata(path, {"UPA": UPA})
+    await _update_metadata(path, {"UPA": upa})
 
 
 def _determine_source(path: StagingPath):
@@ -260,9 +261,9 @@ def _determine_source(path: StagingPath):
     """
     jgi_path = path.jgi_metadata
     if os.path.exists(jgi_path) and os.path.isfile(jgi_path):
-        return "JGI import"
+        return SOURCE_JGI_IMPORT
     else:
-        return "Unknown"
+        return SOURCE_UNKNOWN
 
 
 async def dir_info(

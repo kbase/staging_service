@@ -20,6 +20,11 @@ from staging_service.import_specifications.file_parser import (
 )
 from tests.test_helpers import assert_exception_correct
 
+TEST_EXCEL_FILE = "myfile.xlsx"
+
+# This file does not exist, it is used for a mock, appears in many locations.
+TEST_MOCK_CSV_FILE_NAME = "somefile.csv"
+
 # some test functions include "SpecificationSource" in the name, which violates
 # snake_case rules, but is meaningful in this context.
 # pylint: disable=C0103
@@ -49,9 +54,9 @@ def test_SpecificationSource_init_fail():
     assert_SpecificationSource_init_fail(None, ValueError("file is required"))
 
 
-def assert_SpecificationSource_init_fail(file_: Optional[str], expected: Exception):
+def assert_SpecificationSource_init_fail(file: Optional[str], expected: Exception):
     with raises(Exception) as got:
-        SpecificationSource(file_)
+        SpecificationSource(file)
     assert_exception_correct(got.value, expected)
 
 
@@ -124,12 +129,12 @@ def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
     e = Error(
         ErrorType.INCORRECT_COLUMN_COUNT,
         message="42",
-        source_1=specification_source("somefile"),
+        source_1=specification_source("some_other_file"),
     )
 
     assert e.error == ErrorType.INCORRECT_COLUMN_COUNT
     assert e.message == "42"
-    assert e.source_1 == specification_source("somefile")
+    assert e.source_1 == specification_source("some_other_file")
     assert e.source_2 is None
 
 
@@ -337,11 +342,11 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    specification_source("myfile.xlsx", "tab1"),
+                    specification_source(TEST_EXCEL_FILE, "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(
-                    specification_source("myfile.xlsx", "tab2"),
+                    specification_source(TEST_EXCEL_FILE, "tab2"),
                     (frozendict({"whee": "whoo"}),),  # tuple!
                 ),
             }
@@ -352,7 +357,7 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type_other": ParseResult(
-                    specification_source("somefile.csv"),
+                    specification_source(TEST_MOCK_CSV_FILE_NAME),
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 )
             }
@@ -360,31 +365,33 @@ def test_parse_import_specifications_success():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+        (Path(TEST_EXCEL_FILE), Path(TEST_MOCK_CSV_FILE_NAME)), resolver, logger
     )
 
     assert res == ParseResults(
         frozendict(
             {
                 "type1": ParseResult(
-                    specification_source("myfile.xlsx", "tab1"),
+                    specification_source(TEST_EXCEL_FILE, "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(
-                    specification_source("myfile.xlsx", "tab2"),
+                    specification_source(TEST_EXCEL_FILE, "tab2"),
                     (frozendict({"whee": "whoo"}),),  # tuple!
                 ),
                 "type_other": ParseResult(
-                    specification_source("somefile.csv"),
+                    specification_source(TEST_MOCK_CSV_FILE_NAME),
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 ),
             }
         )
     )
 
-    resolver.assert_has_calls([call(Path("myfile.xlsx")), call(Path("somefile.csv"))])
-    parser1.assert_called_once_with(Path("myfile.xlsx"))
-    parser2.assert_called_once_with(Path("somefile.csv"))
+    resolver.assert_has_calls(
+        [call(Path(TEST_EXCEL_FILE)), call(Path(TEST_MOCK_CSV_FILE_NAME))]
+    )
+    parser1.assert_called_once_with(Path(TEST_EXCEL_FILE))
+    parser2.assert_called_once_with(Path(TEST_MOCK_CSV_FILE_NAME))
     logger.assert_not_called()
 
 
@@ -406,13 +413,15 @@ def test_parse_import_specification_resolver_exception():
     parser1.return_value = ParseResults(errors=tuple([Error(ErrorType.OTHER, "foo")]))
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+        (Path(TEST_EXCEL_FILE), Path(TEST_MOCK_CSV_FILE_NAME)), resolver, logger
     )
 
     assert res == ParseResults(errors=tuple([Error(ErrorType.OTHER, "crapsticks")]))
 
-    resolver.assert_has_calls([call(Path("myfile.xlsx")), call(Path("somefile.csv"))])
-    parser1.assert_called_once_with(Path("myfile.xlsx"))
+    resolver.assert_has_calls(
+        [call(Path(TEST_EXCEL_FILE)), call(Path(TEST_MOCK_CSV_FILE_NAME))]
+    )
+    parser1.assert_called_once_with(Path(TEST_EXCEL_FILE))
     # In [1]: ArithmeticError("a") == ArithmeticError("a")
     # Out[1]: False
     # so assert_called_once_with doesn't work
@@ -454,7 +463,9 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")), resolver, logger
+        (Path(TEST_EXCEL_FILE), Path(TEST_MOCK_CSV_FILE_NAME), Path("x.jpeg")),
+        resolver,
+        logger,
     )
 
     assert res == ParseResults(
@@ -475,13 +486,13 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
 
     resolver.assert_has_calls(
         [
-            call(Path("myfile.xlsx")),
-            call(Path("somefile.csv")),
+            call(Path(TEST_EXCEL_FILE)),
+            call(Path(TEST_MOCK_CSV_FILE_NAME)),
             call(Path("x.jpeg")),
         ]
     )
-    parser1.assert_called_once_with(Path("myfile.xlsx"))
-    parser2.assert_called_once_with(Path("somefile.csv"))
+    parser1.assert_called_once_with(Path(TEST_EXCEL_FILE))
+    parser2.assert_called_once_with(Path(TEST_MOCK_CSV_FILE_NAME))
     logger.assert_not_called()
 
 
@@ -506,7 +517,7 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
                 Error(ErrorType.OTHER, "other"),
                 Error(
                     ErrorType.FILE_NOT_FOUND,
-                    source_1=specification_source("myfile.xlsx"),
+                    source_1=specification_source(TEST_EXCEL_FILE),
                 ),
             ]
         )
@@ -543,7 +554,9 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")), resolver, logger
+        (Path(TEST_EXCEL_FILE), Path(TEST_MOCK_CSV_FILE_NAME), Path("x.tsv")),
+        resolver,
+        logger,
     )
 
     assert res == ParseResults(
@@ -552,7 +565,7 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
                 Error(ErrorType.OTHER, "other"),
                 Error(
                     ErrorType.FILE_NOT_FOUND,
-                    source_1=specification_source("myfile.xlsx"),
+                    source_1=specification_source(TEST_EXCEL_FILE),
                 ),
                 Error(
                     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
@@ -572,12 +585,12 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
 
     resolver.assert_has_calls(
         [
-            call(Path("myfile.xlsx")),
-            call(Path("somefile.csv")),
+            call(Path(TEST_EXCEL_FILE)),
+            call(Path(TEST_MOCK_CSV_FILE_NAME)),
             call(Path("x.tsv")),
         ]
     )
-    parser1.assert_called_once_with(Path("myfile.xlsx"))
-    parser2.assert_called_once_with(Path("somefile.csv"))
+    parser1.assert_called_once_with(Path(TEST_EXCEL_FILE))
+    parser2.assert_called_once_with(Path(TEST_MOCK_CSV_FILE_NAME))
     parser3.assert_called_once_with(Path("x.tsv"))
     logger.assert_not_called()

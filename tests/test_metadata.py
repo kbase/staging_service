@@ -13,6 +13,8 @@ from pytest import fixture, raises
 
 from staging_service.metadata import (
     FILE_SNIPPET_SIZE,
+    NOT_TEXT_FILE_VALUE,
+    SOURCE_JGI_IMPORT,
     _determine_source,
     _file_read_from_head,
     _file_read_from_tail,
@@ -108,8 +110,8 @@ async def _generate_binary_file(temp_dir):
     assert isinstance(res["mtime"], int)
     assert "lineCount" in res
     assert res["lineCount"] is None
-    assert res["head"] == "not a text file"
-    assert res["tail"] == "not a text file"
+    assert res["head"] == NOT_TEXT_FILE_VALUE
+    assert res["tail"] == NOT_TEXT_FILE_VALUE
 
 
 async def test_binary_data(temp_dir: Path):
@@ -147,7 +149,7 @@ async def test_determine_source_jgi_metadata_source_exists(temp_dir: Path):
     with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write("foo")
 
-    assert _determine_source(staging_path) == "JGI import"
+    assert _determine_source(staging_path) == SOURCE_JGI_IMPORT
 
 
 def _create_validated_staging_path(staging_dir: str, file_path: str):
@@ -186,7 +188,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical(temp_dir: Path):
     with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
-    assert _determine_source(staging_path) == "JGI import"
+    assert _determine_source(staging_path) == SOURCE_JGI_IMPORT
 
 
 def test_determine_source_jgi_metadata_source_exists_canonical_subdir(temp_dir: Path):
@@ -199,7 +201,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical_subdir(temp_dir: 
     with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
-    assert _determine_source(staging_path) == "JGI import"
+    assert _determine_source(staging_path) == SOURCE_JGI_IMPORT
 
 
 def test_determine_source_jgi_metadata_source_exists_canonical_deepsubdir(
@@ -214,7 +216,7 @@ def test_determine_source_jgi_metadata_source_exists_canonical_deepsubdir(
     with open(staging_path.jgi_metadata, "w", encoding="utf-8") as data_file:
         data_file.write(f".{staging_path.full_path}.{filename_base}jgi")
 
-    assert _determine_source(staging_path) == "JGI import"
+    assert _determine_source(staging_path) == SOURCE_JGI_IMPORT
 
 
 def test_determine_source_jgi_metadata_source_doesnt_exist(temp_dir: StagingPath):
@@ -266,7 +268,7 @@ def temp_dir2() -> Generator[Path, None, None]:
 def make_random_string(string_length: str) -> str:
     random.seed(42)
     possible_letters = string.ascii_letters
-    return "".join(random.choice(possible_letters) for i in range(string_length))
+    return "".join(random.choice(possible_letters) for _ in range(string_length))
 
 
 def test_read_from_head_happy(tmp_path: Path):
@@ -315,7 +317,7 @@ def test_read_from_head_sad(tmp_path: Path):
         with open(file_path, "wb") as output_file:
             output_file.write(file_content)
         snippet = _file_read_from_head(file_path)
-        assert snippet == "not a text file"
+        assert snippet == NOT_TEXT_FILE_VALUE
 
 
 def test_read_from_tail_sad(tmp_path: Path):
@@ -332,7 +334,7 @@ def test_read_from_tail_sad(tmp_path: Path):
         with open(file_path, "wb") as output_file:
             output_file.write(file_content)
         snippet = _file_read_from_tail(file_path)
-        assert snippet == "not a text file"
+        assert snippet == NOT_TEXT_FILE_VALUE
 
 
 async def test_invalid_desired_fields(temp_dir: Path):
