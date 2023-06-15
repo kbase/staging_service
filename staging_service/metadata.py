@@ -84,6 +84,18 @@ async def _read_metadata(metadata_path: str):
         return decoder.decode(data)
 
 
+async def _get_metadata(metadata_path: str):
+    """
+    Gets the file metadata from the file system or, if it doesn't exist,
+    return an empty dict.
+    """
+    try:
+        return await _read_metadata(metadata_path)
+    except FileNotFoundError:
+        os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
+        return {}
+
+
 def is_text_string(bytes_to_check):
     """
     Determines if the provided bytes is indeed a text string.
@@ -125,11 +137,7 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     # Open metadatafile if it exists, otherwise create an
     # empty dict and ensure there is a writable directory for it
     # to be saved to.
-    if os.path.exists(path.metadata_path):
-        existing_metadata = await _read_metadata(path.metadata_path)
-    else:
-        os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
-        existing_metadata = {}
+    existing_metadata = await _get_metadata(path.metadata_path)
 
     additional_metadata = {}
 
