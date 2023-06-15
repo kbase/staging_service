@@ -22,6 +22,8 @@ RUN addgroup --system kbapp && \
     adduser --system --ingroup kbapp kbapp && \
     chown -R kbapp:kbapp /app
 
+USER kbapp
+
 ENTRYPOINT [ "/app/development/tools/runner/entrypoint.sh" ]
 
 CMD [ "bash" ]
