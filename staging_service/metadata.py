@@ -174,7 +174,7 @@ async def _generate_metadata(path: StagingPath, source: str = None):
     last_chunk_read = None
     chunk_count = 0
 
-    md5 = hashlib.md5()  # noqua: S303
+    md5 = hashlib.md5()  # NOSONAR
     async with aiofiles.open(path.full_path, "rb") as fin:
         while True:
             chunk = await fin.read(READ_BUFFER_SIZE)
