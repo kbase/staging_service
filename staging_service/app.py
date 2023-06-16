@@ -451,38 +451,47 @@ async def _handle_upload_save_to_destination(
     chunk_size: int,
     max_file_size: int,
 ):
-    async with aiofiles.tempfile.NamedTemporaryFile(
-        "wb",
-        delete=False,
-        dir=os.path.dirname(destination_path.full_path),
-        prefix=".upload.",
-    ) as output_file:
-        temp_file_name = output_file.name
-        actual_size = 0
-        while True:
-            if actual_size > max_file_size:
-                raise web.HTTPBadRequest(
-                    text=(
-                        f"file size reached {actual_size:,} bytes which exceeds "
-                        + f"the maximum allowed of {max_file_size:,} bytes)"
+    try:
+        async with aiofiles.tempfile.NamedTemporaryFile(
+            "wb",
+            delete=True,
+            dir=os.path.dirname(destination_path.full_path),
+            prefix=".upload.",
+        ) as output_file:
+            temp_file_name = output_file.name
+            actual_size = 0
+            while True:
+                if actual_size > max_file_size:
+                    raise web.HTTPBadRequest(
+                        text=(
+                            f"file size reached {actual_size:,} bytes which exceeds "
+                            + f"the maximum allowed of {max_file_size:,} bytes)"
+                        )
                     )
+
+                # A chunk size of 1MB seems to be a bit faster than the default of 8Kb.
+                chunk = await stream.read_chunk(size=chunk_size)
+
+                # Chunk is always a "bytes" object, but will be empty if there is nothing else
+                # to read, which is considered Falsy.
+                if not chunk:
+                    break
+
+                actual_size += len(chunk)
+
+                await output_file.write(
+                    chunk,
                 )
 
-            # A chunk size of 1MB seems to be a bit faster than the default of 8Kb.
-            chunk = await stream.read_chunk(size=chunk_size)
-
-            # Chunk is always a "bytes" object, but will be empty if there is nothing else
-            # to read, which is considered Falsy.
-            if not chunk:
-                break
-
-            actual_size += len(chunk)
-
-            await output_file.write(
-                chunk,
-            )
-
-        shutil.move(temp_file_name, destination_path.full_path)
+            shutil.move(temp_file_name, destination_path.full_path)
+    except FileNotFoundError:
+        # this is a normal condition after the file is moved
+        pass
+    except ConnectionResetError:
+        # this is a normal condition if the file transfer is canceled,
+        # or the Narrative is closed during upload.
+        # Although it may indicate other problems as well.
+        pass
 
 
 async def _handle_upload_save_to_temp(
@@ -623,6 +632,10 @@ async def upload_files_chunked(request: web.Request):
     # allowing us to ditch XHR.
     await _handle_upload_save(user_file_part, path)
 
+    # This may be triggered by an canceled or otherwise interrupted upload.
+    # Note that now that we save to temp then move/copy to destination, this
+    # works, prior to this the file was written directly, which could leave a partial
+    # file.
     if not os.path.exists(path.full_path):
         error_msg = "We are sorry but upload was interrupted. Please try again."
         raise web.HTTPNotFound(text=error_msg)
@@ -779,6 +792,7 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
+
     username = await auth_client().get_user(token)
     await assert_globusid_exists(username, token)
     return username
