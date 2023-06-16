@@ -37,6 +37,14 @@ python -m venv venv
 python -m pip install --upgrade pip
 ```
 
+## Running Dev Server
+
+For integration tests, the server can be stood up inside a docker container:
+
+```shell
+./development/scripts/run-dev-server.sh
+```
+
 ### install deps
 
 ```shell
