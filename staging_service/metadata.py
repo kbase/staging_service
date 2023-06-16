@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import unicodedata
 from difflib import SequenceMatcher
@@ -82,9 +83,14 @@ async def _read_metadata(metadata_path: str):
     """
     Reads the file at the provided path, and decodes to JSON.
     """
-    async with aiofiles.open(metadata_path, mode="r", encoding="utf-8") as extant:
-        data = await extant.read()
-        return decoder.decode(data)
+    try:
+        async with aiofiles.open(metadata_path, mode="r", encoding="utf-8") as extant:
+            data = await extant.read()
+            return decoder.decode(data)
+    except json.decoder.JSONDecodeError:
+        # The metadata file is either corrupted or is currently being written.
+        # TODO: can we distinguish these cases, or redesign things?
+        return {}
 
 
 async def _get_metadata(metadata_path: str):
@@ -224,8 +230,8 @@ async def _save_metadata(path: StagingPath, metadata: dict):
     """
     Saves the given metadata dictionary into the metadata file associated with the given path
     """
-    async with aiofiles.open(path.metadata_path, mode="w") as f:
-        await f.writelines(encoder.encode(metadata))
+    async with aiofiles.open(path.metadata_path, mode="w") as metadata_file:
+        await metadata_file.write(encoder.encode(metadata))
 
 
 async def _update_metadata(path: StagingPath, additional_metadata: dict) -> dict:
