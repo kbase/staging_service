@@ -269,7 +269,7 @@ def make_random_string(string_length: str) -> str:
     random.seed(42)
     possible_letters = string.ascii_letters
     return "".join(
-        random.choice(possible_letters) for _ in range(string_length)  # NOSONAR nosec
+        random.choice(possible_letters) for _ in range(string_length)  # NOSONAR #nosec
     )
 
 
