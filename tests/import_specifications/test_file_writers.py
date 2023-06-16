@@ -1,26 +1,25 @@
 import os
 import uuid
-
-import openpyxl
-
 from collections.abc import Generator
 from pathlib import Path
-from pytest import raises, fixture
 
-from tests.test_app import FileUtil
+import openpyxl
+from pytest import fixture, raises
 
 from staging_service.import_specifications.file_writers import (
-    write_csv,
-    write_tsv,
-    write_excel,
     ImportSpecWriteException,
+    write_csv,
+    write_excel,
+    write_tsv,
 )
-
-from tests.test_utils import (
+from tests.test_helpers import (
+    FileUtil,
     assert_exception_correct,
-    check_file_contents,
+    assert_file_contents,
     check_excel_contents,
 )
+
+# pylint: disable=C0116
 
 
 @fixture(scope="module")
@@ -43,7 +42,7 @@ _TEST_DATA = {
         "data": [
             {"id3": "comma,comma", "id1": "yay!\ttab", "id2": 42},
             {"id3": 56.78, "id1": "boo!", "id2": None},
-        ]
+        ],
     },
     "type2": {
         "order_and_display": [
@@ -52,7 +51,7 @@ _TEST_DATA = {
         "data": [
             {"id1": "foo"},
             {"id1": 0},
-        ]
+        ],
     },
     "type3": {
         "order_and_display": [
@@ -60,8 +59,8 @@ _TEST_DATA = {
             ("tab\tid", "xsv is only"),
             ("comma,id", "a template"),
         ],
-        "data": []
-    }
+        "data": [],
+    },
 }
 
 
@@ -72,7 +71,7 @@ def test_write_csv(temp_dir: Path):
         "type2": "type2.csv",
         "type3": "type3.csv",
     }
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type1.csv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -80,9 +79,9 @@ def test_write_csv(temp_dir: Path):
             '"thing,with,comma",other,thing\twith\ttabs\n',
             'yay!\ttab,42,"comma,comma"\n',
             "boo!,,56.78\n",
-        ]
+        ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type2.csv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -90,15 +89,15 @@ def test_write_csv(temp_dir: Path):
             "oh no I only have one column\n",
             "foo\n",
             "0\n",
-        ]
+        ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type3.csv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
             'some_id,tab\tid,"comma,id"\n',
             "hey this,xsv is only,a template\n",
-        ]
+        ],
     )
 
 
@@ -109,7 +108,7 @@ def test_write_tsv(temp_dir: Path):
         "type2": "type2.tsv",
         "type3": "type3.tsv",
     }
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type1.tsv",
         [
             "Data type: type1; Columns: 3; Version: 1\n",
@@ -117,9 +116,9 @@ def test_write_tsv(temp_dir: Path):
             'thing,with,comma\tother\t"thing\twith\ttabs"\n',
             '"yay!\ttab"\t42\tcomma,comma\n',
             "boo!\t\t56.78\n",
-        ]
+        ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type2.tsv",
         [
             "Data type: type2; Columns: 1; Version: 1\n",
@@ -127,15 +126,15 @@ def test_write_tsv(temp_dir: Path):
             "oh no I only have one column\n",
             "foo\n",
             "0\n",
-        ]
+        ],
     )
-    check_file_contents(
+    assert_file_contents(
         temp_dir / "type3.tsv",
         [
             "Data type: type3; Columns: 3; Version: 1\n",
             'some_id\t"tab\tid"\tcomma,id\n',
             "hey this\txsv is only\ta template\n",
-        ]
+        ],
     )
 
 
@@ -179,7 +178,7 @@ def test_write_excel(temp_dir: Path):
         "type3",
         [
             ["Data type: type3; Columns: 3; Version: 1", None, None],
-            ["some_id","tab\tid","comma,id"],
+            ["some_id", "tab\tid", "comma,id"],
             ["hey this", "xsv is only", "a template"],
         ],
         [8.0, 11.0, 10.0],
@@ -193,84 +192,140 @@ def test_file_writers_fail():
     file_writers_fail(p, None, E("The types value must be a mapping"))
     file_writers_fail(p, {}, E("At least one data type must be specified"))
     file_writers_fail(
-        p, {None: 1}, E("A data type cannot be a non-string or a whitespace only string"))
+        p,
+        {None: 1},
+        E("A data type cannot be a non-string or a whitespace only string"),
+    )
     file_writers_fail(
         p,
         {"  \t ": 1},
-        E("A data type cannot be a non-string or a whitespace only string"))
+        E("A data type cannot be a non-string or a whitespace only string"),
+    )
     file_writers_fail(p, {"t": []}, E("The value for data type t must be a mapping"))
     file_writers_fail(p, {"t": 1}, E("The value for data type t must be a mapping"))
     file_writers_fail(p, {"t": {}}, E("Data type t missing order_and_display key"))
     file_writers_fail(
         p,
         {"t": {"order_and_display": {}, "data": []}},
-        E("Data type t order_and_display value is not a list"))
+        E("Data type t order_and_display value is not a list"),
+    )
     file_writers_fail(
         p,
         {"t": {"order_and_display": [], "data": []}},
-        E("At least one entry is required for order_and_display for type t"))
+        E("At least one entry is required for order_and_display for type t"),
+    )
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"]]}},
-        E("Data type t missing data key"))
+        E("Data type t missing data key"),
+    )
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"]], "data": "foo"}},
-        E("Data type t data value is not a list"))
+        E("Data type t data value is not a list"),
+    )
     file_writers_fail(
         p,
-        {"t": {"order_and_display": [["foo", "bar"], "baz"] , "data": []}},
-        E("Invalid order_and_display entry for datatype t at index 1 - "
-                   + "the entry is not a list"))
+        {"t": {"order_and_display": [["foo", "bar"], "baz"], "data": []}},
+        E(
+            "Invalid order_and_display entry for datatype t at index 1 - "
+            + "the entry is not a list"
+        ),
+    )
     file_writers_fail(
         p,
-        {"t": {"order_and_display": [("foo", "bar"), ["whee", "whoo"], ["baz"]] , "data": []}},
-        E("Invalid order_and_display entry for datatype t at index 2 - "
-                   + "expected 2 item list"))
+        {
+            "t": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"], ["baz"]],
+                "data": [],
+            }
+        },
+        E(
+            "Invalid order_and_display entry for datatype t at index 2 - "
+            + "expected 2 item list"
+        ),
+    )
     file_writers_fail(
         p,
-        {"t": {"order_and_display": [("foo", "bar", "whee"), ["whee", "whoo"]] , "data": []}},
-        E("Invalid order_and_display entry for datatype t at index 0 - "
-                   + "expected 2 item list"))
+        {
+            "t": {
+                "order_and_display": [("foo", "bar", "whee"), ["whee", "whoo"]],
+                "data": [],
+            }
+        },
+        E(
+            "Invalid order_and_display entry for datatype t at index 0 - "
+            + "expected 2 item list"
+        ),
+    )
     for parm in [None, "  \t   ", 1]:
         file_writers_fail(
             p,
             {"t": {"order_and_display": [(parm, "foo"), ["whee", "whoo"]], "data": []}},
-            E("Invalid order_and_display entry for datatype t at index 0 - "
-                    + "parameter ID cannot be a non-string or a whitespace only string"))
+            E(
+                "Invalid order_and_display entry for datatype t at index 0 - "
+                + "parameter ID cannot be a non-string or a whitespace only string"
+            ),
+        )
         file_writers_fail(
             p,
             {"t": {"order_and_display": [("bar", "foo"), ["whee", parm]], "data": []}},
-            E("Invalid order_and_display entry for datatype t at index 1 - "
-                    + "parameter display name cannot be a non-string or a whitespace only string"))
+            E(
+                "Invalid order_and_display entry for datatype t at index 1 - "
+                + "parameter display name cannot be a non-string or a whitespace only string"
+            ),
+        )
     file_writers_fail(
         p,
-        {"t": {"order_and_display": [("bar", "foo"), ["whee", "whoo"]], "data": ["foo"]}},
-        E("Data type t data row 0 is not a mapping"))
+        {
+            "t": {
+                "order_and_display": [("bar", "foo"), ["whee", "whoo"]],
+                "data": ["foo"],
+            }
+        },
+        E("Data type t data row 0 is not a mapping"),
+    )
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("bar", "foo")], "data": [{"bar": 1}, []]}},
-        E("Data type t data row 1 is not a mapping"))
+        E("Data type t data row 1 is not a mapping"),
+    )
     file_writers_fail(
         p,
-        {"t": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
-               "data": [{"foo": 1, "whee": 2}, {"foo": 2}]}},
-        E("Data type t data row 1 does not have the same keys as order_and_display"))
+        {
+            "t": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"]],
+                "data": [{"foo": 1, "whee": 2}, {"foo": 2}],
+            }
+        },
+        E("Data type t data row 1 does not have the same keys as order_and_display"),
+    )
     file_writers_fail(
         p,
-        {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
-                "data": [{"foo": 2, "whee": 3, 5: 4}, {"foo": 1, "whee": 2}]}},
-        E("Data type ty data row 0 does not have the same keys as order_and_display"))
+        {
+            "ty": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"]],
+                "data": [{"foo": 2, "whee": 3, 5: 4}, {"foo": 1, "whee": 2}],
+            }
+        },
+        E("Data type ty data row 0 does not have the same keys as order_and_display"),
+    )
     file_writers_fail(
         p,
-        {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]],
-                "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}]}},
-        E("Data type ty data row 1's value for parameter whee "
-                   + "is not a number or a string"))
+        {
+            "ty": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"]],
+                "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}],
+            }
+        },
+        E(
+            "Data type ty data row 1's value for parameter whee "
+            + "is not a number or a string"
+        ),
+    )
 
 
-
-def file_writers_fail(path: Path, types: dict, expected: Exception):
+def file_writers_fail(path: Path | None, types: dict | None, expected: Exception):
     with raises(Exception) as got:
         write_csv(path, types)
     assert_exception_correct(got.value, expected)

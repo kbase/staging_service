@@ -1,7 +1,13 @@
 from pathlib import Path
 
 from staging_service.app_error_formatter import format_import_spec_errors
-from staging_service.import_specifications.file_parser import ErrorType, Error, SpecificationSource
+from staging_service.import_specifications.file_parser import (
+    Error,
+    ErrorType,
+    SpecificationSource,
+)
+
+# pylint: disable=C0116
 
 
 def _ss(file: str, tab: str = None) -> SpecificationSource:
@@ -15,10 +21,11 @@ def test_format_import_spec_errors_no_input():
 def test_format_import_spec_errors_one_error():
     errors = [Error(ErrorType.OTHER, "foobar")]
     assert format_import_spec_errors(errors, {}) == [
-        {"type": "unexpected_error",
-         "message": "foobar",
-         "file": None,
-         }
+        {
+            "type": "unexpected_error",
+            "message": "foobar",
+            "file": None,
+        }
     ]
 
 
@@ -31,7 +38,7 @@ def test_format_import_spec_errors_all_the_errors_no_tabs():
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
             "foobar4",
             _ss("file4"),
-            _ss("file5")
+            _ss("file5"),
         ),
         Error(ErrorType.NO_FILES_PROVIDED),
         Error(ErrorType.FILE_NOT_FOUND, source_1=_ss("file6")),
@@ -45,31 +52,31 @@ def test_format_import_spec_errors_all_the_errors_no_tabs():
         Path("file6"): Path("f6"),
     }
     assert format_import_spec_errors(errors, paths) == [
-        {"type": "unexpected_error",
-         "message": "foobar1",
-         "file": "f1",
-         },
-        {"type": "cannot_parse_file",
-         "message": "foobar2",
-         "file": "f2",
-         "tab": None
-         },
-        {"type": "incorrect_column_count",
-         "message": "foobar3",
-         "file": "f3",
-         "tab": None,
-         },
-        {"type": "multiple_specifications_for_data_type",
-         "message": "foobar4",
-         "file_1": "f4",
-         "tab_1": None,
-         "file_2": "f5",
-         "tab_2": None,
-         },
+        {
+            "type": "unexpected_error",
+            "message": "foobar1",
+            "file": "f1",
+        },
+        {"type": "cannot_parse_file", "message": "foobar2", "file": "f2", "tab": None},
+        {
+            "type": "incorrect_column_count",
+            "message": "foobar3",
+            "file": "f3",
+            "tab": None,
+        },
+        {
+            "type": "multiple_specifications_for_data_type",
+            "message": "foobar4",
+            "file_1": "f4",
+            "tab_1": None,
+            "file_2": "f5",
+            "tab_2": None,
+        },
         {"type": "no_files_provided"},
-        {"type": "cannot_find_file",
-         "file": "f6",
-         },
+        {
+            "type": "cannot_find_file",
+            "file": "f6",
+        },
     ]
 
 
@@ -81,7 +88,7 @@ def test_format_import_spec_errors_all_the_errors_with_tabs():
             ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
             "foobar3",
             _ss("file3", "tab3"),
-            _ss("file4", "tab4")
+            _ss("file4", "tab4"),
         ),
     ]
     paths = {
@@ -91,21 +98,24 @@ def test_format_import_spec_errors_all_the_errors_with_tabs():
         Path("file4"): Path("f4"),
     }
     assert format_import_spec_errors(errors, paths) == [
-        {"type": "cannot_parse_file",
-         "message": "foobar1",
-         "file": "f1",
-         "tab": "tab1"
-         },
-        {"type": "incorrect_column_count",
-         "message": "foobar2",
-         "file": "f2",
-         "tab": "tab2",
-         },
-        {"type": "multiple_specifications_for_data_type",
-         "message": "foobar3",
-         "file_1": "f3",
-         "tab_1": "tab3",
-         "file_2": "f4",
-         "tab_2": "tab4",
-         },
+        {
+            "type": "cannot_parse_file",
+            "message": "foobar1",
+            "file": "f1",
+            "tab": "tab1",
+        },
+        {
+            "type": "incorrect_column_count",
+            "message": "foobar2",
+            "file": "f2",
+            "tab": "tab2",
+        },
+        {
+            "type": "multiple_specifications_for_data_type",
+            "message": "foobar3",
+            "file_1": "f3",
+            "tab_1": "tab3",
+            "file_2": "f4",
+            "tab_2": "tab4",
+        },
     ]

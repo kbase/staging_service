@@ -7,11 +7,18 @@ import os
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
 
+from staging_service.auth2Client import KBaseAuth2
+from staging_service.config import get_config
+
+
+def auth_client():
+    return KBaseAuth2(get_config()["staging_service"]["AUTH_URL"])
+
 
 async def run_command(*args):
     """Run command in subprocess
     Example from:
-        http://asyncio.readthedocs.io/en/latest/subprocess.html
+        https://asyncio.readthedocs.io/en/latest/subprocess.html
     """
     # Create subprocess
     process = await asyncio.create_subprocess_exec(
@@ -31,15 +38,17 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        error_msg = "command {cmd} failed\nreturn code: {returncode}\nerror: {error}".format(
-            cmd=" ".join(args),
-            returncode=process.returncode,
-            error=stderr.decode().strip(),
+        error_msg = (
+            "command {cmd} failed\nreturn code: {returncode}\nerror: {error}".format(
+                cmd=" ".join(args),
+                returncode=process.returncode,
+                error=stderr.decode().strip(),
+            )
         )
         raise HTTPInternalServerError(text=error_msg)
 
 
-class Path(object):
+class StagingPath(object):
     _META_DIR = None  # expects to be set by config
     _DATA_DIR = None  # expects to be set by config
     _CONCIERGE_PATH = None  # expects to be set by config
@@ -68,22 +77,22 @@ class Path(object):
             while path.startswith("/"):
                 path = path[1:]
         user_path = os.path.join(username, path)
-        full_path = os.path.join(Path._DATA_DIR, user_path)
+        full_path = os.path.join(StagingPath._DATA_DIR, user_path)
 
-        metadata_path = os.path.join(Path._META_DIR, user_path)
+        metadata_path = os.path.join(StagingPath._META_DIR, user_path)
         name = os.path.basename(path)
         jgi_metadata = os.path.join(os.path.dirname(full_path), "." + name + ".jgi")
-        return Path(full_path, metadata_path, user_path, name, jgi_metadata)
+        return StagingPath(full_path, metadata_path, user_path, name, jgi_metadata)
 
     @staticmethod
     def from_full_path(full_path: str):
-        user_path = full_path[len(Path._DATA_DIR) :]
+        user_path = full_path[len(StagingPath._DATA_DIR) :]
         if user_path.startswith("/"):
             user_path = user_path[1:]
-        metadata_path = os.path.join(Path._META_DIR, user_path)
+        metadata_path = os.path.join(StagingPath._META_DIR, user_path)
         name = os.path.basename(full_path)
         jgi_metadata = os.path.join(os.path.dirname(full_path), "." + name + ".jgi")
-        return Path(full_path, metadata_path, user_path, name, jgi_metadata)
+        return StagingPath(full_path, metadata_path, user_path, name, jgi_metadata)
 
 
 class AclManager:
@@ -167,7 +176,7 @@ class AclManager:
         Attempt to add acl for the given user id and directory
         """
         try:
-            resp = self.globus_transfer_client.add_endpoint_acl_rule(
+            self.globus_transfer_client.add_endpoint_acl_rule(
                 self.endpoint_id,
                 dict(
                     DATA_TYPE="access",
@@ -240,7 +249,7 @@ class AclManager:
                 text=json.dumps(response), content_type="application/json"
             )
 
-        except globus_sdk.GlobusAPIError as error:
+        except globus_sdk.GlobusAPIErro:
             response = {
                 "success": False,
                 "error_type": "GlobusAPIError",
@@ -258,7 +267,7 @@ class AclManager:
         :return: Result of attempt to add acl
         """
         user_identity_id = self._get_globus_identity(shared_directory)
-        cp_full = f"{Path._DATA_DIR}/{concierge_path}"
+        cp_full = f"{StagingPath._DATA_DIR}/{concierge_path}"
         try:
             os.mkdir(cp_full)
             print(f"Attempting to create concierge dir {cp_full}")

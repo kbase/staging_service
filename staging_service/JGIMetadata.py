@@ -1,13 +1,15 @@
-from .utils import Path
-from json import JSONDecoder
-import aiofiles
 import os
+from json import JSONDecoder
+
+import aiofiles
 from aiohttp import web
+
+from .utils import StagingPath
 
 decoder = JSONDecoder()
 
 
-async def read_metadata_for(path: Path):
+async def read_metadata_for(path: StagingPath):
     if os.path.exists(path.jgi_metadata) and os.path.isfile(path.jgi_metadata):
         async with aiofiles.open(path.jgi_metadata, mode="r") as json:
             data = await json.read()

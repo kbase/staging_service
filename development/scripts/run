@@ -1,0 +1,8 @@
+#!/bin/sh
+PROJECT_DIRECTORY=${DIR:-$PWD}
+echo "Project Directory: ${PROJECT_DIRECTORY}"
+docker compose \
+    -f "${PROJECT_DIRECTORY}/development/tools/runner/docker-compose.yml" \
+    --project-directory "${PROJECT_DIRECTORY}" \
+    --project-name tools \
+    run --rm runner "${@:1}"

@@ -86,6 +86,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+Pipfile
 
 # Spyder project settings
 .spyderproject
@@ -100,8 +101,15 @@ ENV/
 # mypy
 .mypy_cache/
 
+# IDEs
+.idea
+.fleet
+
+# misc
+
 data/
 .DS_Store
 .virtualenvs/
 test.env
 run_tests_single.sh
+local_work/

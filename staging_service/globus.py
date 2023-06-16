@@ -1,8 +1,10 @@
-from .utils import Path
-import aiohttp
-import aiofiles
-import os
 import configparser
+import os
+
+import aiofiles
+import aiohttp
+
+from .utils import StagingPath
 
 
 def _get_authme_url():
@@ -18,6 +20,7 @@ def _get_authme_url():
 async def _get_globus_ids(token):
     if not token:
         raise aiohttp.web.HTTPBadRequest(text="must supply token")
+
     async with aiohttp.ClientSession() as session:
         auth2_me_url = _get_authme_url()
         async with session.get(auth2_me_url, headers={"Authorization": token}) as resp:
@@ -37,30 +40,31 @@ async def _get_globus_ids(token):
 
 
 def _globus_id_path(username: str):
-    return Path.validate_path(username, ".globus_id")
+    return StagingPath.validate_path(username, ".globus_id")
 
 
-def is_globusid(path: Path, username: str):
+def is_globusid(path: StagingPath, username: str):
     return path.full_path == _globus_id_path(username)
 
 
 async def assert_globusid_exists(username, token):
-    """ ensures that a globus id exists if there is a valid one for user"""
-
-    # make root dir
-    root = Path.validate_path(username, "")
-    if not os.path.exists(root.full_path):
-        os.makedirs(root.full_path)
+    """ensures that a globus id exists if there is a valid one for user"""
 
     path = _globus_id_path(username)
-    # check to see if file exists or is empty
+
+    # Ensure the path to the globus file exists. In a deployment, this is the
+    # user's staging directory.
+    os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
+
+    # Create the globus
     if not os.path.exists(path.full_path) or os.stat(path.full_path).st_size == 0:
         globus_ids = await _get_globus_ids(token)
         if len(globus_ids) == 0:
             return
+
         # TODO in the future this should support writing multiple lines
         # such as the commented code below, for multiple linked accounts
         # text = '\n'.join(globus_ids)
         text = globus_ids[0]
         async with aiofiles.open(path.full_path, mode="w") as globus_file:
-            await globus_file.writelines(text)
+            await globus_file.write(text)

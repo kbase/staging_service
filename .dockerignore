@@ -1,0 +1,3 @@
+# Even though the Dockerfile only copies over necessary files, certain
+# artifacts may creep in that we should exclude from the image.
+.DS_Store
