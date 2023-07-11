@@ -238,7 +238,7 @@ def write_excel(
         sheet.row_dimensions[2].hidden = True
         res[datatype] = filename
     # trash the automatically created sheet
-    wb.remove_sheet(wb[wb.sheetnames[0]])
+    wb.remove(wb[wb.sheetnames[0]])
     wb.save(folder / filename)
     return res
 
