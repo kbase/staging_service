@@ -1,10 +1,8 @@
 import pytest
 
 from staging_service.app import inject_config_dependencies
-from staging_service.autodetect.GenerateMappings import (
-    extensions_mapping,
-    file_format_to_extension_mapping,
-)
+from staging_service.autodetect.GenerateMappings import extensions_mapping
+from staging_service.autodetect.Mappings import file_format_to_extension_mapping
 from staging_service.AutoDetectUtils import AutoDetectUtils
 from tests.test_utils import bootstrap_config
 
