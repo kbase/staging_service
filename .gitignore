@@ -100,9 +100,6 @@ ENV/
 # mypy
 .mypy_cache/
 
-# IDEs
-.vscode
-
 data/
 .DS_Store
 .virtualenvs/

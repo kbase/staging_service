@@ -3,5 +3,9 @@
     "python.linting.pylintEnabled": false,
     "files.autoSave": "afterDelay",
     "files.autoSaveDelay": 500,
-    "python.pythonPath": "python3"
+    "python.pythonPath": "python3",
+    "cSpell.words": [
+        "aiohttp",
+        "authme"
+    ]
 }
