@@ -10,7 +10,6 @@ from io import BytesIO
 from json import JSONDecoder
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 from urllib.parse import unquote, urlencode
 
 import openpyxl
@@ -624,7 +623,7 @@ async def test_list():
             # testing list dot-files
             fs.make_file(
                 os.path.join(username, "test", ".test_file_1"),  # NOSONAR python:S1192
-                txt
+                txt,
             )
             # f5 = fs.make_file(os.path.join(username, 'test', '.globus_id'), txt)
             res6 = await cli.get("/list/", headers={"Authorization": ""})
