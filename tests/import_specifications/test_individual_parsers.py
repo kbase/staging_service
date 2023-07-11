@@ -385,11 +385,17 @@ def test_xsv_parse_fail_bad_version(temp_dir: Path):
 def test_xsv_parse_fail_missing_column_headers(temp_dir: Path):
     err = "Missing 2nd header line"
     _xsv_parse_fail(
-        temp_dir, ["Data type: foo; Columns: 3; Version: 1\n"], parse_csv, err
+        temp_dir,
+        ["Data type: foo; Columns: 3; Version: 1\n"],  # NOSONAR python:S1192
+        parse_csv,
+        err,
     )
 
     err = "Missing 3rd header line"
-    lines = ["Data type: foo; Columns: 3; Version: 1\n", "head1, head2, head3\n"]
+    lines = [
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head3\n",  # NOSONAR python:S1192
+    ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
 
@@ -403,10 +409,11 @@ def test_xsv_parse_fail_missing_column_header_entries(temp_dir: Path):
 
 
 def test_xsv_parse_fail_missing_data(temp_dir: Path):
-    err = "No non-header data in file"
+    err = "No non-header data in file"  # NOSONAR python:S1192
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head3\n",
-        "Head 1, Head 2, Head 3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head3\n",
+        "Head 1, Head 2, Head 3\n",  # NOSONAR python:S1192
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
@@ -414,37 +421,42 @@ def test_xsv_parse_fail_missing_data(temp_dir: Path):
 def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
     err = "Incorrect number of items in line 3, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 3, expected 2, got 3"
     lines = [
-        "Data type: foo; Columns: 2; Version: 1\n" "head1\thead2\n",
-        "Head 1\tHead 2\tHead 3\n",
+        "Data type: foo; Columns: 2; Version: 1\n",
+        "head1\thead2\n",
+        "Head 1\tHead 2\tHead 3\n",  # NOSONAR python:S1192
     ]
     _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 2, expected 2, got 3"
     lines = [
-        "Data type: foo; Columns: 2; Version: 1\n" "head1, head2, head3\n",
+        "Data type: foo; Columns: 2; Version: 1\n",
+        "head1, head2, head3\n",
         "Head 1, Head 2\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 2, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1\thead2\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1\thead2\n",
         "Head 1\tHead 2\tHead 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_tsv, err, ErrorType.INCORRECT_COLUMN_COUNT)
 
     err = "Incorrect number of items in line 5, expected 3, got 4"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1, head2, head 3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1, head2, head 3\n",
         "Head 1, Head 2, Head 3\n",
-        "1, 2, 3\n",
+        "1, 2, 3\n",  # NOSONAR python:S1192
         "1, 2, 3, 4\n",
         "1, 2, 3\n",
     ]
@@ -452,9 +464,10 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
 
     err = "Incorrect number of items in line 6, expected 3, got 2"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head1\thead2\thead 3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head1\thead2\thead 3\n",
         "Head 1\tHead 2\tHead 3\n",
-        "1\t2\t3\n",
+        "1\t2\t3\n",  # NOSONAR python:S1192
         "1\t2\t3\n",
         "1\t2\n",
         "1\t2\t3\n",
@@ -465,14 +478,16 @@ def test_xsv_parse_fail_unequal_rows(temp_dir: Path):
 def test_xsv_parse_fail_duplicate_headers(temp_dir: Path):
     err = "Duplicate header name in row 2: head3"
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head3, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head3, head2, head3\n",
         "Head 1, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
 
     # test with duplicate dual headers
     lines = [
-        "Data type: foo; Columns: 3; Version: 1\n" "head3, head2, head3\n",
+        "Data type: foo; Columns: 3; Version: 1\n",
+        "head3, head2, head3\n",
         "Head 3, Head 2, Head 3\n",
     ]
     _xsv_parse_fail(temp_dir, lines, parse_csv, err)
@@ -641,7 +656,8 @@ def test_excel_parse_fail_empty_file(temp_dir: Path):
 
 def test_excel_parse_fail_non_excel_file(temp_dir: Path):
     lines = [
-        "Data type: foo; Version: 1\n" "head1, head2, head 3\n",
+        "Data type: foo; Version: 1\n",
+        "head1, head2, head 3\n",
         "Head 1, Head 2, Head 3\n",
         "1, 2, 3\n",
     ]

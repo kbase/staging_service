@@ -309,7 +309,7 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    spcsrc("myfile.xlsx", "tab1"),
+                    spcsrc("myfile.xlsx", "tab1"),  # NOSONAR python:S1192
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(
@@ -324,7 +324,7 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type_other": ParseResult(
-                    spcsrc("somefile.csv"),
+                    spcsrc("somefile.csv"),  # NOSONAR python:S1192
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 )
             }
@@ -418,7 +418,9 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")), resolver, logger
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")),  # NOSONAR python:S1192
+        resolver,
+        logger,
     )
 
     assert res == ParseResults(
@@ -429,7 +431,7 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
                 Error(
                     ErrorType.PARSE_FAIL,
                     "JPEG is not a supported file type for import specifications",
-                    spcsrc(Path("x.jpeg")),
+                    spcsrc("x.jpeg"),
                 ),
             ]
         )
@@ -490,7 +492,8 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")), resolver, logger
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")),  # NOSONAR python:S1192
+        resolver, logger
     )
 
     assert res == ParseResults(

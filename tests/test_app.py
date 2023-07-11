@@ -622,7 +622,10 @@ async def test_list():
             assert sum(file_folder_count) == 1
 
             # testing list dot-files
-            fs.make_file(os.path.join(username, "test", ".test_file_1"), txt)
+            fs.make_file(
+                os.path.join(username, "test", ".test_file_1"),  # NOSONAR python:S1192
+                txt
+            )
             # f5 = fs.make_file(os.path.join(username, 'test', '.globus_id'), txt)
             res6 = await cli.get("/list/", headers={"Authorization": ""})
             assert res6.status == 200
@@ -632,7 +635,7 @@ async def test_list():
             file_names = [
                 file_json["name"] for file_json in json if not file_json["isFolder"]
             ]
-            assert ".test_file_1" not in file_names
+            assert ".test_file_1" not in file_names  # NOSONAR python:S1192
             assert ".globus_id" not in file_names
             assert len(file_names) == 2
 
@@ -646,7 +649,7 @@ async def test_list():
             file_names = [
                 file_json["name"] for file_json in json if not file_json["isFolder"]
             ]
-            assert ".test_file_1" in file_names
+            assert ".test_file_1" in file_names  # NOSONAR python:S1192
             assert ".globus_id" in file_names
             assert len(file_names) == 4
 
@@ -1538,7 +1541,7 @@ async def test_write_bulk_specification_success_csv():
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             resp = await cli.post(
-                "write_bulk_specification/",
+                "write_bulk_specification/",  # NOSONAR
                 json={
                     "output_directory": "specs",
                     "output_file_type": "CSV",

@@ -90,7 +90,7 @@ def test_specific_filenames():
             (None, {"prefix": "filename", "suffix": None, "file_ext_type": []}),
         ),
         (
-            "file.name",
+            "file.name",  # NOSONAR python:S1192
             (None, {"prefix": "file.name", "suffix": None, "file_ext_type": []}),
         ),
         (
@@ -104,7 +104,7 @@ def test_specific_filenames():
                     {
                         "app_weight": 1,
                         "id": "decompress",
-                        "title": "Decompress/Unpack",
+                        "title": "Decompress/Unpack",  # NOSONAR python:S1192
                     }
                 ],
                 {
@@ -143,12 +143,12 @@ def test_specific_filenames():
                     {
                         "app_weight": 1,
                         "id": "gff_genome",
-                        "title": "GFF/FASTA Genome",
+                        "title": "GFF/FASTA Genome",  # NOSONAR python:S1192
                     },
                     {
                         "app_weight": 1,
                         "id": "gff_metagenome",
-                        "title": "GFF/FASTA MetaGenome",
+                        "title": "GFF/FASTA MetaGenome",  # NOSONAR python:S1192
                     },
                 ],
                 {
