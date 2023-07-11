@@ -77,7 +77,7 @@ async def add_upa(path: Path, UPA: str):
             data = await extant.read()
             data = decoder.decode(data)
     else:
-        data = await _generate_metadata(path, None)  # TODO performance optimization
+        data = await _generate_metadata(path, None)
     data["UPA"] = UPA
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     async with aiofiles.open(path.metadata_path, mode="w") as update:

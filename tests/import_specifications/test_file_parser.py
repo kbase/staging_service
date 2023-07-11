@@ -25,7 +25,7 @@ def spcsrc(path: str, tab: Optional[str] = None):
     return SpecificationSource(Path(path), tab)
 
 
-def test_SpecificationSource_init_success():
+def test_specification_source_init_success():
     # minimal
     ss = SpecificationSource(Path("foo"))
 
@@ -39,18 +39,18 @@ def test_SpecificationSource_init_success():
     assert ss.tab == "tabbytab"
 
 
-def test_SpecificationSource_init_fail():
+def test_specification_source_init_fail():
     # could inline this, but might as well follow the same pattern as all the other tests
-    specificationSource_init_fail(None, ValueError("file is required"))
+    specification_source_init_fail(None, ValueError("file is required"))
 
 
-def specificationSource_init_fail(file_: Optional[str], expected: Exception):
+def specification_source_init_fail(file_: Optional[str], expected: Exception):
     with raises(Exception) as got:
         SpecificationSource(file_)
     assert_exception_correct(got.value, expected)
 
 
-def test_FileTypeResolution_init_w_parser_success():
+def test_file_type_resolution_init_w_parser_success():
     def p(path):
         del path
         return ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
@@ -61,21 +61,21 @@ def test_FileTypeResolution_init_w_parser_success():
     assert ftr.unsupported_type is None
 
 
-def test_FileTypeResolution_init_w_unsupported_type_success():
+def test_file_type_resolution_init_w_unsupported_type_success():
     ftr = FileTypeResolution(unsupported_type="sys")
 
     assert ftr.parser is None
     assert ftr.unsupported_type == "sys"
 
 
-def test_FileTypeResolution_init_fail():
+def test_file_type_resolution_init_fail():
     err = "Exactly one of parser or unsupported_type must be supplied"
     pr = ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
-    fileTypeResolution_init_fail(None, None, ValueError(err))
-    fileTypeResolution_init_fail(lambda path: pr, "mp-2", ValueError(err))
+    file_type_resolution_init_fail(None, None, ValueError(err))
+    file_type_resolution_init_fail(lambda path: pr, "mp-2", ValueError(err))
 
 
-def fileTypeResolution_init_fail(
+def file_type_resolution_init_fail(
     parser: Optional[Callable[[Path], ParseResults]],
     unexpected_type: Optional[str],
     expected: Exception,
@@ -85,7 +85,7 @@ def fileTypeResolution_init_fail(
     assert_exception_correct(got.value, expected)
 
 
-def test_Error_init_w_FILE_NOT_FOUND_success():
+def test_error_init_w_file_not_found_success():
     # minimal
     e = Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo"))
 
@@ -103,7 +103,7 @@ def test_Error_init_w_FILE_NOT_FOUND_success():
     assert e.source_2 is None
 
 
-def test_Error_init_w_PARSE_FAIL_success():
+def test_error_init_w_parse_fail_success():
     e = Error(ErrorType.PARSE_FAIL, message="foo", source_1=spcsrc("foo2"))
 
     assert e.error_type == ErrorType.PARSE_FAIL
@@ -112,7 +112,7 @@ def test_Error_init_w_PARSE_FAIL_success():
     assert e.source_2 is None
 
 
-def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
+def test_error_init_w_incorrect_column_count_success():
     e = Error(
         ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile")
     )
@@ -123,7 +123,7 @@ def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
     assert e.source_2 is None
 
 
-def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
+def test_error_init_w_multiple_specifications_for_data_type_success():
     e = Error(
         ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
         "foo",
@@ -137,7 +137,7 @@ def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
     assert e.source_2 == spcsrc("yay")
 
 
-def test_Error_init_w_NO_FILES_PROVIDED_success():
+def test_error_init_w_no_files_provided_success():
     e = Error(ErrorType.NO_FILES_PROVIDED)
 
     assert e.error_type == ErrorType.NO_FILES_PROVIDED
@@ -146,7 +146,7 @@ def test_Error_init_w_NO_FILES_PROVIDED_success():
     assert e.source_2 is None
 
 
-def test_Error_init_w_OTHER_success():
+def test_error_init_w_other_success():
     # minimal
     e = Error(ErrorType.OTHER, message="foo")
 
@@ -164,7 +164,7 @@ def test_Error_init_w_OTHER_success():
     assert e.source_2 is None
 
 
-def test_Error_init_fail():
+def test_error_init_fail():
     # arguments are error type, message string, 1st source, 2nd source, exception
     error_init_fail(None, None, None, None, ValueError("error is required"))
     error_init_fail(
@@ -214,22 +214,22 @@ def error_init_fail(
     assert_exception_correct(got.value, expected)
 
 
-def test_ParseResult_init_success():
+def test_parse_result_init_success():
     pr = ParseResult(spcsrc("bar"), (frozendict({"foo": "bar"}),))
 
     assert pr.source == spcsrc("bar")
     assert pr.result == (frozendict({"foo": "bar"}),)
 
 
-def test_ParseResult_init_fail():
-    parseResult_init_fail(None, None, ValueError("source is required"))
-    parseResult_init_fail(
+def test_parse_result_init_fail():
+    parse_result_init_fail(None, None, ValueError("source is required"))
+    parse_result_init_fail(
         None, (frozendict({"foo": "bar"}),), ValueError("source is required")
     )
-    parseResult_init_fail(spcsrc("foo"), None, ValueError("result is required"))
+    parse_result_init_fail(spcsrc("foo"), None, ValueError("result is required"))
 
 
-def parseResult_init_fail(
+def parse_result_init_fail(
     source: Optional[SpecificationSource],
     result: Optional[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
     expected: Exception,
@@ -254,7 +254,7 @@ PR_ERROR = (
 )
 
 
-def test_ParseResults_init_w_results_success():
+def test_parse_results_init_w_results_success():
     results_copy = frozendict(PR_RESULTS)  # prevent identity equality
 
     pr = ParseResults(PR_RESULTS)
@@ -264,7 +264,7 @@ def test_ParseResults_init_w_results_success():
     assert pr == ParseResults(results_copy)
 
 
-def test_ParseResults_init_w_error_success():
+def test_parse_results_init_w_error_success():
     errors_copy = tuple(PR_ERROR)  # prevent identity equality
 
     pr = ParseResults(errors=PR_ERROR)
@@ -274,13 +274,13 @@ def test_ParseResults_init_w_error_success():
     assert pr == ParseResults(errors=errors_copy)
 
 
-def test_ParseResults_init_fail():
+def test_Parse_Results_init_fail():
     err = "Exactly one of results or errors must be supplied"
-    parseResults_init_fail(None, None, ValueError(err))
-    parseResults_init_fail(PR_RESULTS, PR_ERROR, ValueError(err))
+    parse_results_init_fail(None, None, ValueError(err))
+    parse_results_init_fail(PR_RESULTS, PR_ERROR, ValueError(err))
 
 
-def parseResults_init_fail(
+def parse_results_init_fail(
     results: Optional[frozendict[str, ParseResult]],
     errors: Optional[tuple[Error, ...]],
     expected: Exception,
@@ -418,7 +418,11 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")),  # NOSONAR python:S1192
+        (
+            Path("myfile.xlsx"),
+            Path("somefile.csv"),
+            Path("x.jpeg"),
+        ),  # NOSONAR python:S1192
         resolver,
         logger,
     )
@@ -492,8 +496,13 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
     )
 
     res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")),  # NOSONAR python:S1192
-        resolver, logger
+        (
+            Path("myfile.xlsx"),
+            Path("somefile.csv"),
+            Path("x.tsv"),
+        ),  # NOSONAR python:S1192
+        resolver,
+        logger,
     )
 
     assert res == ParseResults(
