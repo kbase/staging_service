@@ -421,8 +421,8 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
         (
             Path("myfile.xlsx"),
             Path("somefile.csv"),
-            Path("x.jpeg"),
-        ),  # NOSONAR python:S1192
+            Path("x.jpeg"),  # NOSONAR python:S1192
+        ),
         resolver,
         logger,
     )
@@ -499,8 +499,8 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         (
             Path("myfile.xlsx"),
             Path("somefile.csv"),
-            Path("x.tsv"),
-        ),  # NOSONAR python:S1192
+            Path("x.tsv"),  # NOSONAR python:S1192
+        ),
         resolver,
         logger,
     )
@@ -530,10 +530,10 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         [
             call(Path("myfile.xlsx")),
             call(Path("somefile.csv")),
-            call(Path("x.tsv")),
+            call(Path("x.tsv")),  # NOSONAR python:S1192
         ]
     )
     parser1.assert_called_once_with(Path("myfile.xlsx"))
     parser2.assert_called_once_with(Path("somefile.csv"))
-    parser3.assert_called_once_with(Path("x.tsv"))
+    parser3.assert_called_once_with(Path("x.tsv"))  # NOSONAR python:S1192
     logger.assert_not_called()
