@@ -5,7 +5,7 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path as PathPy
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
 from aiohttp import web
@@ -406,7 +406,7 @@ async def upload_files_chunked(request: web.Request):
     """
     username = await authorize_request(request)
 
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
 
     reader = await request.multipart()
@@ -430,11 +430,12 @@ async def upload_files_chunked(request: web.Request):
     if not (user_file and destination_path):
         raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
 
-    filename: str = user_file.filename
+    filename: str = unquote(user_file.filename)
     if filename.lstrip() != filename:
         raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
             text="cannot upload file with name beginning with space"
         )
+
     if "," in filename:
         raise web.HTTPForbidden(  # for consistency we use 403 again
             text="cannot upload file with ',' in name"
@@ -478,7 +479,7 @@ async def define_upa(request: web.Request):
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
         raise web.HTTPNotFound(text=f"no file found found on path {path.user_path}")
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide UPA field in body")
     body = await request.post()
     try:
@@ -526,7 +527,7 @@ async def rename(request: web.Request):
         raise web.HTTPForbidden(text="cannot rename or move home directory")
     if is_globusid(path, username):
         raise web.HTTPForbidden(text="cannot rename or move protected file")
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide newPath field in body")
     body = await request.post()
     try:

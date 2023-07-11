@@ -5,14 +5,14 @@ import uuid
 from collections.abc import Generator
 from pathlib import Path as PyPath
 
-from pytest import fixture
+import pytest
 
 from staging_service.metadata import some_metadata
 from staging_service.utils import Path
 from tests.test_app import FileUtil
 
 
-@fixture(scope="module", name="temp_dir")
+@pytest.fixture(scope="module", name="temp_dir")
 def temp_dir_fixture() -> Generator[PyPath, None, None]:
     with FileUtil() as fu:
         childdir = PyPath(fu.make_dir(str(uuid.uuid4()))).resolve()
@@ -22,6 +22,7 @@ def temp_dir_fixture() -> Generator[PyPath, None, None]:
     # FileUtil will auto delete after exiting
 
 
+@pytest.mark.asyncio
 async def test_incomplete_metadata_file_update(temp_dir: Path):
     """
     Tests the case where a file is listed or checked for existence prior to completing
