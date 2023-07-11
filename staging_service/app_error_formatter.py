@@ -4,7 +4,7 @@ This module formats error classes into primitive types and containers.
 
 from pathlib import Path
 
-from .import_specifications.file_parser import ErrorType, Error
+from .import_specifications.file_parser import Error, ErrorType
 
 # Types for the lambda parameters are all strings
 # We don't add hints in to avoid repeating them over and over
@@ -25,13 +25,13 @@ _IMPORT_SPEC_ERROR_FORMATTERS = {
         "type": "cannot_parse_file",
         "message": msg,
         "file": file1,
-        "tab": tab1
+        "tab": tab1,
     },
     ErrorType.INCORRECT_COLUMN_COUNT: lambda msg, file1, tab1, file2, tab2: {
         "type": "incorrect_column_count",
         "message": msg,
         "file": file1,
-        "tab": tab1
+        "tab": tab1,
     },
     ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg, file1, tab1, file2, tab2: {
         "type": "multiple_specifications_for_data_type",
@@ -43,7 +43,9 @@ _IMPORT_SPEC_ERROR_FORMATTERS = {
     },
 }
 
-def format_import_spec_errors(errors: list[Error], path_translations: dict[Path, Path]
+
+def format_import_spec_errors(
+    errors: list[Error], path_translations: dict[Path, Path]
 ) -> list[dict[str, str]]:
     """
     Formats a list of bulk import specification errors into a list of str->str dicts.
@@ -54,17 +56,20 @@ def format_import_spec_errors(errors: list[Error], path_translations: dict[Path,
         to a path that is interpretable by a user.
     """
     errs = []
-    for e in errors:
+    for error in errors:
         file1 = None
         tab1 = None
         file2 = None
         tab2 = None
-        if e.source_1:
-            file1 = str(path_translations[e.source_1.file])
-            tab1 = e.source_1.tab
-        if e.source_2:
-            file2 = str(path_translations[e.source_2.file])
-            tab2 = e.source_2.tab
-        errs.append(_IMPORT_SPEC_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2))
+        if error.source_1:
+            file1 = str(path_translations[error.source_1.file])
+            tab1 = error.source_1.tab
+        if error.source_2:
+            file2 = str(path_translations[error.source_2.file])
+            tab2 = error.source_2.tab
+        errs.append(
+            _IMPORT_SPEC_ERROR_FORMATTERS[error.error_type](
+                error.message, file1, tab1, file2, tab2
+            )
+        )
     return errs
-

@@ -4,13 +4,14 @@ A very basic KBase auth client for the Python server.
 @author: gaprice@lbl.gov
 modified for python3 and authV2
 """
-import time as _time
-import aiohttp
 import hashlib
+import time as _time
+
+import aiohttp
 
 
 class TokenCache(object):
-    """ A basic cache for tokens. """
+    """A basic cache for tokens."""
 
     _MAX_TIME_SEC = 5 * 60  # 5 min
 
@@ -66,18 +67,18 @@ class KBaseAuth2(object):
         user = self._cache.get_user(token)
         if user:
             return user
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self._authurl, headers={"Authorization": token}
             ) as resp:
                 ret = await resp.json()
-                if not resp.reason == "OK":
+                if resp.reason != "OK":
+                    http_code = ret["error"]["httpcode"]
+                    message = ret["error"]["message"]
                     raise aiohttp.web.HTTPUnauthorized(
-                        text="Error connecting to auth service: {} {}\n{}".format(
-                            ret["error"]["httpcode"],
-                            resp.reason,
-                            ret["error"]["message"],
-                        )
+                        text="Error connecting to auth service:"
+                        + f"{http_code} {resp.reason}\n{message}"
                     )
         # whichever one comes first
         self._cache._MAX_TIME_SEC = ret["cachefor"]

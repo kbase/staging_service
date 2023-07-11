@@ -1,11 +1,13 @@
-from json import JSONDecoder, JSONEncoder
-import aiofiles
-from .utils import run_command, Path
-import os
-from aiohttp import web
 import hashlib
+import os
 from difflib import SequenceMatcher
-from itertools import islice
+from json import JSONDecoder, JSONEncoder
+from typing import Union
+
+import aiofiles
+from aiohttp import web
+
+from .utils import Path
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -28,18 +30,18 @@ async def stat_data(path: Path) -> dict:
 
 def _file_read_from_tail(file_path):
     upper_bound = min(1024, os.stat(file_path).st_size)
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         file.seek(0, os.SEEK_END)
         file.seek(file.tell() - upper_bound, os.SEEK_SET)
         return file.read()
 
 
 def _file_read_from_head(file_path):
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         return file.read(1024)
 
 
-async def _generate_metadata(path: Path, source: str):
+async def _generate_metadata(path: Path, source: Union[str, None]):
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     if os.path.exists(path.metadata_path):
         async with aiofiles.open(path.metadata_path, mode="r") as extant:
@@ -52,7 +54,7 @@ async def _generate_metadata(path: Path, source: str):
         data["source"] = source
     try:
         md5 = hashlib.md5(open(path.full_path, "rb").read()).hexdigest()
-    except:
+    except Exception:
         md5 = "n/a"
 
     data["md5"] = md5.split()[0]
@@ -61,7 +63,7 @@ async def _generate_metadata(path: Path, source: str):
     try:  # all things that expect a text file to decode output should be in this block
         data["head"] = _file_read_from_head(path.full_path)
         data["tail"] = _file_read_from_tail(path.full_path)
-    except:
+    except Exception:
         data["head"] = "not text file"
         data["tail"] = "not text file"
     async with aiofiles.open(path.metadata_path, mode="w") as f:
@@ -75,7 +77,7 @@ async def add_upa(path: Path, UPA: str):
             data = await extant.read()
             data = decoder.decode(data)
     else:
-        data = await _generate_metadata(path)  # TODO performance optimization
+        data = await _generate_metadata(path, None)  # TODO performance optimization
     data["UPA"] = UPA
     os.makedirs(os.path.dirname(path.metadata_path), exist_ok=True)
     async with aiofiles.open(path.metadata_path, mode="w") as update:
@@ -100,7 +102,7 @@ async def _only_source(path: Path):
             try:
                 data = await extant.read()
                 data = decoder.decode(data)
-            except:
+            except Exception:
                 data = {}
     else:
         data = {}
@@ -125,7 +127,7 @@ async def dir_info(
         specific_path = Path.from_full_path(entry.path)
         # maybe should never show the special .globus_id file ever?
         # or moving it somewhere outside the user directory would be better
-        if not show_hidden and entry.name.startswith('.'):
+        if not show_hidden and entry.name.startswith("."):
             continue
         if entry.is_dir():
             if query == "" or specific_path.user_path.find(query) != -1:
@@ -191,6 +193,6 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
             result[key] = data[key]
         except KeyError as no_data:
             raise web.HTTPBadRequest(
-                text="no data exists for key {key}".format(key=no_data.args)
+                text=f"no data exists for key {no_data.args}"
             )  # TODO check this exception message
     return result
