@@ -7,7 +7,6 @@ from __future__ import print_function  # for python 2
 
 import logging
 import time
-import shutil
 from collections import namedtuple
 
 from os.path import getmtime
