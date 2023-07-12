@@ -1,3 +1,7 @@
+### Unreleased
+- update to Python 3.11.4
+- run black on all service and test files, fix most linting complaints (pylint, sonarlint)
+
 ### Version 1.3.6
 - Fixed a bug that would cause NaN and Inf values in xSV to be returned as JSON barewords,
   which could cause some JSON parsers to fail. They are now returned as strings.
