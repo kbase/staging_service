@@ -22,7 +22,6 @@ def temp_dir_fixture() -> Generator[PyPath, None, None]:
     # FileUtil will auto delete after exiting
 
 
-@pytest.mark.asyncio
 async def test_incomplete_metadata_file_update(temp_dir: Path):
     """
     Tests the case where a file is listed or checked for existence prior to completing
