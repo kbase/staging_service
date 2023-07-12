@@ -70,7 +70,7 @@ def remove_acl(acl):
         )
     )
     try:
-        resp = globus_transfer_client.delete_endpoint_acl_rule(endpoint_id, acl["id"])
+        globus_transfer_client.delete_endpoint_acl_rule(endpoint_id, acl["id"])
     except TransferAPIError as error:
         logging.error(error.raw_text)
 
