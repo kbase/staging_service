@@ -186,7 +186,6 @@ def test_path_sanitation(username_first, username_rest, path):
 
 
 @asyncgiven(txt=st.text())
-
 async def test_cmd(txt):
     with FileUtil(DATA_DIR) as fs:
         d = fs.make_dir("test")
@@ -204,7 +203,6 @@ async def test_cmd(txt):
         assert md5 == expected_md5
 
 
-
 async def test_auth():
     async with AppClient(config) as cli:
         resp = await cli.get("/test-auth")
@@ -213,14 +211,12 @@ async def test_auth():
         assert "I'm authenticated as" in text
 
 
-
 async def test_service():
     async with AppClient(config) as cli:
         resp = await cli.get("/test-service")
         assert resp.status == 200
         text = await resp.text()
         assert "staging service version" in text
-
 
 
 async def test_jbi_metadata():
@@ -253,7 +249,6 @@ async def test_jbi_metadata():
                 headers={"Authorization": ""},
             )
             assert res1.status == 404
-
 
 
 async def test_metadata():
@@ -356,7 +351,6 @@ async def test_metadata():
             assert not json.get("isFolder")
 
 
-
 async def test_define_upa():
     txt = "testing text\n"
     username = "testuser"
@@ -438,7 +432,6 @@ async def test_define_upa():
             assert res6.status == 400
 
 
-
 async def test_mv():
     txt = "testing text\n"
     username = "testuser"
@@ -513,7 +506,6 @@ async def test_mv():
             assert res7.status == 404
 
 
-
 async def test_delete():
     txt = "testing text\n"
     username = "testuser"
@@ -560,7 +552,6 @@ async def test_delete():
                 headers={"Authorization": ""},
             )
             assert res5.status == 404
-
 
 
 async def test_list():
@@ -654,7 +645,6 @@ async def test_list():
 
 
 @asyncgiven(txt=st.text())
-
 async def test_download(txt):
     username = "testuser"
     async with AppClient(config, username) as cli:
@@ -671,7 +661,6 @@ async def test_download(txt):
             assert result_text == txt.encode()
 
 
-
 async def test_download_errors():
     username = "testuser"
     async with AppClient(config, username) as cli:
@@ -684,7 +673,6 @@ async def test_download_errors():
                 os.path.join("download", "test", ""), headers={"Authorization": ""}
             )
             assert res2.status == 400
-
 
 
 async def test_similar():
@@ -726,7 +714,6 @@ async def test_similar():
             # testing path is a directory
             res3 = await cli.get("similar/test", headers={"Authorization": ""})
             assert res3.status == 400
-
 
 
 async def test_existence():
@@ -791,7 +778,6 @@ async def test_existence():
             assert json["isFolder"] is False
 
 
-
 async def test_search():
     txt = "testing text"
     username = "testuser"
@@ -816,7 +802,6 @@ async def test_search():
             json_text = await res3.text()
             json = decoder.decode(json_text)
             assert len(json) == 2
-
 
 
 async def test_upload():
@@ -854,12 +839,10 @@ async def _upload_file_fail_filename(filename: str, err: str):
         assert res.status == 403
 
 
-
 async def test_upload_fail_leading_space():
     await _upload_file_fail_filename(
         " test_file", "cannot upload file with name beginning with space"
     )
-
 
 
 async def test_upload_fail_dotfile():
@@ -868,14 +851,12 @@ async def test_upload_fail_dotfile():
     )
 
 
-
 async def test_upload_fail_comma_in_file():
     await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name")
 
 
 @settings(deadline=None)
 @asyncgiven(contents=st.text())
-
 async def test_directory_decompression(contents):
     fname = "test"
     dirname = "dirname"
@@ -936,7 +917,6 @@ async def test_directory_decompression(contents):
 
 
 @asyncgiven(contents=st.text())
-
 async def test_file_decompression(contents):
     fname = "test"
     dirname = "dirname"
@@ -970,7 +950,6 @@ async def test_file_decompression(contents):
                 # check to see if we got back what we started with for all files and directories
                 assert os.path.exists(d)
                 assert os.path.exists(f1)
-
 
 
 async def test_importer_mappings():
@@ -1041,7 +1020,6 @@ async def test_importer_mappings():
                 f"must provide file_list field. Your provided qs: {unquote(qsd)}"
                 in text
             )
-
 
 
 async def test_bulk_specification_success():
@@ -1134,7 +1112,6 @@ async def test_bulk_specification_success():
             assert resp.status == 200
 
 
-
 async def test_bulk_specification_fail_no_files():
     async with AppClient(config) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
@@ -1142,7 +1119,6 @@ async def test_bulk_specification_fail_no_files():
             jsn = await resp.json()
             assert jsn == {"errors": [{"type": "no_files_provided"}]}
             assert resp.status == 400
-
 
 
 async def test_bulk_specification_fail_not_found():
@@ -1170,7 +1146,6 @@ async def test_bulk_specification_fail_not_found():
                 ]
             }
             assert resp.status == 404
-
 
 
 async def test_bulk_specification_fail_parse_fail():
@@ -1288,7 +1263,6 @@ async def test_bulk_specification_fail_parse_fail():
             assert resp.status == 400
 
 
-
 async def test_bulk_specification_fail_column_count():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
@@ -1360,7 +1334,6 @@ async def test_bulk_specification_fail_column_count():
                 ]
             }
             assert resp.status == 400
-
 
 
 async def test_bulk_specification_fail_multiple_specs_per_type():
@@ -1454,7 +1427,6 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
             assert resp.status == 400
 
 
-
 async def test_bulk_specification_fail_multiple_specs_per_type_excel():
     """
     Test an excel file with an internal data type collision.
@@ -1533,7 +1505,6 @@ _IMPORT_SPEC_TEST_DATA = {
 }
 
 
-
 async def test_write_bulk_specification_success_csv():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
     async with AppClient(config) as cli:
@@ -1575,7 +1546,6 @@ async def test_write_bulk_specification_success_csv():
                     "myreads.fa,0.1\n",
                 ],
             )
-
 
 
 async def test_write_bulk_specification_success_tsv():
@@ -1621,7 +1591,6 @@ async def test_write_bulk_specification_success_tsv():
                     "Reads File Name\tReads inseam measurement in km\n",
                 ],
             )
-
 
 
 async def test_write_bulk_specification_success_excel():
@@ -1674,14 +1643,12 @@ async def test_write_bulk_specification_success_excel():
             )
 
 
-
 async def test_write_bulk_specification_fail_wrong_data_type():
     async with AppClient(config) as cli:
         resp = await cli.post("write_bulk_specification/", data="foo")
         js = await resp.json()
         assert js == {"error": "Required content-type is application/json"}
         assert resp.status == 415
-
 
 
 async def test_write_bulk_specification_fail_no_content_length():
@@ -1692,7 +1659,6 @@ async def test_write_bulk_specification_fail_no_content_length():
         js = await resp.json()
         assert js == {"error": "The content-length header is required and must be > 0"}
         assert resp.status == 411
-
 
 
 async def test_write_bulk_specification_fail_large_input():
@@ -1707,7 +1673,6 @@ async def test_write_bulk_specification_fail_large_input():
         assert resp.status == 413
 
 
-
 async def _write_bulk_specification_json_fail(json: Any, err: str):
     async with AppClient(config) as cli:
         resp = await cli.post("write_bulk_specification", json=json)
@@ -1716,12 +1681,10 @@ async def _write_bulk_specification_json_fail(json: Any, err: str):
         assert resp.status == 400
 
 
-
 async def test_write_bulk_specification_fail_not_dict():
     await _write_bulk_specification_json_fail(
         ["foo"], "The top level JSON element must be a mapping"
     )
-
 
 
 async def test_write_bulk_specification_fail_no_output_dir():
@@ -1730,19 +1693,16 @@ async def test_write_bulk_specification_fail_no_output_dir():
     )
 
 
-
 async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
     await _write_bulk_specification_json_fail(
         {"output_directory": 4}, "output_directory is required and must be a string"
     )
 
 
-
 async def test_write_bulk_specification_fail_no_file_type():
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo"}, "Invalid output_file_type: None"
     )
-
 
 
 async def test_write_bulk_specification_fail_wrong_file_type():
@@ -1752,13 +1712,11 @@ async def test_write_bulk_specification_fail_wrong_file_type():
     )
 
 
-
 async def test_write_bulk_specification_fail_invalid_type_value():
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
         "The value for data type a must be a mapping",
     )
-
 
 
 async def test_importer_filetypes():
