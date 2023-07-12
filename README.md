@@ -1,10 +1,10 @@
 # staging_service
 
 
-In order to setup local development, you must have docker installed and if you want to run it locally you must have python 3.9.6 or greater installed
+In order to setup local development, you must have docker installed and if you want to run it locally you must have python 3.11.4 or greater installed.
 
 
-# setup
+## setup
 
 make a folder called /data as well as inside that /bulk and inside that a folder for any usernames you wish it to work with
 
@@ -16,41 +16,39 @@ data
 
 if you want to run locally you must install requirements.txt for python3
 
-# running
+## running
 
 to run locally run /deployment/bin/entrypoint.sh
 
 to run inside docker run /run_in_docker.sh
 
-# tests
+## tests
 
-* to test use ./run_tests.sh
-* requires python 3.9.6 or higher
-* requires installation on mac of libmagic `brew install libmagic`
+* to test use `./run_tests.sh`
+* requires python 3.11.4 or higher
+* requires installation on mac of libmagic: `brew install libmagic` or `sudo port install libmagic`.
 
-
-
-# debugging
+## debugging
 
 Included configurations for the Visual Studio Code debugger for python that mirror what is in the entrypoint.sh and testing configuration to run locally in the debugger, set breakpoints and if you open the project in VSCode the debugger should be good to go. The provided configurations can run locally and run tests locally
 
-# development
+## development
 
 When releasing a new version:
 
 * Update the release notes
 * Update the version in [staging_service/app.py](staging_service/app.py).VERSION
 
-# expected command line utilities
+## expected command line utilities
 to run locally you will need all of these utils on your system: tar, unzip, zip, gzip, bzip2, md5sum, head, tail, wc
 
 in the docker container all of these should be available
 
-# API
+## API
 
 all paths should be specified treating the user's home directory as root
 
-## Test Service
+### Test Service
 
 **URL** : `ci.kbase.us/services/staging_service/test-service`
 
@@ -58,7 +56,7 @@ all paths should be specified treating the user's home directory as root
 
 **Method** : `GET`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -67,7 +65,7 @@ all paths should be specified treating the user's home directory as root
 ```
 This is just a test. This is only a test.
 ```
-## Test Auth
+### Test Auth
 
 **URL** : `ci.kbase.us/services/staging_service/test-auth`
 
@@ -77,7 +75,7 @@ This is just a test. This is only a test.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -87,7 +85,7 @@ This is just a test. This is only a test.
 I'm authenticated as <username>
 ```
 
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -104,13 +102,13 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-## File Lifetime
+### File Lifetime
 **URL** : `ci.kbase.us/services/staging_service/file-lifetime`
 **local URL** : `localhost:3000/file-lifetime`
 
 **Method** : `GET`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -122,7 +120,7 @@ this is not actually handled by the server but is expected to be performed by a 
 90
 ```
 
-## List Directory
+### List Directory
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/list/{path to directory}`
@@ -137,7 +135,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -161,7 +159,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -185,7 +183,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-## Download file
+### Download file
 
 **URL** : `ci.kbase.us/services/staging_service/download/{path to file}`
 
@@ -199,12 +197,12 @@ path <username>/<incorrect path> does not exist
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 **Content** : `<file content>`
 
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -235,7 +233,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-## Search files and folders
+### Search files and folders
 defaults to not show hidden dotfiles
 
 **URL** : `ci.kbase.us/services/staging_service/search/{search query}`
@@ -250,7 +248,7 @@ defaults to not show hidden dotfiles
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -281,7 +279,7 @@ defaults to not show hidden dotfiles
     }
 ]
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -298,7 +296,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-## File and Folder Metadata
+### File and Folder Metadata
 
 **URL** : `ci.kbase.us/services/staging_service/metadata/{path to file or folder}`
 
@@ -308,7 +306,7 @@ Must supply token
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -337,7 +335,7 @@ Must supply token
     "isFolder": false
 }
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -361,7 +359,7 @@ Must supply token
 path <username>/<incorrect path> does not exist
 ```
 
-## Upload File
+### Upload File
 
 **URL** : `ci.kbase.us/services/staging_service/upload`
 
@@ -383,7 +381,7 @@ uploads: {multipart file}
 
 Files starting with whitespace or a '.' are not allowed
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -400,7 +398,7 @@ Files starting with whitespace or a '.' are not allowed
     }
 ]
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -417,7 +415,7 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-## Define/Create UPA for file which has been imported
+### Define/Create UPA for file which has been imported
 
 **URL** : `ci.kbase.us/services/staging_service/define-upa/{path to imported file}`
 
@@ -433,7 +431,7 @@ first element in request body should be
 
 UPA: {the actual UPA of imported file}
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -442,7 +440,7 @@ UPA: {the actual UPA of imported file}
 ```
 successfully update UPA <UPA> for file <Path>
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -467,7 +465,7 @@ must provide UPA field in body
 ```
 
 
-## Delete file or folder (will delete things contained in folder)
+### Delete file or folder (will delete things contained in folder)
 
 **URL** : `ci.kbase.us/services/staging_service/delete/{path to file or folder}`
 
@@ -477,7 +475,7 @@ must provide UPA field in body
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -486,7 +484,7 @@ must provide UPA field in body
 ```
 successfully deleted UPA <Path>
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -520,7 +518,7 @@ cannot delete home directory
 cannot delete protected file
 ```
 
-## Move/rename a file or folder
+### Move/rename a file or folder
 
 **URL** : `ci.kbase.us/services/staging_service/mv/{path to file or folder}`
 
@@ -536,7 +534,7 @@ first element in request body should be
 
 newPath : {the new location/name for file or folder}
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -545,7 +543,7 @@ newPath : {the new location/name for file or folder}
 ```
 successfully moved <path> to <newPath>
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -582,10 +580,10 @@ cannot rename or move protected file
 
 **Content**
 ```
-<newPath> allready exists
+<newPath> already exists
 ```
 
-## Decompress various archive formats
+### Decompress various archive formats
 supported archive formats are:
 .zip, .ZIP, .tar.gz, .tgz, .tar.bz, .tar.bz2, .tar, .gz, .bz2, .bzip2
 **URL** : `ci.kbase.us/services/staging_service/decompress/{path to archive`
@@ -596,7 +594,7 @@ supported archive formats are:
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -605,7 +603,7 @@ supported archive formats are:
 ```
 successfully decompressed <path to archive>
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -630,7 +628,7 @@ cannot decompress a <file extension> file
 ```
 
 
-## Add Globus ACL
+### Add Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -657,7 +655,7 @@ linking to globus.
     "permissions": "rw"
 }
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -682,7 +680,7 @@ Error Connecting to auth service ...
 }
 ```
 
-## Remove Globus ACL
+### Remove Globus ACL
 
 After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
 linking to globus.
@@ -709,7 +707,7 @@ linking to globus.
     "Success": true
 }
 ```
-### Error Response
+#### Error Response
 
 **Condition** : if authentication is incorrect
 
@@ -734,7 +732,7 @@ Error Connecting to auth service ...
 }
 ```
 
-## Parse bulk specifications
+### Parse bulk specifications
 
 This endpoint parses one or more bulk specification files in the staging area into a data
 structure (close to) ready for insertion into the Narrative bulk import or analysis cell.
@@ -755,7 +753,7 @@ details.
 
 **Headers** : `Authorization: <Valid Auth token>`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -802,7 +800,7 @@ Reponse:
   provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
   user-provided data, and each line corresponds to a single import or analysis.
   
-### Error Response
+#### Error Response
 
 Error reponses are of the general form:
 ```
@@ -833,7 +831,7 @@ The HTTP code returned will be, in order of precedence:
 
 The per error type data structures are:
 
-#### `cannot_find_file`
+##### `cannot_find_file`
 
 ```
 {
@@ -842,7 +840,7 @@ The per error type data structures are:
 }
 ```
 
-#### `cannot_parse_file`
+##### `cannot_parse_file`
 
 ```
 {
@@ -853,7 +851,7 @@ The per error type data structures are:
 }
 ```
 
-#### `incorrect_column_count`
+##### `incorrect_column_count`
 
 ```
 {
@@ -864,7 +862,7 @@ The per error type data structures are:
 }
 ```
 
-#### `multiple_specifications_for_data_type`
+##### `multiple_specifications_for_data_type`
 
 ```
 {
@@ -877,7 +875,7 @@ The per error type data structures are:
 }
 ```
 
-#### `no_files_provided`
+##### `no_files_provided`
 
 ```
 {
@@ -885,7 +883,7 @@ The per error type data structures are:
 }
 ```
 
-#### `unexpected_error`
+##### `unexpected_error`
 
 ```
 {
@@ -895,7 +893,7 @@ The per error type data structures are:
 }
 ```
 
-## Write bulk specifications
+### Write bulk specifications
 
 This endpoint is the reverse of the parse bulk specifications endpoint - it takes a similar
 data structure to that which the parse endpoint returns and writes bulk specification templates.
@@ -910,7 +908,7 @@ data structure to that which the parse endpoint returns and writes bulk specific
 * `Authorization: <Valid Auth token>`
 * `Content-Type: Application/JSON`
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -986,7 +984,7 @@ Reponse:
   In the case of Excel, all the file paths will be the same since the data types are all written
   to different tabs in the same file.
   
-### Error Response
+#### Error Response
 
 Method specific errors have the form:
 
@@ -999,7 +997,7 @@ The AioHTTP server may also return built in errors that are not in JSON format -
 this is overly large (> 1MB) request bodies.
 
 
-## Get Importer Mappings
+### Get Importer Mappings
 
 This endpoint returns:
 1) a mapping between a list of files and predicted importer apps, and
@@ -1025,7 +1023,7 @@ For example,
 
 **Headers** : Not Required
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -1066,7 +1064,7 @@ Response:
     ]
 }
 ```
-### Error Response
+#### Error Response
 **Code** : `400 Bad Request`
 
 **Content**
@@ -1074,7 +1072,7 @@ Response:
 must provide file_list field 
 ```
 
-## Get importer filetypes
+### Get importer filetypes
 
 This endpoint returns information about the file types associated with data types and the file
 extensions for those file types. It is primarily of use for creating UI elements describing
@@ -1088,7 +1086,7 @@ which file extensions may be selected when performing bulk file selections.
 
 **Headers** : Not Required
 
-### Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
@@ -1123,7 +1121,7 @@ Response:
 
 # Autodetect App and File Type IDs
 
-## App type IDs
+### App type IDs
 
 These are the currently supported upload app type IDs:
 
@@ -1149,7 +1147,7 @@ decompress
 Note that decompress is only returned when no other file type can be detected from the file
 extension.
 
-## File type IDs
+### File type IDs
 
 These are the currently supported file type IDs. These are primarily useful for apps that take
 two different file types, like GFF/FASTA genomes.
