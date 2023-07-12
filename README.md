@@ -9,9 +9,9 @@ make a folder called /data as well as inside that /bulk and inside that a folder
 for any usernames you wish it to work with
 
 - data
-  - bulk
-    - username1
-    - username2
+    - bulk
+        - username1
+        - username2
 
 if you want to run locally you must install requirements.txt for python3
 
@@ -23,9 +23,9 @@ to run inside docker run /run_in_docker.sh
 
 ## tests
 
-* to test use `./run_tests.sh`
-* requires python 3.11.4 or higher
-* requires installation on mac of libmagic: `brew install libmagic`
+- to test use `./run_tests.sh`
+- requires python 3.11.4 or higher
+- requires installation on mac of libmagic: `brew install libmagic`
   or `sudo port install libmagic`.
 
 ## debugging
@@ -40,8 +40,8 @@ locally
 
 When releasing a new version:
 
-* Update the release notes
-* Update the version in [staging_service/app.py](staging_service/app.py).VERSION
+- Update the release notes
+- Update the version in [staging_service/app.py](staging_service/app.py).VERSION
 
 ## expected command line utilities
 
@@ -870,19 +870,19 @@ Reponse:
 }
 ```
 
-* `<type N>` is a data type ID from
+- `<type N>` is a data type ID from
   the [Mappings.py](./staging_service/autodetect/Mappings.py)
   file and the Narrative staging area configuration file - it is a shared
   namespace between the
   staging service and Narrative to specify bulk applications, and has a 1:1
   mapping to an
   app. It is determined by the first header line from the templates.
-* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK`
+- `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK`
   app's `spec.json` file.
   These are determined by the second header line from the templates and will
   differ
   by the data type.
-* `<value for ID, row N>` is the user-provided value for the input for a
+- `<value for ID, row N>` is the user-provided value for the input for a
   given `spec.json` ID
   and import or analysis instance, where an import/analysis instance is
   effectively a row
@@ -909,22 +909,22 @@ Error responses are of the general form:
 
 Existing error codes are currently:
 
-* `cannot_find_file` if an input file cannot be found
-* `cannot_parse_file` if an input file cannot be parsed
-* `incorrect_column_count` if the column count is not as expected
-  * For Excel files, this may mean there is a non-empty cell outside the
-    bounds of the data area
-* `multiple_specifications_for_data_type` if more than one tab or file per data
+- `cannot_find_file` if an input file cannot be found
+- `cannot_parse_file` if an input file cannot be parsed
+- `incorrect_column_count` if the column count is not as expected
+    * For Excel files, this may mean there is a non-empty cell outside the
+      bounds of the data area
+- `multiple_specifications_for_data_type` if more than one tab or file per data
   type is submitted
-* `no_files_provided` if no files were provided
-* `unexpected_error` if some other error occurs
+- `no_files_provided` if no files were provided
+- `unexpected_error` if some other error occurs
 
 The HTTP code returned will be, in order of precedence:
 
-* 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
-* 404 if at least one error is `cannot_find_file` but there are no 400-type
+- 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
+- 404 if at least one error is `cannot_find_file` but there are no 400-type
   errors
-* 500 if all errors are `unexpected_error`
+- 500 if all errors are `unexpected_error`
 
 The per error type data structures are:
 
@@ -1005,8 +1005,8 @@ specification templates.
 
 **Headers** :
 
-* `Authorization: <Valid Auth token>`
-* `Content-Type: Application/JSON`
+- `Authorization: <Valid Auth token>`
+- `Content-Type: Application/JSON`
 
 #### Success Response
 
@@ -1047,32 +1047,32 @@ POST write_bulk_specification/
 }
 ```
 
-* `output_directory` specifies where the output files should be written in the
+- `output_directory` specifies where the output files should be written in the
   user's staging area.
-* `output_file_type` specifies the format of the output files.
-* `<type N>` is a data type ID from
+- `output_file_type` specifies the format of the output files.
+- `<type N>` is a data type ID from
   the [Mappings.py](./staging_service/autodetect/Mappings.py)
   file and the Narrative staging area configuration file - it is a shared
   namespace between the
   staging service and Narrative to specify bulk applications, and has a 1:1
   mapping to an
   app. It is included in the first header line in the templates.
-* `order_and_display` determines the ordering of the columns in the written
+- `order_and_display` determines the ordering of the columns in the written
   templates, as well
   as mapping the spec.json ID of the parameter to the human readable name of the
   parameter in
   the display.yml file.
-* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK`
+- `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK`
   app's `spec.json` file.
   These are written to the second header line from the import templates and will
   differ
   by the data type.
-* `data` contains any data to be written to the file as example data, and is
+- `data` contains any data to be written to the file as example data, and is
   analagous to the data
   structure returned from the parse endpoint. To specify that no data should be
   written to the
   template provide an empty list.
-* `<value for ID, row N>` is the value for the input for a given `spec.json` ID
+- `<value for ID, row N>` is the value for the input for a given `spec.json` ID
   and import or analysis instance, where an import/analysis instance is
   effectively a row
   in the data file. Each data file row is provided in order for each type. Each
@@ -1094,8 +1094,8 @@ Reponse:
 }
 ```
 
-* `output_file_type` has the same definition as above.
-* `files` contains a mapping of each provided data type to the output template
+- `output_file_type` has the same definition as above.
+- `files` contains a mapping of each provided data type to the output template
   file for that type.
   In the case of Excel, all the file paths will be the same since the data types
   are all written
@@ -1132,14 +1132,14 @@ This endpoint returns:
 
 For example,
 
-* if we pass in nothing we get a response with no mappings
-* if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we
+- if we pass in nothing we get a response with no mappings
+- if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we
   would get back a
   response that maps to Fasta Importers and FastQ Importers, with a weight of 0
   to 1
   which represents the probability that this is the correct importer for you.
-* for files for which there is no predicted app, the return is a null value
-* this endpoint is used to power the dropdowns for the staging service window in
+- for files for which there is no predicted app, the return is a null value
+- this endpoint is used to power the dropdowns for the staging service window in
   the Narrative
 
 **URL** : `ci.kbase.us/services/staging_service/importer_mappings`
@@ -1247,17 +1247,17 @@ Response:
 }
 ```
 
-* `<type N>` is a data type ID from
+- `<type N>` is a data type ID from
   the [Mappings.py](./staging_service/autodetect/Mappings.py)
   file and the Narrative staging area configuration file - it is a shared
   namespace between the
   staging service and Narrative to specify bulk applications, and has a 1:1
   mapping to an
   import app. It is included in the first header line in the templates.
-* `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file
+- `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file
   types are listed
   below.
-* `<extension N>` is a file extension like `*.fa` or `*.gbk`.
+- `<extension N>` is a file extension like `*.fa` or `*.gbk`.
 
 ## Autodetect App and File Type IDs
 
