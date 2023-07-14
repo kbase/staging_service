@@ -26,77 +26,86 @@ Functionality: Running this script will
 """
 from collections import defaultdict
 
-from staging_service.autodetect import Mappings
+from staging_service.autodetect.Mappings import CSV, EXCEL, FASTA, FASTQ, GENBANK, GFF, JSON, SBML, SRA, TSV, ZIP, \
+    assembly_id, \
+    decompress_id, \
+    escher_map_id, \
+    expression_matrix_id, \
+    extension_to_file_format_mapping, fastq_reads_interleaved_id, \
+    fastq_reads_noninterleaved_id, \
+    fba_model_id, file_format_to_extension_mapping, genbank_genome_id, gff_genome_id, gff_metagenome_id, \
+    import_specification, media_id, \
+    metabolic_annotations_bulk_id, \
+    metabolic_annotations_id, phenotype_set_id, sample_set_id, sra_reads_id
 
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
 app_id_to_title = {
-    Mappings.sra_reads_id: "SRA Reads",
-    Mappings.fastq_reads_interleaved_id: "FastQ Reads Interleaved",
-    Mappings.fastq_reads_noninterleaved_id: "FastQ Reads NonInterleaved",
-    Mappings.assembly_id: "Assembly",
-    Mappings.gff_genome_id: "GFF/FASTA Genome",
-    Mappings.gff_metagenome_id: "GFF/FASTA MetaGenome",
-    Mappings.genbank_genome_id: "Genbank Genome",
-    Mappings.decompress_id: "Decompress/Unpack",
-    Mappings.sample_set_id: "Samples",
-    Mappings.media_id: "Media",
-    Mappings.expression_matrix_id: "Expression Matrix",
-    Mappings.metabolic_annotations_id: "Metabolic Annotations",
-    Mappings.metabolic_annotations_bulk_id: "Bulk Metabolic Annotations",
-    Mappings.fba_model_id: "FBA Model",
-    Mappings.phenotype_set_id: "Phenotype Set",
-    Mappings.escher_map_id: "EscherMap",
-    Mappings.import_specification: "Import Specification",
+    sra_reads_id: "SRA Reads",
+    fastq_reads_interleaved_id: "FastQ Reads Interleaved",
+    fastq_reads_noninterleaved_id: "FastQ Reads NonInterleaved",
+    assembly_id: "Assembly",
+    gff_genome_id: "GFF/FASTA Genome",
+    gff_metagenome_id: "GFF/FASTA MetaGenome",
+    genbank_genome_id: "Genbank Genome",
+    decompress_id: "Decompress/Unpack",
+    sample_set_id: "Samples",
+    media_id: "Media",
+    expression_matrix_id: "Expression Matrix",
+    metabolic_annotations_id: "Metabolic Annotations",
+    metabolic_annotations_bulk_id: "Bulk Metabolic Annotations",
+    fba_model_id: "FBA Model",
+    phenotype_set_id: "Phenotype Set",
+    escher_map_id: "EscherMap",
+    import_specification: "Import Specification",
 }
-
 
 file_format_to_app_mapping = {}
 
-file_format_to_app_mapping[Mappings.SRA] = [Mappings.sra_reads_id]
-file_format_to_app_mapping[Mappings.FASTQ] = [
-    Mappings.fastq_reads_interleaved_id,
-    Mappings.fastq_reads_noninterleaved_id,
+file_format_to_app_mapping[SRA] = [sra_reads_id]
+file_format_to_app_mapping[FASTQ] = [
+    fastq_reads_interleaved_id,
+    fastq_reads_noninterleaved_id,
 ]
-file_format_to_app_mapping[Mappings.FASTA] = [
-    Mappings.assembly_id,
-    Mappings.gff_genome_id,
-    Mappings.gff_metagenome_id,
+file_format_to_app_mapping[FASTA] = [
+    assembly_id,
+    gff_genome_id,
+    gff_metagenome_id,
 ]
-file_format_to_app_mapping[Mappings.GENBANK] = [Mappings.genbank_genome_id]
-file_format_to_app_mapping[Mappings.GFF] = [
-    Mappings.gff_genome_id,
-    Mappings.gff_metagenome_id,
+file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
+file_format_to_app_mapping[GFF] = [
+    gff_genome_id,
+    gff_metagenome_id,
 ]
-file_format_to_app_mapping[Mappings.ZIP] = [Mappings.decompress_id]
-file_format_to_app_mapping[Mappings.CSV] = [
-    Mappings.sample_set_id,
-    Mappings.import_specification,
+file_format_to_app_mapping[ZIP] = [decompress_id]
+file_format_to_app_mapping[CSV] = [
+    sample_set_id,
+    import_specification,
 ]
-file_format_to_app_mapping[Mappings.TSV] = [
-    Mappings.media_id,
-    Mappings.expression_matrix_id,
-    Mappings.metabolic_annotations_id,
-    Mappings.metabolic_annotations_bulk_id,
-    Mappings.fba_model_id,
-    Mappings.phenotype_set_id,
-    Mappings.import_specification,
+file_format_to_app_mapping[TSV] = [
+    media_id,
+    expression_matrix_id,
+    metabolic_annotations_id,
+    metabolic_annotations_bulk_id,
+    fba_model_id,
+    phenotype_set_id,
+    import_specification,
 ]
-file_format_to_app_mapping[Mappings.EXCEL] = [
-    Mappings.sample_set_id,
-    Mappings.media_id,
-    Mappings.fba_model_id,
-    Mappings.import_specification,
+file_format_to_app_mapping[EXCEL] = [
+    sample_set_id,
+    media_id,
+    fba_model_id,
+    import_specification,
 ]
-file_format_to_app_mapping[Mappings.JSON] = [Mappings.escher_map_id]
-file_format_to_app_mapping[Mappings.SBML] = [Mappings.fba_model_id]
+file_format_to_app_mapping[JSON] = [escher_map_id]
+file_format_to_app_mapping[SBML] = [fba_model_id]
 
 app_id_to_extensions = defaultdict(list)
 for filecat, apps in file_format_to_app_mapping.items():
     for app_id in apps:
         app_id_to_extensions[app_id].extend(
-            Mappings.file_format_to_extension_mapping[filecat]
+            file_format_to_extension_mapping[filecat]
         )
 
 # Create the mapping between file extensions and apps
@@ -124,7 +133,7 @@ for app_id in app_id_to_extensions:
                 # include whether reads are forward or reverse if we get smarter about name
                 # detection. For backwards compatability, we'd leave the current FASTQ type and
                 # add a FASTQ-FWD or FWD type or something.
-                "file_ext_type": [Mappings.extension_to_file_format_mapping[extension]],
+                "file_ext_type": [extension_to_file_format_mapping[extension]],
                 "mappings": [],
             }
         extensions_mapping[extension]["mappings"].append(
