@@ -1,8 +1,10 @@
-from .utils import Path
-import aiohttp
-import aiofiles
-import os
 import configparser
+import os
+
+import aiofiles
+import aiohttp
+
+from .utils import Path
 
 
 def _get_authme_url():
@@ -22,11 +24,11 @@ async def _get_globus_ids(token):
         auth2_me_url = _get_authme_url()
         async with session.get(auth2_me_url, headers={"Authorization": token}) as resp:
             ret = await resp.json()
-            if not resp.reason == "OK":
+            if resp.reason != "OK":
+                http_code = ret["error"]["httpcode"]
+                message = ret["error"]["message"]
                 raise aiohttp.web.HTTPUnauthorized(
-                    text="Error connecting to auth service: {} {}\n{}".format(
-                        ret["error"]["httpcode"], resp.reason, ret["error"]["message"]
-                    )
+                    text=f"Error connecting to auth service: {http_code} {resp.reason}\n{message}"
                 )
     return list(
         map(
@@ -45,7 +47,7 @@ def is_globusid(path: Path, username: str):
 
 
 async def assert_globusid_exists(username, token):
-    """ ensures that a globus id exists if there is a valid one for user"""
+    """ensures that a globus id exists if there is a valid one for user"""
 
     # make root dir
     root = Path.validate_path(username, "")
@@ -62,5 +64,7 @@ async def assert_globusid_exists(username, token):
         # such as the commented code below, for multiple linked accounts
         # text = '\n'.join(globus_ids)
         text = globus_ids[0]
-        async with aiofiles.open(path.full_path, mode="w") as globus_file:
+        async with aiofiles.open(
+            path.full_path, mode="w", encoding="utf-8"
+        ) as globus_file:
             await globus_file.writelines(text)
