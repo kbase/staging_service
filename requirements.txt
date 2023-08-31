@@ -1,18 +1,14 @@
-aiofiles==23.1.0
+aiofiles==23.2.1
+aiohttp==3.8.5
 aiohttp_cors==0.7.0
-aiohttp==3.8.4
-coverage==7.2.7
 defusedxml==0.7.1
 frozendict==2.3.8
-globus-sdk==3.23.0
-hypothesis==6.81.1
+globus-sdk==3.28.0
+gunicorn==21.2.0
 openpyxl==3.1.2
-pandas==2.0.3 
-pytest-aiohttp==1.0.4
-pytest-asyncio==0.21.0
-pytest-cov==4.1.0
-pytest==7.4.0
+pandas==2.1.0
 python-dotenv==1.0.0
 python-magic==0.4.27
+types-openpyxl===3.1.0.17
 uvloop==0.17.0
 xlrd==2.0.1 # fairly out of date
