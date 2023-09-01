@@ -655,7 +655,6 @@ async def test_download(txt):
     username = "testuser"
     with FileUtil() as fs:
         async with AppClient(config, username) as cli:
-            # TODO: here and elsewhere, we should probably use a fake fs.
             # Creates the test file (test_file_1) with text provided by
             # hypothesis.
             fs.make_dir(os.path.join(username, "test"))
