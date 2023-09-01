@@ -29,7 +29,7 @@ make run-dev
 
 ### Run on host
 * to test use `./run_tests.sh`
-* requires python 3.11.4 or higher
+* requires python 3.11.5 or higher
 * requires installation on mac of libmagic `brew install libmagic` or `sudo port install libmagic`
 
 ### Run in container
