@@ -20,7 +20,8 @@
 				"mhutchie.git-graph",
 				"ms-python.black-formatter",
 				"ms-python.flake8",
-				"mikoz.autoflake-extension"
+				"mikoz.autoflake-extension",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}
