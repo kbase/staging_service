@@ -76,9 +76,9 @@ def test_file_type_resolution_init_fail():
 
 
 def file_type_resolution_init_fail(
-    parser: Optional[Callable[[Path], ParseResults]],
-    unexpected_type: Optional[str],
-    expected: Exception,
+        parser: Optional[Callable[[Path], ParseResults]],
+        unexpected_type: Optional[str],
+        expected: Exception,
 ):
     with raises(Exception) as got:
         FileTypeResolution(parser, unexpected_type)
@@ -186,8 +186,8 @@ def test_error_init_fail():
     )
     ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     err = (
-        "message, source_1, source_2 is required for a "
-        + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
+            "message, source_1, source_2 is required for a "
+            + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
     )
     error_init_fail(ms, None, None, None, ValueError(err))
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
@@ -203,11 +203,11 @@ def test_error_init_fail():
 
 
 def error_init_fail(
-    errortype: Optional[ErrorType],
-    message: Optional[str],
-    source_1: Optional[SpecificationSource],
-    source_2: Optional[SpecificationSource],
-    expected: Exception,
+        errortype: Optional[ErrorType],
+        message: Optional[str],
+        source_1: Optional[SpecificationSource],
+        source_2: Optional[SpecificationSource],
+        expected: Exception,
 ):
     with raises(Exception) as got:
         Error(errortype, message, source_1, source_2)
@@ -230,9 +230,9 @@ def test_parse_result_init_fail():
 
 
 def parse_result_init_fail(
-    source: Optional[SpecificationSource],
-    result: Optional[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
-    expected: Exception,
+        source: Optional[SpecificationSource],
+        result: Optional[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
+        expected: Exception,
 ):
     with raises(Exception) as got:
         ParseResult(source, result)
@@ -274,16 +274,16 @@ def test_parse_results_init_w_error_success():
     assert pr == ParseResults(errors=errors_copy)
 
 
-def test_Parse_Results_init_fail():
+def test_parse_results_init_fail():
     err = "Exactly one of results or errors must be supplied"
     parse_results_init_fail(None, None, ValueError(err))
     parse_results_init_fail(PR_RESULTS, PR_ERROR, ValueError(err))
 
 
 def parse_results_init_fail(
-    results: Optional[frozendict[str, ParseResult]],
-    errors: Optional[tuple[Error, ...]],
-    expected: Exception,
+        results: Optional[frozendict[str, ParseResult]],
+        errors: Optional[tuple[Error, ...]],
+        expected: Exception,
 ):
     with raises(Exception) as got:
         ParseResults(results, errors)
@@ -291,7 +291,7 @@ def parse_results_init_fail(
 
 
 def _ftr(
-    parser: Callable[[Path], ParseResults] = None, notype: str = None
+        parser: Callable[[Path], ParseResults] = None, notype: str = None
 ) -> FileTypeResolution:
     return FileTypeResolution(parser, notype)
 

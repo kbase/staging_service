@@ -7,6 +7,7 @@
 ############################################################
 
 from __future__ import print_function
+
 # the following is a hack to get the baseclient to import whether we're in a
 # package or not. This makes pep8 unhappy hence the annotations.
 try:
@@ -18,28 +19,39 @@ except ImportError:
 
 
 class NarrativeMethodStore(object):
-
     def __init__(
-            self, url=None, timeout=30 * 60, user_id=None,
-            password=None, token=None, ignore_authrc=False,
-            trust_all_ssl_certificates=False,
-            auth_svc='https://ci.kbase.us/services/auth/api/legacy/KBase/Sessions/Login'):
+        self,
+        url=None,
+        timeout=30 * 60,
+        user_id=None,
+        password=None,
+        token=None,
+        ignore_authrc=False,
+        trust_all_ssl_certificates=False,
+        auth_svc="https://ci.kbase.us/services/auth/api/legacy/KBase/Sessions/Login",
+    ):
         if url is None:
-            url = 'https://kbase.us/services/narrative_method_store/rpc'
+            url = "https://kbase.us/services/narrative_method_store/rpc"
         self._service_ver = None
         self._client = _BaseClient(
-            url, timeout=timeout, user_id=user_id, password=password,
-            token=token, ignore_authrc=ignore_authrc,
+            url,
+            timeout=timeout,
+            user_id=user_id,
+            password=password,
+            token=token,
+            ignore_authrc=ignore_authrc,
             trust_all_ssl_certificates=trust_all_ssl_certificates,
-            auth_svc=auth_svc)
+            auth_svc=auth_svc,
+        )
 
     def ver(self, context=None):
         """
         Returns the current running version of the NarrativeMethodStore.
         :returns: instance of String
         """
-        return self._client.call_method('NarrativeMethodStore.ver',
-                                        [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.ver", [], self._service_ver, context
+        )
 
     def status(self, context=None):
         """
@@ -50,8 +62,9 @@ class NarrativeMethodStore(object):
            parameter "git_spec_commit" of String, parameter "update_interval"
            of String
         """
-        return self._client.call_method('NarrativeMethodStore.status',
-                                        [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.status", [], self._service_ver, context
+        )
 
     def list_categories(self, params, context=None):
         """
@@ -103,8 +116,9 @@ class NarrativeMethodStore(object):
            String to String, parameter "landing_page_url_prefix" of String,
            parameter "loading_error" of String
         """
-        return self._client.call_method('NarrativeMethodStore.list_categories',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_categories", [params], self._service_ver, context
+        )
 
     def get_category(self, params, context=None):
         """
@@ -116,8 +130,9 @@ class NarrativeMethodStore(object):
            String, parameter "parent_ids" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method('NarrativeMethodStore.get_category',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_category", [params], self._service_ver, context
+        )
 
     def list_methods(self, params, context=None):
         """
@@ -144,8 +159,9 @@ class NarrativeMethodStore(object):
            list of String, parameter "output_types" of list of String,
            parameter "app_type" of String
         """
-        return self._client.call_method('NarrativeMethodStore.list_methods',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods", [params], self._service_ver, context
+        )
 
     def list_methods_full_info(self, params, context=None):
         """
@@ -185,8 +201,12 @@ class NarrativeMethodStore(object):
            structure: parameter "pmid" of String, parameter "display_text" of
            String, parameter "link" of type "url"
         """
-        return self._client.call_method('NarrativeMethodStore.list_methods_full_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods_full_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def list_methods_spec(self, params, context=None):
         """
@@ -261,7 +281,7 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "ui_class" of String, parameter "default_values"
            of list of String, parameter "valid_file_types" of list of String,
            parameter "text_options" of type "TextOptions" (valid_ws_types  -
-           list of valid ws types that can be used for input validate_as    
+           list of valid ws types that can be used for input validate_as
            - int | float | nonnumeric | none is_output_name  - true if the
            user is specifying an output name, false otherwise, default is
            false) -> structure: parameter "valid_ws_types" of list of String,
@@ -333,10 +353,10 @@ class NarrativeMethodStore(object):
            selection items data structure must be a list of mappings or
            structures. As an example of correctly specifying where the
            selection items are within the data structure returned from the
-           dynamic service, if the data structure is: [ "foo",               
+           dynamic service, if the data structure is: [ "foo",
            # return array position 0 {                     # return array
            position 1 "interesting_data": [ "baz", "boo", [ {"id": 1, "name":
-           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar" 
+           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar"
            # return array position 2 ] Note that KBase dynamic services all
            return an array of values, even for single-value returns, as the
            KIDL spec allows specifying multiple return values per function.
@@ -534,8 +554,12 @@ class NarrativeMethodStore(object):
            "target_property" of String, parameter "target_type_transform" of
            String, parameter "job_id_output_field" of String
         """
-        return self._client.call_method('NarrativeMethodStore.list_methods_spec',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods_spec",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def list_method_ids_and_names(self, params, context=None):
         """
@@ -544,8 +568,12 @@ class NarrativeMethodStore(object):
            'release').) -> structure: parameter "tag" of String
         :returns: instance of mapping from String to String
         """
-        return self._client.call_method('NarrativeMethodStore.list_method_ids_and_names',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_method_ids_and_names",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def list_apps(self, params, context=None):
         """
@@ -564,8 +592,9 @@ class NarrativeMethodStore(object):
            parameter "categories" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method('NarrativeMethodStore.list_apps',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps", [params], self._service_ver, context
+        )
 
     def list_apps_full_info(self, params, context=None):
         """
@@ -591,8 +620,12 @@ class NarrativeMethodStore(object):
            parameter "screenshots" of list of type "ScreenShot" -> structure:
            parameter "url" of type "url"
         """
-        return self._client.call_method('NarrativeMethodStore.list_apps_full_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps_full_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def list_apps_spec(self, params, context=None):
         """
@@ -630,15 +663,20 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "from" of String, parameter "to" of String,
            parameter "description" of String
         """
-        return self._client.call_method('NarrativeMethodStore.list_apps_spec',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps_spec", [params], self._service_ver, context
+        )
 
     def list_app_ids_and_names(self, context=None):
         """
         :returns: instance of mapping from String to String
         """
-        return self._client.call_method('NarrativeMethodStore.list_app_ids_and_names',
-                                        [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_app_ids_and_names",
+            [],
+            self._service_ver,
+            context,
+        )
 
     def list_types(self, params, context=None):
         """
@@ -662,8 +700,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method('NarrativeMethodStore.list_types',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_types", [params], self._service_ver, context
+        )
 
     def get_method_brief_info(self, params, context=None):
         """
@@ -687,8 +726,12 @@ class NarrativeMethodStore(object):
            list of String, parameter "output_types" of list of String,
            parameter "app_type" of String
         """
-        return self._client.call_method('NarrativeMethodStore.get_method_brief_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_brief_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_method_full_info(self, params, context=None):
         """
@@ -725,8 +768,12 @@ class NarrativeMethodStore(object):
            structure: parameter "pmid" of String, parameter "display_text" of
            String, parameter "link" of type "url"
         """
-        return self._client.call_method('NarrativeMethodStore.get_method_full_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_full_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_method_spec(self, params, context=None):
         """
@@ -798,7 +845,7 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "ui_class" of String, parameter "default_values"
            of list of String, parameter "valid_file_types" of list of String,
            parameter "text_options" of type "TextOptions" (valid_ws_types  -
-           list of valid ws types that can be used for input validate_as    
+           list of valid ws types that can be used for input validate_as
            - int | float | nonnumeric | none is_output_name  - true if the
            user is specifying an output name, false otherwise, default is
            false) -> structure: parameter "valid_ws_types" of list of String,
@@ -870,10 +917,10 @@ class NarrativeMethodStore(object):
            selection items data structure must be a list of mappings or
            structures. As an example of correctly specifying where the
            selection items are within the data structure returned from the
-           dynamic service, if the data structure is: [ "foo",               
+           dynamic service, if the data structure is: [ "foo",
            # return array position 0 {                     # return array
            position 1 "interesting_data": [ "baz", "boo", [ {"id": 1, "name":
-           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar" 
+           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar"
            # return array position 2 ] Note that KBase dynamic services all
            return an array of values, even for single-value returns, as the
            KIDL spec allows specifying multiple return values per function.
@@ -1071,8 +1118,9 @@ class NarrativeMethodStore(object):
            "target_property" of String, parameter "target_type_transform" of
            String, parameter "job_id_output_field" of String
         """
-        return self._client.call_method('NarrativeMethodStore.get_method_spec',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_spec", [params], self._service_ver, context
+        )
 
     def get_app_brief_info(self, params, context=None):
         """
@@ -1086,8 +1134,12 @@ class NarrativeMethodStore(object):
            parameter "categories" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method('NarrativeMethodStore.get_app_brief_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_brief_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_app_full_info(self, params, context=None):
         """
@@ -1108,8 +1160,12 @@ class NarrativeMethodStore(object):
            parameter "screenshots" of list of type "ScreenShot" -> structure:
            parameter "url" of type "url"
         """
-        return self._client.call_method('NarrativeMethodStore.get_app_full_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_full_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_app_spec(self, params, context=None):
         """
@@ -1142,8 +1198,9 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "from" of String, parameter "to" of String,
            parameter "description" of String
         """
-        return self._client.call_method('NarrativeMethodStore.get_app_spec',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_spec", [params], self._service_ver, context
+        )
 
     def get_type_info(self, params, context=None):
         """
@@ -1162,8 +1219,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method('NarrativeMethodStore.get_type_info',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_type_info", [params], self._service_ver, context
+        )
 
     def validate_method(self, params, context=None):
         """
@@ -1307,7 +1365,7 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "ui_class" of String, parameter "default_values"
            of list of String, parameter "valid_file_types" of list of String,
            parameter "text_options" of type "TextOptions" (valid_ws_types  -
-           list of valid ws types that can be used for input validate_as    
+           list of valid ws types that can be used for input validate_as
            - int | float | nonnumeric | none is_output_name  - true if the
            user is specifying an output name, false otherwise, default is
            false) -> structure: parameter "valid_ws_types" of list of String,
@@ -1379,10 +1437,10 @@ class NarrativeMethodStore(object):
            selection items data structure must be a list of mappings or
            structures. As an example of correctly specifying where the
            selection items are within the data structure returned from the
-           dynamic service, if the data structure is: [ "foo",               
+           dynamic service, if the data structure is: [ "foo",
            # return array position 0 {                     # return array
            position 1 "interesting_data": [ "baz", "boo", [ {"id": 1, "name":
-           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar" 
+           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar"
            # return array position 2 ] Note that KBase dynamic services all
            return an array of values, even for single-value returns, as the
            KIDL spec allows specifying multiple return values per function.
@@ -1592,8 +1650,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method('NarrativeMethodStore.validate_method',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_method", [params], self._service_ver, context
+        )
 
     def validate_app(self, params, context=None):
         """
@@ -1735,7 +1794,7 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "ui_class" of String, parameter "default_values"
            of list of String, parameter "valid_file_types" of list of String,
            parameter "text_options" of type "TextOptions" (valid_ws_types  -
-           list of valid ws types that can be used for input validate_as    
+           list of valid ws types that can be used for input validate_as
            - int | float | nonnumeric | none is_output_name  - true if the
            user is specifying an output name, false otherwise, default is
            false) -> structure: parameter "valid_ws_types" of list of String,
@@ -1807,10 +1866,10 @@ class NarrativeMethodStore(object):
            selection items data structure must be a list of mappings or
            structures. As an example of correctly specifying where the
            selection items are within the data structure returned from the
-           dynamic service, if the data structure is: [ "foo",               
+           dynamic service, if the data structure is: [ "foo",
            # return array position 0 {                     # return array
            position 1 "interesting_data": [ "baz", "boo", [ {"id": 1, "name":
-           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar" 
+           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar"
            # return array position 2 ] Note that KBase dynamic services all
            return an array of values, even for single-value returns, as the
            KIDL spec allows specifying multiple return values per function.
@@ -2020,8 +2079,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method('NarrativeMethodStore.validate_app',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_app", [params], self._service_ver, context
+        )
 
     def validate_type(self, params, context=None):
         """
@@ -2163,7 +2223,7 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "ui_class" of String, parameter "default_values"
            of list of String, parameter "valid_file_types" of list of String,
            parameter "text_options" of type "TextOptions" (valid_ws_types  -
-           list of valid ws types that can be used for input validate_as    
+           list of valid ws types that can be used for input validate_as
            - int | float | nonnumeric | none is_output_name  - true if the
            user is specifying an output name, false otherwise, default is
            false) -> structure: parameter "valid_ws_types" of list of String,
@@ -2235,10 +2295,10 @@ class NarrativeMethodStore(object):
            selection items data structure must be a list of mappings or
            structures. As an example of correctly specifying where the
            selection items are within the data structure returned from the
-           dynamic service, if the data structure is: [ "foo",               
+           dynamic service, if the data structure is: [ "foo",
            # return array position 0 {                     # return array
            position 1 "interesting_data": [ "baz", "boo", [ {"id": 1, "name":
-           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar" 
+           "foo" }, ... {"id": 42, "name": "wowbagger" } ], "bat" ] }, "bar"
            # return array position 2 ] Note that KBase dynamic services all
            return an array of values, even for single-value returns, as the
            KIDL spec allows specifying multiple return values per function.
@@ -2448,8 +2508,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method('NarrativeMethodStore.validate_type',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_type", [params], self._service_ver, context
+        )
 
     def load_widget_java_script(self, params, context=None):
         """
@@ -2464,8 +2525,12 @@ class NarrativeMethodStore(object):
            parameter "tag" of String
         :returns: instance of String
         """
-        return self._client.call_method('NarrativeMethodStore.load_widget_java_script',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.load_widget_java_script",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def register_repo(self, params, context=None):
         """
@@ -2474,24 +2539,27 @@ class NarrativeMethodStore(object):
            ******************************) -> structure: parameter "git_url"
            of String, parameter "git_commit_hash" of String
         """
-        return self._client.call_method('NarrativeMethodStore.register_repo',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.register_repo", [params], self._service_ver, context
+        )
 
     def disable_repo(self, params, context=None):
         """
         :param params: instance of type "DisableRepoParams" -> structure:
            parameter "module_name" of String
         """
-        return self._client.call_method('NarrativeMethodStore.disable_repo',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.disable_repo", [params], self._service_ver, context
+        )
 
     def enable_repo(self, params, context=None):
         """
         :param params: instance of type "EnableRepoParams" -> structure:
            parameter "module_name" of String
         """
-        return self._client.call_method('NarrativeMethodStore.enable_repo',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.enable_repo", [params], self._service_ver, context
+        )
 
     def push_repo_to_tag(self, params, context=None):
         """
@@ -2499,5 +2567,9 @@ class NarrativeMethodStore(object):
            two values: 'beta' or 'release'.) -> structure: parameter
            "module_name" of String, parameter "tag" of String
         """
-        return self._client.call_method('NarrativeMethodStore.push_repo_to_tag',
-                                        [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.push_repo_to_tag",
+            [params],
+            self._service_ver,
+            context,
+        )

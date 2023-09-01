@@ -125,20 +125,20 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
     assert (
-        username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
     )
     assert (
-        username + "/baz"
-        == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+            username + "/baz"
+            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
     )
     assert (
-        username + "/bar"
-        == utils.Path.validate_path(username, "foo/../../../../bar").user_path
+            username + "/bar"
+            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
     assert (
-        username + "/foo/bar"
-        == utils.Path.validate_path(username, "../foo/bar").user_path
+            username + "/foo/bar"
+            == utils.Path.validate_path(username, "../foo/bar").user_path
     )
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
@@ -152,8 +152,8 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
     assert (
-        username + "/stuff.ext"
-        == utils.Path.validate_path(username, "/stuff.ext").user_path
+            username + "/stuff.ext"
+            == utils.Path.validate_path(username, "/stuff.ext").user_path
     )
 
 
@@ -1003,8 +1003,8 @@ async def test_importer_mappings():
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
         assert (
-            mappings[1][0]
-            == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
+                mappings[1][0]
+                == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
         )
 
     # A dict is passed in
@@ -1033,8 +1033,8 @@ async def test_importer_mappings():
             assert resp.status == 400
             text = await resp.text()
             assert (
-                f"must provide file_list field. Your provided qs: {unquote(qsd)}"
-                in text
+                    f"must provide file_list field. Your provided qs: {unquote(qsd)}"
+                    in text
             )
 
 
@@ -1233,8 +1233,8 @@ async def test_bulk_specification_fail_parse_fail():
                     {
                         "type": "cannot_parse_file",
                         "message": 'Invalid header; got "Dater type: breakfastcereals; '
-                        + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
-                        + 'Columns: <column count>; Version: <version>"',
+                                   + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
+                                   + 'Columns: <column count>; Version: <version>"',
                         "file": "testuser/otherfolder/thing.csv",
                         "tab": None,
                     },
@@ -1687,8 +1687,8 @@ async def test_write_bulk_specification_fail_large_input():
         txt = await resp.text()
         # this seems to be a built in (somewhat inaccurate) server feature
         assert (
-            txt
-            == "Maximum request body size 1048576 exceeded, actual body size 1048576"
+                txt
+                == "Maximum request body size 1048576 exceeded, actual body size 1048576"
         )
         assert resp.status == 413
 
