@@ -10,7 +10,9 @@ def make_random_string(string_length: int) -> str:
     Generate a string of random ascii letters of the given length
     """
     possible_letters = string.ascii_letters
-    return "".join(random.choice(possible_letters) for i in range(string_length))
+    # ignore the SONAR warning below; this is just for generating test data, security is
+    # not an issue.
+    return "".join(random.choice(possible_letters) for i in range(string_length))  # NOSONAR
 
 
 if __name__ == "__main__":
