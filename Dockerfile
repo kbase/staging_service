@@ -1,4 +1,4 @@
-FROM python:3.11.5-slim-bullseye
+FROM python:3.11.5-slim-bookworm
 # -----------------------------------------
 RUN mkdir -p /kb/deployment/lib
 RUN apt-get update && \

@@ -3,7 +3,7 @@
 ## Unreleased
 
 - update to Python 3.11.5
-- images base is python 3.11.5 / debian bullseye
+- images base is python 3.11.5 / debian bookworm
 - pin all image dependencies to those currently supported by the debian bullseye
 - update all Python dependencies to latest versions
 - run black on all service and test files, fix most linting complaints (pylint,
