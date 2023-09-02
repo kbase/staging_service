@@ -589,7 +589,7 @@ async def test_list():
             # on GHA-hosted containers, so let's assume that is due to the base Linux
             # system (Ubuntu-latest), and make this more resilient. Let's round both,
             # then
-            diff = json[0]["mtime"] - time.time() * 1000
+            diff = (json[0]["mtime"] - time.time() * 1000)/1000
             assert abs(diff) < 3
             # assert json[0]["mtime"] <= round(time.time()) * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
@@ -604,7 +604,7 @@ async def test_list():
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
             assert json[0]["path"] == "testuser/test"
-            diff = json[0]["mtime"] - time.time() * 1000
+            diff = (json[0]["mtime"] - time.time() * 1000)/1000
             assert abs(diff) < 3
             # assert json[0]["mtime"] <= round(time.time()) * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
