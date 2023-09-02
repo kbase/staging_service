@@ -584,8 +584,14 @@ async def test_list():
             # FAILED tests/test_app.py::test_list - assert 1693508770000 <=
             # (1693508769.9508653 * 1000)
             # Thursday, August 31, 2023 7:06:10 PM
-            # Thursday, August 31, 2023 7:06:09.950 PM
-            assert json[0]["mtime"] <= round(time.time()) * 1000
+            # Thursday, August 31, 2023 7:06:09.950 PM 
+            # Hmm, so although that was observed locally, it is not working that way
+            # on GHA-hosted containers, so let's assume that is due to the base Linux
+            # system (Ubuntu-latest), and make this more resilient. Let's round both,
+            # then
+            diff = json[0]["mtime"] - time.time() * 1000
+            assert abs(diff) < 3
+            # assert json[0]["mtime"] <= round(time.time()) * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
@@ -598,7 +604,9 @@ async def test_list():
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
             assert json[0]["path"] == "testuser/test"
-            assert json[0]["mtime"] <= round(time.time()) * 1000
+            diff = json[0]["mtime"] - time.time() * 1000
+            assert abs(diff) < 3
+            # assert json[0]["mtime"] <= round(time.time()) * 1000
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
