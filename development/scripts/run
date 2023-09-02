@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 PROJECT_DIRECTORY=${DIR:-$PWD}
 echo "Project Directory: ${PROJECT_DIRECTORY}"
 docker compose \
