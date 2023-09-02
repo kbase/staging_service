@@ -23,11 +23,11 @@ RUN python -m pip install "pip==23.2.1" && pip install -r /app/requirements.txt 
 ENV PATH="/app:${PATH}"
 
 # Run as a regular user, not root.
-RUN addgroup --system kbapp && \
-    adduser --system --ingroup kbapp kbapp && \
-    chown -R kbapp:kbapp /app
+# RUN addgroup --system kbapp && \
+#     adduser --system --ingroup kbapp kbapp && \
+#     chown -R kbapp:kbapp /app
 
-USER kbapp
+# USER kbapp
 
 ENTRYPOINT [ "/app/development/tools/runner/entrypoint.sh" ]
 
