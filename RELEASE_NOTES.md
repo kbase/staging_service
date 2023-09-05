@@ -4,7 +4,7 @@
 
 - update to Python 3.11.5
 - image base is python 3.11.5 / debian bookworm
-- pin all image dependencies to those currently supported by the debian bullseye
+- pin all image dependencies to those currently supported by the debian bookworm
 - update all Python dependencies to latest versions
 - run black on all service and test files, fix most linting complaints (pylint,
   sonarlint)
