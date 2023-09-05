@@ -10,10 +10,10 @@ def make_random_string(string_length: int) -> str:
     Generate a string of random ascii letters of the given length
     """
     possible_letters = string.ascii_letters
-    # ignore the bandit warning below triggered by codacy;
+    # ignore the Sonarcloud and bandit warning below triggered by codacy;
     # this is just for generating data for testing, either formal or informa;
     # security is not an issue.
-    return "".join(random.choice(possible_letters) for _ in range(string_length))  # nosec
+    return "".join(random.choice(possible_letters) for _ in range(string_length))  # nosec NOSONAR
 
 
 if __name__ == "__main__":
