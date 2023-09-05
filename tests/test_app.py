@@ -31,6 +31,8 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
 decoder = JSONDecoder()
 
+MTIME_PRECISION = 3
+
 config = configparser.ConfigParser()
 config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
 
@@ -569,29 +571,42 @@ async def test_list():
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
             assert json[0]["path"] == "testuser/test"
-            # This can fail due to the calculation of mtime, which may be have the
-            # precision of time.time(). That is, in my observations it may be in
-            # seconds. If the mtime is rounded up, the test will quite likely fail as
-            # the file mtime will be greater than the current time returned by
-            # time.time().
-            # The solution applied is to round the expected time up.
-            # This will fail, still, on Windows, where apparently st_mtime has 2
-            # second precision.
-            # Alternatively, the service implementation could use finer precition time
-            # measurement via st_mtime_ns, although that is also platform-dependent
-            # (i.e. it is not always nanosecond precise.))
-            # E.g.
+
+            # This test is meant to prove that the time of the file just created is less
+            # than the current time measured immediately afterward. This carries some
+            # truth, as the actions in a single-threaded application should be in
+            # chronological sequence.
+            # However, a naive implementation can fail due to the manner in which the
+            # file modification time, or "mtime" is measured. In some systems it may
+            # have precision of "second", even if the underlying system can measure time
+            # at higher precision. In this case, the time may also be "rounded up" to
+            # the nearest second. If the comparision time has a highter precision, e.g.
+            # ms or ns, the comparison time may actually appear to be BEFORE the file's
+            # mtime which was actually measured BEFORE.
+
+            # One solution could be to round the comparison time, but that would implie
+            # that we KNOW that the system will round up to the second. But we don't
+            # actually know that, although we could measure that through sampling, I
+            # suppose.
+
+            # In any case, the method we choose to use is to change the test condition a
+            # bit. We just want to assert that the file's mtime, as provided by the api,
+            # is within the ballpark of the current time. We define this ballpark as 3
+            # seconds, since in at least some cases, Windows mtime precision is 2 seconds.
+            
+            # Here is an actual example of a terst that failed with the naive
+            # implementation:
+            
             # FAILED tests/test_app.py::test_list - assert 1693508770000 <=
             # (1693508769.9508653 * 1000)
             # Thursday, August 31, 2023 7:06:10 PM
-            # Thursday, August 31, 2023 7:06:09.950 PM 
-            # Hmm, so although that was observed locally, it is not working that way
-            # on GHA-hosted containers, so let's assume that is due to the base Linux
-            # system (Ubuntu-latest), and make this more resilient. Let's round both,
-            # then
-            diff = (json[0]["mtime"] - time.time() * 1000)/1000
-            assert abs(diff) < 3
-            # assert json[0]["mtime"] <= round(time.time()) * 1000
+            # Thursday, August 31, 2023 7:06:09.950 PM
+
+            # The "mtime" in the structure is in ms.
+
+            diff = json[0]["mtime"]/1000 - time.time()
+            assert abs(diff) < MTIME_PRECISION
+
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
@@ -604,9 +619,10 @@ async def test_list():
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
             assert json[0]["path"] == "testuser/test"
-            diff = (json[0]["mtime"] - time.time() * 1000)/1000
-            assert abs(diff) < 3
-            # assert json[0]["mtime"] <= round(time.time()) * 1000
+
+            diff = json[0]["mtime"]/1000 - time.time()
+            assert abs(diff) < MTIME_PRECISION
+
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
 
