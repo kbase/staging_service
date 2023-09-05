@@ -9,4 +9,4 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Run the tests
-      run: ./development/scripts/run run_tests.sh
+      run: ./development/scripts/run scripts/run_tests.sh

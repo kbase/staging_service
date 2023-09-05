@@ -71,7 +71,7 @@ Here are the common ones:
 - `mypy staging_service`
 - `black staging_service`
 - `isort staging_service`
-- `./run_tests.sh`
+- `./scripts/run_tests.sh`
 
 ### Running the server
 
@@ -116,4 +116,4 @@ To run the tools:
 - `./development/scripts/run mypy staging_service`
 - `./development/scripts/run black staging_service`
 - `./development/scripts/run isort staging_service`
-- `./development/scripts/run ./run_tests.sh`
+- `./development/scripts/run ./scripts/run_tests.sh`

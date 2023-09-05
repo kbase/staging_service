@@ -32,7 +32,7 @@ make run-dev
 
 ### Run on host
 
-- to test use `./run_tests.sh`
+- to test use `./scripts/run_tests.sh`
 - requires python 3.11.5 or higher
 - requires installation on mac of libmagic `brew install libmagic` or `sudo port install
   libmagic`
@@ -43,14 +43,14 @@ You can also run tests in a container which uses the same base image and uses th
 dependencies. (This container can also run other python tasks.)
 
 ```shell
-./development/scripts/run run_tests.sh
+./development/scripts/run scripts/run_tests.sh
 ```
 
 To run tests in individual test file you may supply the path to it. By default, the
 tests run against `tests/`.
 
 ```shell
-./development/scripts/run run_tests.sh tests/test_app.py
+./development/scripts/run scripts/run_tests.sh tests/test_app.py
 ```
 
 ## debugging
