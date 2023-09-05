@@ -7,9 +7,9 @@ data types.
 
 ## Resources
 
-* [The original strategy document for this approach](https://docs.google.com/document/d/1ocmZVBlTzAh_cdZaWGRwIbAuH-mcPRZFdhcwRhAfzxM/edit)
-  * Readable for everyone that has access to the KBase Google Docs folder
-  * The document contains short descriptions of future projects not included in this work,
+- [The original strategy document for this approach](https://docs.google.com/document/d/1ocmZVBlTzAh_cdZaWGRwIbAuH-mcPRZFdhcwRhAfzxM/edit)
+  - Readable for everyone that has access to the KBase Google Docs folder
+  - The document contains short descriptions of future projects not included in this work,
     such as generating template files on the fly and rich templates.
 
 ## Front end changes
@@ -39,15 +39,15 @@ The file, by row, is:
 
 1. The data type, in this case `gff_metagenome`, the column count, and the version, in
    this case 1.
-    * The data type is from the list in the
+    - The data type is from the list in the
        [Mappings.py](https://github.com/kbase/staging_service/blob/master/staging_service/autodetect/Mappings.py)
        file in the StS. The Narrative is expected to understand these types and map them
        to importer apps.
-    * The column count allows for error checking row sizes. This particularly important for
+    - The column count allows for error checking row sizes. This particularly important for
        the Excel parser, which uses `pandas` under the hood. `pandas` will silently pad data
        and headers out to match the longest row in the sheet, so the column count is required
        to detect errors.
-    * The version allows us to update the file format and increment the version,
+    - The version allows us to update the file format and increment the version,
        allowing backwards compatibility - the staging service can process the file appropriately
        depending on the version number.
 2. The IDs of the app inputs from the `spec.json` file.
@@ -72,9 +72,9 @@ As part of this project we will deliver:
 1. CSV templates for each in scope app (e.g. the first 3 lines of the example file)
 2. An Excel template containing a tab for each in scope app
 3. A `README.md` file explaining how to use the templates.
-   * The `README.md` should include a link to rich import specification documentation on
+   - The `README.md` should include a link to rich import specification documentation on
      the KBase website once it is developed.
-   * Note: cover booleans / checkboxes which are not intuitive. 0 will indicate
+   - Note: cover booleans / checkboxes which are not intuitive. 0 will indicate
      unchecked, and 1 checked. These values may show up as strings in the API, and the
      consumer will be expected to handle conversion appropriately.
 
@@ -95,13 +95,13 @@ future update). The front end will be expected to either
 
 ## User operations
 
-* The user uploads the import specification files to the staging area along with all the
+- The user uploads the import specification files to the staging area along with all the
   files inluded in the specification.
-* The user selects the `Import Specification` type for the specification files.
-  * The user may also select other files in the staging area to include in the import along
+- The user selects the `Import Specification` type for the specification files.
+  - The user may also select other files in the staging area to include in the import along
     with the files listed in the specification.
-    * The user *does not* have to select any files included in the specification.
-* The user clicks `Import Selected`.
+    - The user *does not* have to select any files included in the specification.
+- The user clicks `Import Selected`.
 
 As such, a new type must be added to the StS: `import_specification` with the title
 `Import Specification`. *Nota bene*: It may be preferable to have the Narrative specify the
@@ -167,20 +167,22 @@ allowing for a consistent user experience.
 The StS will return errors on a (mostly) per input file basis, with a string error code for
 each error type. Currently the error types are:
 
-* `cannot_find_file` if an input file cannot be found
-* `cannot_parse_file` if an input file cannot be parsed
-* `incorrect_column_count` if the column count is not as expected
-  * For Excel files, this may mean there is a non-empty cell outside the bounds of the
+- `cannot_find_file` if an input file cannot be found
+
+- `cannot_parse_file` if an input file cannot be parsed
+- `incorrect_column_count` if the column count is not as expected
+  - For Excel files, this may mean there is a non-empty cell outside the bounds of the
     data area
-* `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
-* `no_files_provided` if no files were provided
-* `unexpected_error` if some other error occurs
+- `multiple_specifications_for_data_type` if more than one tab or file per data type
+    is submitted
+- `no_files_provided` if no files were provided
+- `unexpected_error` if some other error occurs
 
 The HTTP code returned will be, in order of precedence:
 
-* 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
-* 404 if at least one error is `cannot_find_file` but there are no 400-type errors
-* 500 if all errors are `unexpected_error`
+- 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
+- 404 if at least one error is `cannot_find_file` but there are no 400-type errors
+- 500 if all errors are `unexpected_error`
 
 The general structure of the error response is:
 
@@ -260,26 +262,26 @@ Note in this case the service MUST log the stack trace along with the filename f
 
 ## Alternatives explored
 
-* We considered parsing the files in the Narrative backend (pulling the files as is from
+- We considered parsing the files in the Narrative backend (pulling the files as is from
   the StS) but the current design allows for other services and UIs reusing the parsing
   code. There doesn't otherwise seem to be a strong reason to include the code one place
   or the other so we decided to include it in the StS.
 
 ## Questions
 
-* Should it be an error to submit multiple files or tabs for the same type? If not,
+- Should it be an error to submit multiple files or tabs for the same type? If not,
   how should the different files be denoted and ordered?
-  * This has follow on effect for how spreadsheet type views in the UI should be displayed.
-  * A: For the MVP disallow submitting more than one file / tab per type. Post release we'll
-    find out if this is a use case that users care about.
-* Should we disallow filenames with commas? They may cause problems with the new endpoint.
-  * A: Disallow commas, the same way we disallow files staring with whitespace or periods.
-* Should we strictly enforce a column count for every row in xSV files?
-  * Not enforcing a count makes it somewhat easier for users to fill in the data - they don't
-    need to add extraneous commas or tabs to the end of the line.
-  * Enforcing a count makes it less likely that a user will commit silent counting
+  - This has follow on effect for how spreadsheet type views in the UI should be displayed.
+  - A: For the MVP disallow submitting more than one file / tab per type. Post release
+    we'll find out if this is a use case that users care about.
+- Should we disallow filenames with commas? They may cause problems with the new endpoint.
+  - A: Disallow commas, the same way we disallow files staring with whitespace or periods.
+- Should we strictly enforce a column count for every row in xSV files?
+  - Not enforcing a count makes it somewhat easier for users to fill in the data -
+    they don't need to add extraneous commas or tabs to the end of the line.
+  - Enforcing a count makes it less likely that a user will commit silent counting
     errors if there are many empty entries between items in a line.
-  * A: Enforce a column count to prevent user errors.
+  - A: Enforce a column count to prevent user errors.
 
 ## Addendum: dynamic parameter lookup
 
@@ -288,14 +290,14 @@ out of scope, but trivial to add GFF/FASTA Genome) importer in the near future. 
 for the purpose of xSV import the user will be expected to provide the entire, correct,
 scientific name as returned from the taxon API.
 
-* The user could get this name by starting a genome import and running the query from the
+- The user could get this name by starting a genome import and running the query from the
   import app cell configuration screen.
-  * This will be documented in the README.md for the template files.
-* As part of the UI work we could theoretically provide a landing page for looking up valid
+  - This will be documented in the README.md for the template files.
+- As part of the UI work we could theoretically provide a landing page for looking up valid
   scientific names.
-* Presumably the UI would need to run the dynamic query and report an error to the user
+- Presumably the UI would need to run the dynamic query and report an error to the user
   if the dynamic service returns 0 or > 1 entries.
-* Providing the scientific name vs. the taxon ID seems simpler because the machinery already
+- Providing the scientific name vs. the taxon ID seems simpler because the machinery already
   exists to perform the query and is part of the spec.
-* Expect these plans to change as it becomes more clear how dynamic fields will work in the
-  context of bulk import.
+- Expect these plans to change as it becomes more clear how dynamic fields will work
+  in the context of bulk import.

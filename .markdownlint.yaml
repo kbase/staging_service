@@ -1,8 +1,10 @@
+MD013:
+  # Matches black line length for python code.
+  line_length: 88
+  # some long examples would break the line length and are awkward to rearrange
+  code_blocks: false
+
 # We don't want the annoying warnings when there are duplicated non-sibling headers as
 # many types of docs have a pattern for headings that is repeated throughout the document.
 MD024: 
   siblings_only: true
-
-MD013:
-  line_length: 88
-  code_blocks: false
