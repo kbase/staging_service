@@ -21,16 +21,16 @@ the least surprise!
 There is also support for locally hosted development via VSC, but this developer (EAP)
 does not do this style of Python development.
 
-
 ### Getting Started
 
 1. Ensure you have docker running.
 
 2. Open the project in VSC
 
-There are a few ways to open a project in VSC:
-- from the repo directory `code .`
-- from VSC menu:
+    There are a few ways to open a project in VSC:
+
+    - from the repo directory `code .`
+    - from VSC menu:
     - File > New Window
     - From the new window:
         - Click on Explorer in the left-nav, then click on Open Folder
@@ -41,14 +41,15 @@ There are a few ways to open a project in VSC:
 
 3. Start the devcontainer.
 
-- press the keys `Shift` - `Command` - `P` (macOS) to open the command palette
-- start typing "Dev Container: Reopen Folder in Container"
-- when you see it appear, click on it
-- the image will build, the container will start
+    - press the keys `Shift` - `Command` - `P` (macOS) to open the command palette
+    - start typing "Dev Container: Reopen Folder in Container"
+    - when you see it appear, click on it
+    - the image will build, the container will start
 
 4. Open a terminal
 
-If a terminal is not already open, open the built-in terminal with `Control` - `~` (that is a tilde)
+    If a terminal is not already open, open the built-in terminal with `Control` - `~`
+    (that is a tilde)
 
 5. Depending on the docker installation, you may need to grant access. If you don't see
    git things enabled, click on the Git tool, and follow the instructions.
@@ -70,7 +71,7 @@ Here are the common ones:
 - `mypy staging_service`
 - `black staging_service`
 - `isort staging_service`
-- `./run_tests.sh `
+- `./run_tests.sh`
 
 ### Running the server
 
@@ -98,7 +99,6 @@ located in `staging_service/__main__.py`.
 
 As a quick sanity test once the service is running, try this from a host terminal:
 
-
 ```shell
 curl http://localhost:3000/test-service
 ```
@@ -116,4 +116,4 @@ To run the tools:
 - `./development/scripts/run mypy staging_service`
 - `./development/scripts/run black staging_service`
 - `./development/scripts/run isort staging_service`
-- `./development/scripts/run ./run_tests.sh `
+- `./development/scripts/run ./run_tests.sh`

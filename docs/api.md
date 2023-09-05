@@ -1,27 +1,26 @@
 
-## API
+# API
 
 - all paths should be specified treating the user's home directory as root
 
 - The url base, in an actualy deployment, will be:
-    - https://ci.kbase.us for CI
-    - https://next.kbase.us for Next
-    - https://appdev.kbase.us for Appdev
-    - https://kbase.us for Production
+  - `https://ci.kbase.us` for CI
+  - `https://next.kbase.us` for Next
+  - `https://appdev.kbase.us` for Appdev
+  - `https://kbase.us` for Production
 
 - The base path in all environments is `/services/staging_service`
 
 - All api paths will be suffixed to the url base and base path. For example:
 
-    `https://ci.kbase.us/services/staging_service/file-lifetime` 
-    
+    `https://ci.kbase.us/services/staging_service/file-lifetime`
     will invoke the
     `file-lifetime` endpoint, which returns the number of days a file will be retained.
 
 - For local usage (i.e. spinning the service up locally)
-    - the base url is `http://localhost:3000`
-    - the base path is not required
-    - e.g. `http://localhost:3000/file-lifetime`
+  - the base url is `http://localhost:3000`
+  - the base path is not required
+  - e.g. `http://localhost:3000/file-lifetime`
 
 - For endpoints that require authorization, the `Authorization` header must be supplied,
   with the value a KBase auth token.
@@ -34,14 +33,13 @@ Returns a fixed text response. Used to determine if the service is running?
 
 > TODO: we probably don't need this endpoint
 
-
 ### Success Response
 
 `200 OK`
 
 #### Example
 
-```
+```text
 This is just a test. This is only a test.
 ```
 
@@ -49,7 +47,7 @@ This is just a test. This is only a test.
 
 `GET /test-auth`
 
-Returns a text response indicating that the 
+Returns a text response indicating that the
 
 ### Headers
 
@@ -61,7 +59,7 @@ Returns a text response indicating that the
 
 `Content-Type: text/plain`
 
-**Example**
+#### Example
 
 ```text
 I'm authenticated as <username>
@@ -69,15 +67,7 @@ I'm authenticated as <username>
 
 ### Error Responses
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
-##### Content
-
-`text/plain`
-
-```text
-Must supply token
-```
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 ## File Lifetime
 
@@ -85,7 +75,8 @@ Must supply token
 
 Number of days a file will be held for in staging service before being deleted.
 
-This is not actually handled by the server but is expected to be performed by a cron job which shares the env variable read here.
+This is not actually handled by the server but is expected to be performed by a cron job
+which shares the env variable read here.
 
 ### Success Response
 
@@ -110,6 +101,7 @@ Returns a JSON Array containing entries for each file and folder within the prov
 Defaults to not show hidden dotfiles.
 
 ### Headers
+
 `Authorization: <Kbase Auth token>`
 
 ### Success Response
@@ -139,7 +131,7 @@ Defaults to not show hidden dotfiles.
 
 ### Error Responses
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `404 Not Found`
 
@@ -153,8 +145,6 @@ Authorization.
 ```text
 path <username>/<incorrect path> does not exist
 ```
-
-
 
 ## Download file
 
@@ -178,7 +168,7 @@ The contents of the file are returned as the entire body of the response
 
 ### Error Responses
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `400 Bad Request`
 
@@ -200,7 +190,7 @@ The file does not exist
 
 `text/plain`
 
-```
+```text
 path <username>/<incorrect path> does not exist
 ```
 
@@ -255,13 +245,14 @@ defaults to not show hidden dotfiles
 
 ### Error Responses
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 ## File and Folder Metadata
 
 `GET /metadata/{path to file or folder}`
 
 ### Headers
+
 - `Authorization: <KBase Auth token>`
 
 ### Success Response
@@ -302,7 +293,7 @@ If the file or directory is found, a Metadata object is returned
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `404 Not Found`
 
@@ -319,7 +310,7 @@ path <username>/<incorrect path> does not exist
 `POST /upload`
 
 This most important endpoint is designed to receive one or more files in a `POST`
-request sending a `multipart/form-data` body. 
+request sending a `multipart/form-data` body.
 
 The body format is described in more detail below.
 
@@ -330,7 +321,7 @@ The response is a JSON object containing file metadata.
 > uploads supports `multipart/form-data`, or it  may be because historically the first
 > front-end implementation was a form itself, as HTML forms will send as
 > `mutlipart/form-data` if a file control is used to select a file.
-> 
+>
 > The current front-end implementation does not require this, although it does support
 > it, so I would suggest that in the future we refactor to be a simple binary body, with
 > the filename specified in the url search (query param).
@@ -340,7 +331,7 @@ The response is a JSON object containing file metadata.
 - `Authorization: <Valid Auth token>`
 - `Content-Type: multipart/form-data`
 
-### Body 
+### Body
 
 The multpart form-data format supports sending of multiple form fields, each with their
 own metadata as well as body.
@@ -349,7 +340,6 @@ The service requires that two fields be present in the specified order:
 
 - `destPath` - path file should end up in
 - `uploads` - the file itself.
-
 
 Filenames starting with whitespace or a '.' are not allowed
 
@@ -362,7 +352,7 @@ content will be literaly copied into the destination file, with no encoding or v
 
 #### Example
 
-```
+```text
 ------WebKitFormBoundaryA0xgUu1fi1whAcSB
 Content-Disposition: form-data; name="destPath"
 
@@ -380,14 +370,14 @@ root directory of the user's staging area.
 
 The `uploads` field would contain the file's binary content. Note that the field
 metadata includes the "filename" property indicating that the target file
-name is `"foo.csv"`. 
-
+name is `"foo.csv"`.
 
 ### Success Response
 
 `200 OK`
 
-A successful response will return a JSON object containing a metadata description of the file.
+A successful response will return a JSON object containing a metadata description of the
+file.
 
 #### Content
 
@@ -445,9 +435,7 @@ A successful response will return a JSON object containing a metadata descriptio
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
-
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 ## Define/Create UPA for file which has been imported
 
@@ -497,7 +485,6 @@ associate with the provided file.
 
 - `Content-Type: text/plain`
 
-
 #### Body
 
 ```text
@@ -506,7 +493,7 @@ successfully update UPA <UPA> for file <Path>
 
 ### Error Responses
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `400 Bad Request`
 
@@ -516,16 +503,13 @@ UPA missing
 
 `text/plain`
 
-```
+```text
 must provide UPA field in body
 ```
-
-
 
 ## Delete file or folder (will delete things contained in folder)
 
 `DELETE /delete/{path to file or folder}`
-
 
 ### Headers
 
@@ -547,8 +531,7 @@ successfully deleted UPA <Path>
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `403 Forbidden`
 
@@ -579,9 +562,6 @@ or other file access errors.
 ```text
 could not delete <Path>
 ```
-
-
-
 
 ## Move/rename a file or folder
 
@@ -620,24 +600,23 @@ could not delete <Path>
 }
 ```
 
-
 ### Success Response
 
 `200 OK`
 
 #### Headers
+
 - `Content-Type: text/plain`
 
 #### Body
 
-```
+```text
 successfully moved <path> to <newPath>
 ```
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `400 Bad Request`
 
@@ -649,7 +628,7 @@ If the newPath field is missing in the content body
 
 ##### Body
 
-```
+```text
 must provide newPath field in body
 ```
 
@@ -661,11 +640,11 @@ must provide newPath field in body
 
 ##### Body
 
-```
+```text
 cannot rename home or move directory
 ```
 
-```
+```text
 cannot rename or move protected file
 ```
 
@@ -677,12 +656,9 @@ cannot rename or move protected file
 
 ##### Body
 
-```
+```text
 <newPath> already exists
 ```
-
-
-
 
 ## Decompress various archive formats
 
@@ -690,7 +666,6 @@ cannot rename or move protected file
 
 supported archive formats are:
 .zip, .ZIP, .tar.gz, .tgz, .tar.bz, .tar.bz2, .tar, .gz, .bz2, .bzip2
-
 
 ### Headers
 
@@ -700,20 +675,19 @@ supported archive formats are:
 
 `200 OK`
 
-##### Headers
+#### Headers
 
 - `Content-Type: text/plain`
 
-##### Body
+#### Body
 
-```
+```text
 successfully decompressed <path to archive>
 ```
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `400 Bad Request`
 
@@ -723,19 +697,16 @@ The [common responses for an authorized request](#Common-Authorization-Error-Res
 
 ##### Body
 
-
 ```text
 cannot decompress a <file extension> file
 ```
-
-
 
 ## Add Globus ACL
 
 `GET /add-acl`
 
-After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for
-linking to globus.
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus
+id file for linking to globus.
 
 ### Headers
 
@@ -791,11 +762,9 @@ linking to globus.
 }
 ```
 
-
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
-
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `500 Internal Server Error`
 
@@ -805,7 +774,7 @@ If issue with Globus API or ACL Already Exists
 
 - `Content-Type: application/json`
 
-##### Body 
+##### Body
 
 ###### Schema
 
@@ -852,15 +821,12 @@ If issue with Globus API or ACL Already Exists
 }
 ```
 
-
-
-
 ## Remove Globus ACL
 
 `GET /remove-acl`
 
-After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for
-linking to globus.
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus
+id file for linking to globus.
 
 ### Headers
 
@@ -890,12 +856,12 @@ linking to globus.
 Note that the "message" is that returned by the globus api, and out of scope for
 documentation here.
 
-> TODO: we should provide our own message, or return the globus response data, but not
-> return the globus response data (a json object) into a string and call it a message! 
+> TODO: we should provide our own message, or return the globus rZesponse data, but not
+> return the globus response data (a json object) into a string and call it a message!
 
 ### Error Response
 
-The [common responses for an authorized request](#Common-Authorization-Error-Responses)
+The [common responses for an authorized request](#common-authorization-error-responses)
 
 #### `500 Internal Server Error`
 
@@ -942,8 +908,6 @@ An issue with Globus API or ACL Already Exists
 
 ####### Content (example)
 
-**Content**
-
 ```json
 {
     "success": false, 
@@ -954,7 +918,6 @@ An issue with Globus API or ACL Already Exists
 }
 ```
 
-
 ## Parse bulk specifications
 
 `GET /bulk_specification/?files=file1.<ext>[,file2.<ext>,...]`
@@ -964,14 +927,14 @@ where `<ext>` is one of `csv`, `tsv`, `xls`, or `xlsx`.
 This endpoint parses one or more bulk specification files in the staging area into a data
 structure (close to) ready for insertion into the Narrative bulk import or analysis cell.
 
-It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the currently
-supported data types are available in the [templates](./import_specifications/templates)
-directory of this repo. See the [README.md](./import_specifications/templates/README.md) file
-for instructions on template usage.
+It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for the
+currently supported data types are available in the
+[templates](./import_specifications/templates) directory of this repo. See the
+[README.md](./import_specifications/templates/README.md) file for instructions on
+template usage.
 
 See the [import specification ADR document](./docs/import_specifications.ADR.md) for design
 details.
-
 
 ### Headers
 
@@ -991,7 +954,7 @@ details.
 
 ##### Content (example)
 
-```
+```text
 {
     "types": {
         <type 1>: [
@@ -1013,24 +976,25 @@ details.
 }
 ```
 
-* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
-  file and the Narrative staging area configuration file - it is a shared namespace between the
-  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
-  app. It is determined by the first header line from the templates.
-* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
+- `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace
+  between the staging service and Narrative to specify bulk applications, and has a
+  1:1 mapping to an app. It is determined by the first header line from the templates.
+- `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
   These are determined by the second header line from the templates and will differ
   by the data type.
-* `<value for ID, row N>` is the user-provided value for the input for a given `spec.json` ID
-  and import or analysis instance, where an import/analysis instance is effectively a row
-  in the data file. Each data file row is provided in order for each type. Each row is
-  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
-  user-provided data, and each line corresponds to a single import or analysis.
+- `<value for ID, row N>` is the user-provided value for the input for a given
+  `spec.json`
+  ID and import or analysis instance, where an import/analysis instance is effectively a
+  row in the data file. Each data file row is provided in order for each type. Each row is
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the
+  templates are user-provided data, and each line corresponds to a single import or analysis.
   
 ### Error Response
 
 Error reponses are of the general form:
 
-```
+```json
 {
     "errors": [
         {"type": <error code string>,
@@ -1043,25 +1007,26 @@ Error reponses are of the general form:
 
 Existing error codes are currently:
 
-* `cannot_find_file` if an input file cannot be found
-* `cannot_parse_file` if an input file cannot be parsed
-* `incorrect_column_count` if the column count is not as expected
-  * For Excel files, this may mean there is a non-empty cell outside the bounds of the data area
-* `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
-* `no_files_provided` if no files were provided
-* `unexpected_error` if some other error occurs
+- `cannot_find_file` if an input file cannot be found
+- `cannot_parse_file` if an input file cannot be parsed
+- `incorrect_column_count` if the column count is not as expected
+  - For Excel files, this may mean there is a non-empty cell outside the bounds of the
+    data area
+- `multiple_specifications_for_data_type` if more than one tab or file per data type is submitted
+- `no_files_provided` if no files were provided
+- `unexpected_error` if some other error occurs
 
 The HTTP code returned will be, in order of precedence:
 
-* 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
-* 404 if at least one error is `cannot_find_file` but there are no 400-type errors
-* 500 if all errors are `unexpected_error`
+- 400 if any error other than `cannot_find_file` or `unexpected_error` occurs
+- 404 if at least one error is `cannot_find_file` but there are no 400-type errors
+- 500 if all errors are `unexpected_error`
 
 The per error type data structures are:
 
 #### `cannot_find_file`
 
-```
+```json
 {
     "type": "cannot_find_file",
     "file": <filepath>
@@ -1070,7 +1035,7 @@ The per error type data structures are:
 
 #### `cannot_parse_file`
 
-```
+```json
 {
     "type": "cannot_parse_file",
     "file": <filepath>,
@@ -1081,7 +1046,7 @@ The per error type data structures are:
 
 #### `incorrect_column_count`
 
-```
+```json
 {
     "type": "incorrect_column_count",
     "file": <filepath>,
@@ -1092,7 +1057,7 @@ The per error type data structures are:
 
 #### `multiple_specifications_for_data_type`
 
-```
+```json
 {
     "type": "multiple_specifications_for_data_type",
     "file_1": <filepath for first file>,
@@ -1105,7 +1070,7 @@ The per error type data structures are:
 
 #### `no_files_provided`
 
-```
+```json
 {
     "type": "no_files_provided"
 }
@@ -1113,16 +1078,13 @@ The per error type data structures are:
 
 #### `unexpected_error`
 
-```
+```json
 {
     "type": "unexpected_error",
     "file": <filepath if applicable to a single file>
     "message": <message regarding the error>
 }
 ```
-
-
-
 
 ## Write bulk specifications
 
@@ -1133,9 +1095,8 @@ data structure to that which the parse endpoint returns and writes bulk specific
 
 ### Headers
 
--  `Authorization: <KBase Auth token>`
--  `Content-Type: application/json`
-
+- `Authorization: <KBase Auth token>`
+- `Content-Type: application/json`
 
 #### Body
 
@@ -1145,7 +1106,7 @@ data structure to that which the parse endpoint returns and writes bulk specific
 
 ##### Content (example)
 
-```
+```json
 {
     "output_directory": <staging area directory in which to write output files>,
     "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
@@ -1177,27 +1138,27 @@ data structure to that which the parse endpoint returns and writes bulk specific
 }
 ```
 
-* `output_directory` specifies where the output files should be written in the user's staging area.
-* `output_file_type` specifies the format of the output files.
-* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
-  file and the Narrative staging area configuration file - it is a shared namespace between the
-  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
-  app. It is included in the first header line in the templates.
-* `order_and_display` determines the ordering of the columns in the written templates, as well
-  as mapping the spec.json ID of the parameter to the human readable name of the parameter in
-  the display.yml file.
-* `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
+- `output_directory` specifies where the output files should be written in the user's
+   staging area.
+- `output_file_type` specifies the format of the output files.
+- `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace
+  between the staging service and Narrative to specify bulk applications, and has a
+  1:1 mapping to an app. It is included in the first header line in the templates.
+- `order_and_display` determines the ordering of the columns in the written templates,
+  as well as mapping the spec.json ID of the parameter to the human readable name of the
+  parameter in the display.yml file.
+- `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
   These are written to the second header line from the import templates and will differ
   by the data type.
-* `data` contains any data to be written to the file as example data, and is analagous to the data
-  structure returned from the parse endpoint. To specify that no data should be written to the
-  template provide an empty list.
-* `<value for ID, row N>` is the value for the input for a given `spec.json` ID
+- `data` contains any data to be written to the file as example data, and is analagous
+   to the data structure returned from the parse endpoint. To specify that no data
+   should be written to the template provide an empty list.
+- `<value for ID, row N>` is the value for the input for a given `spec.json` ID
   and import or analysis instance, where an import/analysis instance is effectively a row
   in the data file. Each data file row is provided in order for each type. Each row is
-  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
-  user-provided data, and each line corresponds to a single import or analysis.
-
+  provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the
+  templates are user-provided data, and each line corresponds to a single import or analysis.
 
 ### Success Response
 
@@ -1205,7 +1166,7 @@ data structure to that which the parse endpoint returns and writes bulk specific
 
 #### Headers
 
--  `Content-Type: application/json`
+- `Content-Type: application/json`
 
 #### Body
 
@@ -1226,10 +1187,10 @@ data structure to that which the parse endpoint returns and writes bulk specific
 }
 ```
 
-* `output_file_type` has the same definition as above.
-* `files` contains a mapping of each provided data type to the output template file for that type.
-  In the case of Excel, all the file paths will be the same since the data types are all written
-  to different tabs in the same file.
+- `output_file_type` has the same definition as above.
+- `files` contains a mapping of each provided data type to the output template file for
+  that type. In the case of Excel, all the file paths will be the same since the data
+  types are all written to different tabs in the same file.
   
 ### Error Response
 
@@ -1241,10 +1202,8 @@ Method specific errors have the form:
 
 The error code in this case will be a 4XX error.
 
-The AioHTTP server may also return built in errors that are not in JSON format - an example of
-this is overly large (> 1MB) request bodies.
-
-
+The AioHTTP server may also return built in errors that are not in JSON format - an
+example of this is overly large (> 1MB) request bodies.
 
 ## Get Importer Mappings
 
@@ -1253,21 +1212,20 @@ this is overly large (> 1MB) request bodies.
 This endpoint returns:
 
 1) a mapping between a list of files and predicted importer apps, and
-2) a file information list that includes the input file names split between the file prefix and
-   the file suffix, if any, that was used to determine the file -> importer mapping, and a list
-   of file types based on the file suffix. If a file has a suffix that does not match
-   any mapping (e.g. `.sys`), the suffix will be `null`, the prefix the entire file name, and
-   the file type list empty.
+2) a file information list that includes the input file names split between the file
+   prefix and the file suffix, if any, that was used to determine the file -> importer
+   mapping, and a list of file types based on the file suffix. If a file has a suffix
+   that does not match any mapping (e.g. `.sys`), the suffix will be `null`, the prefix
+   the entire file name, and the file type list empty.
 
 For example,
 
-* if we pass in nothing we get a response with no mappings
-* if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a
-   response that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1
-   which represents the probability that this is the correct importer for you.
-* for files for which there is no predicted app, the return is a null value
-* this endpoint is used to power the dropdowns for the staging service window in the Narrative
-
+- if we pass in nothing we get a response with no mappings
+- if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would
+   get back a response that maps to Fasta Importers and FastQ Importers, with a weight
+   of 0 to 1 which represents the probability that this is the correct importer for you.
+- for files for which there is no predicted app, the return is a null value
+- this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
 ### Headers
 
@@ -1296,22 +1254,6 @@ data = {"file_list": ["file1.txt", "file2.zip", "file3.gff3.gz"]}
             "importer_mappings/", data=data
         )
 ```
-
-### Success Response
-
-`200 OK`
-
-#### Headers
-
--  `Content-Type: application/json`
-
-#### Body
-
-##### Schema
-
-> TODO
-
-##### Content (example)
 
 ```json
 {
@@ -1345,27 +1287,26 @@ data = {"file_list": ["file1.txt", "file2.zip", "file3.gff3.gz"]}
 
 > TODO: hopefully the typical 401/400 auth errors are returned
 
-`400 Bad Request`
+#### `400 Bad Request`
 
-#### Headers
+##### Headers
 
 - `Content-Type: text/plain`
 
-#### Body
+##### Body
 
-```
+```text
 must provide file_list field 
 ```
-
-
 
 ## Get importer filetypes
 
 `GET /importer_filetypes`
 
-This endpoint returns information about the file types associated with data types and the file
-extensions for those file types. It is primarily of use for creating UI elements describing
-which file extensions may be selected when performing bulk file selections.
+This endpoint returns information about the file types associated with data types and
+the file extensions for those file types. It is primarily of use for creating UI
+elements describing which file extensions may be selected when performing bulk file
+selections.
 
 ### Headers
 
@@ -1385,7 +1326,7 @@ none
 
 ##### Content (example)
 
-```
+```json
 {
     "datatype_to_filetype": {
         <type 1>: [<file type 1>, ... <file type N>],
@@ -1400,13 +1341,13 @@ none
 }
 ```
 
-* `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
-  file and the Narrative staging area configuration file - it is a shared namespace between the
-  staging service and Narrative to specify bulk applications, and has a 1:1 mapping to an
-  import app. It is included in the first header line in the templates.
-* `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file types are listed
-  below.
-* `<extension N>` is a file extension like `*.fa` or `*.gbk`.
+- `<type N>` is a data type ID from the [Mappings.py](./staging_service/autodetect/Mappings.py)
+  file and the Narrative staging area configuration file - it is a shared namespace
+  between the staging service and Narrative to specify bulk applications, and has a
+  1:1 mapping to an import app. It is included in the first header line in the templates.
+- `<file type N>` is a file type like `FASTA` or `GENBANK`. The supported file types are
+  listed below.
+- `<extension N>` is a file extension like `*.fa` or `*.gbk`.
 
 ## Autodetect App and File Type IDs
 
@@ -1414,7 +1355,7 @@ none
 
 These are the currently supported upload app type IDs:
 
-```
+```text
 fastq_reads_interleaved
 fastq_reads_noninterleaved
 sra_reads
@@ -1438,10 +1379,10 @@ extension.
 
 ### File type IDs
 
-These are the currently supported file type IDs. These are primarily useful for apps that take
-two different file types, like GFF/FASTA genomes.
+These are the currently supported file type IDs. These are primarily useful for apps
+that take two different file types, like GFF/FASTA genomes.
 
-```
+```text
 FASTA
 FASTQ
 SRA

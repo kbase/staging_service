@@ -18,7 +18,7 @@ documentation](https://docs.kbase.us/getting-started/narrative/add-data).
 
 ## Installation
 
-The service is designed to be packagd into a Docker image and run as a container. 
+The service is designed to be packagd into a Docker image and run as a container.
 
 For deployment, the image is built by GitHub actions and stored in GitHub Container
 Registry.
@@ -30,7 +30,21 @@ or from a locally-built image.
 
 ## Usage
 
-> TBD
+There are three basic usage scenarios - development, local deployment, and production
+deployment.
+
+Development has [its own documentation](./docs/development/inde.md).
+
+Production deployment is out of scope (though it can be larged deduced from local
+deployment).
+
+Local deployement is as easy as running
+
+```shell
+./scripts/run-dev-server.sh
+```
+
+from within the devcontainer.
 
 ## API
 
@@ -48,8 +62,6 @@ Forks are not supported at this time.
 
 For development support, see [the development docs](./docs/development.md)
 
-
 ## License
 
 See [the KBase License](./LICENSE.md)
-

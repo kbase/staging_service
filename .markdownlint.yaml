@@ -1,0 +1,8 @@
+# We don't want the annoying warnings when there are duplicated non-sibling headers as
+# many types of docs have a pattern for headings that is repeated throughout the document.
+MD024: 
+  siblings_only: true
+
+MD013:
+  line_length: 88
+  code_blocks: false

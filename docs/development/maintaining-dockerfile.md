@@ -21,7 +21,7 @@ concerned with.
 ## OS dependencies
 
 The OS dependencies are indicated in the Dockerfile as exact versions. This ensures that
-images are consistent, even as the base image evolves over time. 
+images are consistent, even as the base image evolves over time.
 
 ## Different Dockerfiles
 
@@ -29,20 +29,18 @@ At present, there are three Dockerfiles which must be kept in synchrony. They di
 enough that the inconvenience of keeping them consistent seems worth the effort.
 
 - `./Dockerfile`
-    - used for the production image
-    - needs to copy all service files
-    - does not include development Python dependencies
-    - has the production entrypoint
-- `./.devcontainer/Dockerfile` 
-    - used for the devcontainer workflow
-    - does not copy service files
-    - contains development Python dependencies
-    - no entrypoint as that is provided by the docker-compose.yml
+  - used for the production image
+  - needs to copy all service files
+  - does not include development Python dependencies
+  - has the production entrypoint
+- `./.devcontainer/Dockerfile`
+  - used for the devcontainer workflow
+  - does not copy service files
+  - contains development Python dependencies
+  - no entrypoint as that is provided by the docker-compose.yml
 - `./development/tools/Dockerfile`
-    - used for the host cli tools
-    - does not copy service files
-    - contains development Python dependencies
-    - has special entrypoint which execs whatever command is passed from the command
+  - used for the host cli tools
+  - does not copy service files
+  - contains development Python dependencies
+  - has special entrypoint which execs whatever command is passed from the command
       line
-    
-
