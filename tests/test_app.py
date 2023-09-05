@@ -593,10 +593,10 @@ async def test_list():
             # bit. We just want to assert that the file's mtime, as provided by the api,
             # is within the ballpark of the current time. We define this ballpark as 3
             # seconds, since in at least some cases, Windows mtime precision is 2 seconds.
-            
-            # Here is an actual example of a terst that failed with the naive
+
+            # Here is an actual example of a test that failed with the naive
             # implementation:
-            
+
             # FAILED tests/test_app.py::test_list - assert 1693508770000 <=
             # (1693508769.9508653 * 1000)
             # Thursday, August 31, 2023 7:06:10 PM
