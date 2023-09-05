@@ -31,7 +31,7 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
 decoder = JSONDecoder()
 
-MTIME_PRECISION = 3
+MTIME_TEST_PRECISION = 1
 
 config = configparser.ConfigParser()
 config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
@@ -605,7 +605,7 @@ async def test_list():
             # The "mtime" in the structure is in ms.
 
             diff = json[0]["mtime"]/1000 - time.time()
-            assert abs(diff) < MTIME_PRECISION
+            assert abs(diff) < MTIME_TEST_PRECISION
 
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
@@ -621,7 +621,7 @@ async def test_list():
             assert json[0]["path"] == "testuser/test"
 
             diff = json[0]["mtime"]/1000 - time.time()
-            assert abs(diff) < MTIME_PRECISION
+            assert abs(diff) < MTIME_TEST_PRECISION
 
             assert len(file_folder_count) == 4  # 2 folders and 2 files
             assert sum(file_folder_count) == 2
