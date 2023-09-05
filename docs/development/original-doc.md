@@ -19,14 +19,7 @@ if you want to run locally you must install requirements.txt for python3
 
 to run locally run `/deployment/bin/entrypoint.sh`
 
-to run inside docker run `/run_in_docker.sh`
-
-to run in coordination with the kbase-ui development proxy, enabling it to serve locally
-as a back end for Narrative, kbase-ui and other services:
-
-```shell
-make run-dev
-```
+to run inside docker run `./scripts/run_in_docker.sh`
 
 ## tests
 
