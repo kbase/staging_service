@@ -3,7 +3,7 @@ aiohttp==3.8.5
 aiohttp_cors==0.7.0
 defusedxml==0.7.1
 frozendict==2.3.8
-globus-sdk==3.28.0
+globus-sdk==1.6.1
 gunicorn==21.2.0
 openpyxl==3.1.2
 pandas==2.1.0
