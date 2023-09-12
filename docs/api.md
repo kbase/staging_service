@@ -3,7 +3,7 @@
 
 - all paths should be specified treating the user's home directory as root
 
-- The url base, in an actualy deployment, will be:
+- The url base, in an actual deployment, will be:
   - `https://ci.kbase.us` for CI
   - `https://next.kbase.us` for Next
   - `https://appdev.kbase.us` for Appdev
@@ -317,7 +317,7 @@ The body format is described in more detail below.
 The response is a JSON object containing file metadata.
 
 > This might seem a bit of an odd choice, and does complicate the API. It was chosen, I
-> belive because the Narrative front-end component handling the submission of file
+> believe because the Narrative front-end component handling the submission of file
 > uploads supports `multipart/form-data`, or it  may be because historically the first
 > front-end implementation was a form itself, as HTML forms will send as
 > `mutlipart/form-data` if a file control is used to select a file.
@@ -333,7 +333,7 @@ The response is a JSON object containing file metadata.
 
 ### Body
 
-The multpart form-data format supports sending of multiple form fields, each with their
+The multipart form-data format supports sending of multiple form fields, each with their
 own metadata as well as body.
 
 The service requires that two fields be present in the specified order:
@@ -348,7 +348,7 @@ probably have been set based on the path of the file chosen for upload in the Na
 interface (although the service API is agnostic about the how and why.)
 
 The `uploads` field will contain a binary representation of the file. The file binary
-content will be literaly copied into the destination file, with no encoding or validation.
+content will be literally copied into the destination file, with no encoding or validation.
 
 #### Example
 
@@ -856,7 +856,7 @@ id file for linking to globus.
 Note that the "message" is that returned by the globus api, and out of scope for
 documentation here.
 
-> TODO: we should provide our own message, or return the globus rZesponse data, but not
+> TODO: we should provide our own message, or return the globus response data, but not
 > return the globus response data (a json object) into a string and call it a message!
 
 ### Error Response
@@ -992,7 +992,7 @@ details.
   
 ### Error Response
 
-Error reponses are of the general form:
+Error responses are of the general form:
 
 ```json
 {
@@ -1151,7 +1151,7 @@ data structure to that which the parse endpoint returns and writes bulk specific
 - `<spec.json ID N>` is the ID of an input parameter from a `KB-SDK` app's `spec.json` file.
   These are written to the second header line from the import templates and will differ
   by the data type.
-- `data` contains any data to be written to the file as example data, and is analagous
+- `data` contains any data to be written to the file as example data, and is analogous
    to the data structure returned from the parse endpoint. To specify that no data
    should be written to the template provide an empty list.
 - `<value for ID, row N>` is the value for the input for a given `spec.json` ID
@@ -1180,9 +1180,9 @@ data structure to that which the parse endpoint returns and writes bulk specific
 {
     "output_file_type": <one of "CSV", "TSV", or "EXCEL">,
     "files": {
-        <type 1>: <staging service path to file containg data for type 1>,
+        <type 1>: <staging service path to file containing data for type 1>,
         ...
-        <type N>: <staging service path to file containg data for type N>,
+        <type N>: <staging service path to file containing data for type N>,
     }
 }
 ```

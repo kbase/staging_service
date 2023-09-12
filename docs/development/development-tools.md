@@ -35,7 +35,7 @@ does not do this style of Python development.
     - From the new window:
         - Click on Explorer in the left-nav, then click on Open Folder
         - or
-        - Selecte File > Open Folder
+        - Select: File > Open Folder
     - Select the folder containing the repo (project)
     - Click Open
 
@@ -62,7 +62,7 @@ terminal.
 ### Running Tools
 
 All of the tools available for running from the host via docker are also directly
-available within the devcontainer. I still often run them from a host termianl anyway, as
+available within the devcontainer. I still often run them from a host terminal anyway, as
 I can control the position and display of the native terminal a bit better, and it is
 also decoupled from any issues VSC may have. YMMV.
 
@@ -90,7 +90,7 @@ The `FILE_LIFETIME` environment variable is required, and sets the file retentio
 We ensure that the configuration is available via `KB_DEPLOYMENT_CONFIG`. In our case we
 are using a configuration file already prepared for local usage. If you inspect it,
 you'll find that all directory references are relative to the current directory. We are
-referecing the `local.cfg` local configuration where it is stored in the codebase.
+referencing the `local.cfg` local configuration where it is stored in the codebase.
 
 We also ensure that the `staging_service` is included in the `PYTHONPATH`.
 
