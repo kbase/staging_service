@@ -3,6 +3,7 @@
 # DIR is the root of the project.
 DIR="$( cd "$( dirname "$0" )" && pwd )/.."
 
+export PYTHONPATH="${PWD}"
 export KB_DEPLOYMENT_CONFIG="${DIR}/deployment/conf/testing.cfg"
 export FILE_LIFETIME="90"
 
