@@ -23,7 +23,7 @@
 				"mikoz.autoflake-extension",
 				"ms-azuretools.vscode-docker",
 				"DavidAnson.vscode-markdownlint",
-				"matangover.mypy",
+				"matangover.mypy"
 			]
 		}
 	}
