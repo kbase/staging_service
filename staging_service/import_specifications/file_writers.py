@@ -89,13 +89,9 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         _check_string(datatype, "A data type")
         spec = types[datatype]
         if not isinstance(spec, dict):
-            raise ImportSpecWriteException(
-                f"The value for data type {datatype} must be a mapping"
-            )
+            raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
-            raise ImportSpecWriteException(
-                f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key"
-            )
+            raise ImportSpecWriteException(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
         _check_is_sequence(
             spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value"
         )
@@ -109,10 +105,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
 
         param_ids = set()
         for i, id_display in enumerate(spec[_ORDER_AND_DISPLAY]):
-            err = (
-                f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} "
-                + f"at index {i} "
-            )
+            err = f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} " + f"at index {i} "
             _check_is_sequence(id_display, err + "- the entry")
             if len(id_display) != 2:
                 raise ImportSpecWriteException(err + "- expected 2 item list")
@@ -129,14 +122,9 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
                     err + f" does not have the same keys as {_ORDER_AND_DISPLAY}"
                 )
             for pid, v in datarow.items():
-                if (
-                    v is not None
-                    and not isinstance(v, numbers.Number)
-                    and not isinstance(v, str)
-                ):
+                if v is not None and not isinstance(v, numbers.Number) and not isinstance(v, str):
                     raise ImportSpecWriteException(
-                        err
-                        + f"'s value for parameter {pid} is not a number or a string"
+                        err + f"'s value for parameter {pid} is not a number or a string"
                     )
 
 
@@ -148,9 +136,7 @@ def _check_string(tocheck: Any, errprefix: str):
 
 
 def _check_is_sequence(tocheck: Any, errprefix: str):
-    if not (
-        isinstance(tocheck, collections.abc.Sequence) and not isinstance(tocheck, str)
-    ):
+    if not (isinstance(tocheck, collections.abc.Sequence) and not isinstance(tocheck, str)):
         raise ImportSpecWriteException(errprefix + " is not a list")
 
 
@@ -170,9 +156,7 @@ def write_tsv(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str,
     return _write_xsv(folder, types, _EXT_TSV, _SEP_TSV)
 
 
-def _write_xsv(
-    folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, sep: str
-):
+def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, sep: str):
     _check_write_args(folder, types)
     res = {}
     for datatype in types:
@@ -206,9 +190,7 @@ def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
     _check_import_specification(types)
 
 
-def write_excel(
-    folder: Path, types: dict[str, dict[str, list[Any]]]
-) -> dict[str, Path]:
+def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[str, Path]:
     """
     Writes import specifications to an Excel files. All the writers in this module
     have the same function signatures; see the module level documentation.
@@ -253,9 +235,7 @@ def _expand_excel_columns_to_max_width(sheet: Worksheet):
     # https://stackoverflow.com/a/40935194/643675
     for column_cells in sheet.columns:
         length = max(len(_as_text(cell.value)) for cell in column_cells)
-        sheet.column_dimensions[
-            get_column_letter(column_cells[0].column)
-        ].width = length
+        sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
 
 
 def _as_text(value):

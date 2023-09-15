@@ -116,9 +116,7 @@ async def _only_source(path: Path):
     return data["source"]
 
 
-async def dir_info(
-    path: Path, show_hidden: bool, query: str = "", recurse=True
-) -> list:
+async def dir_info(path: Path, show_hidden: bool, query: str = "", recurse=True) -> list:
     """
     only call this on a validated full path
     """
@@ -133,9 +131,7 @@ async def dir_info(
             if query == "" or specific_path.user_path.find(query) != -1:
                 response.append(await stat_data(specific_path))
             if recurse:
-                response.extend(
-                    await dir_info(specific_path, show_hidden, query, recurse)
-                )
+                response.extend(await dir_info(specific_path, show_hidden, query, recurse))
         if entry.is_file():
             if query == "" or specific_path.user_path.find(query) != -1:
                 data = await stat_data(specific_path)

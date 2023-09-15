@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  runner:
+    build:
+      context: ../../..
+      target: dev
+    volumes:
+      - ../../..:/kb/module
+    entrypoint:
+      - /kb/module/development/tools/runner/entrypoint.sh
