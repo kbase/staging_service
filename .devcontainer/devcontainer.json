@@ -22,7 +22,8 @@
 				"ms-python.flake8",
 				"mikoz.autoflake-extension",
 				"ms-azuretools.vscode-docker",
-				"DavidAnson.vscode-markdownlint"
+				"DavidAnson.vscode-markdownlint",
+				"matangover.mypy",
 			]
 		}
 	}

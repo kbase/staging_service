@@ -7,10 +7,10 @@ recent release, when possible.
 
 ## OS version
 
-The OS should be debian, as debian/ubunto are widely used at KBase. The version should
+The OS should be Debian, as Debian/Ubuntu are widely used at KBase. The version should
 be the current stable. The LTS version, which is often several versions behind stable,
-does not seem to be supported by recent Python distributions. That is, to get the most
-recent Python versions requires we can't use LTS, and conversely if we wished to use the
+does not seem to be supported by recent Python distributions. That is, if we want to get
+recent Python versions we probably can't use LTS, and conversely if we wished to use the
 LTS debian we wouldn't be able to use the most recent Python releases.
 
 It is more important to have a current Python, than a current OS. The OS really isn't
@@ -21,26 +21,24 @@ concerned with.
 ## OS dependencies
 
 The OS dependencies are indicated in the Dockerfile as exact versions. This ensures that
-images are consistent, even as the base image evolves over time.
+images are consistent, even as the base image evolves over time. We should keep an eye
+on this, as there are reports from some Linux distros (e.g. Alpine) that package
+retention is not permanent, and older packages may eventually be dropped, meaning that a
+future build may actually fail if it pins package versions. There is some controversy
+over this, with distro maintainers complaining that they dont' have infinite storage
+space for all package versions they have distributed.
 
-## Different Dockerfiles
+## Dockerfile Design
 
-At present, there are three Dockerfiles which must be kept in synchrony. They differ
-enough that the inconvenience of keeping them consistent seems worth the effort.
+The Dockerfile serves at least three purpopses. Its design reflects this by utilizing a
+multi-stage build. Multi-stage builds are primarily for creating internal build layers
+that can be omitted from the final image. However, in this case we use this design to
+create a base image with most OS and Python dependencies installed, a dev stage which
+has development dependencies (OS and Python) installed, and finally a production stage
+which adds all runtime files and the entrypoint.
 
-- `./Dockerfile`
-  - used for the production image
-  - needs to copy all service files
-  - does not include development Python dependencies
-  - has the production entrypoint
-- `./.devcontainer/Dockerfile`
-  - used for the devcontainer workflow
-  - does not copy service files
-  - contains development Python dependencies
-  - no entrypoint as that is provided by the docker-compose.yml
-- `./development/tools/Dockerfile`
-  - used for the host cli tools
-  - does not copy service files
-  - contains development Python dependencies
-  - has special entrypoint which execs whatever command is passed from the command
-      line
+The dev stage is used by the devcontainer and tool docker-compose files to run a
+container which is all ready for development, just needing the repo to be volume mounted
+at `/kb/module``.
+
+The production deploy image can be exercised with the top level `docker-compose.yml`.

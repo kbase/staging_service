@@ -2,9 +2,9 @@ version: '3.8'
 services:
   runner:
     build:
-      context: .
-      dockerfile: development/tools/runner/Dockerfile
+      context: ../../..
+      target: dev
     volumes:
-      - .:/app
-    command:
-      - bash
+      - ../../..:/kb/module
+    entrypoint:
+      - /kb/module/development/tools/runner/entrypoint.sh

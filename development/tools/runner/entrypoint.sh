@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
 # Nice to set this up for all future python code being run.
-export PYTHONPATH="${PWD}/src"
+# We set the root of the repo as the python path. 
+export PYTHONPATH="${PWD}"
 
 #
 # This execs whatever is provided as a COMMAND to the container. By default, as established

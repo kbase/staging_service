@@ -1,16 +1,37 @@
 # WARNING this file does not sync up with the deployment automatically
+#
+# This compose file is for running the service locally.
+#
+# Local (host) directories are overlaid into the container in order to facilitate
+# live coding of source while exercising the service api live.
+# The file locations in the container should be those expected by the service.
+#
+# It is probably more efficacious to use a devcontainer, e.g. with VSC, though,
+# so that the development UI can recognize installed libraries, etc.
+#
+# The "kbase-dev" network allows the container to interact with KBase user interfaces
+# via the docker network. In this development scenario, kbase-ui provides a proxy so
+# that kbase-ui and the narrative can communicate with the local service over
+# https://ci.kbase.us and provide a natural co-development experience.
+#
 version: "3.1"
+networks:
+  kbase-dev:
+    name: kbase-dev
 services:
   staging_service:
-    image: kbase/staging_service:develop
+    # image: kbase/staging_service:develop
+    build:
+      context: .
+    networks:
+      - kbase-dev
     ports:
       - "3000:3000"
     # The following mount assumes the user dirs are under /data/bulk/{username}
     # it further assumes that there is a pre-existing /data/metadata directory
     volumes:
-      - "./data:/kb/deployment/lib/src/data"
-      - "./:/staging_service"
-
+      - ./data:/kb/deployment/lib/src/data
+      - ./staging_service:/kb/deployment/lib/staging_service
     environment:
-      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
-      - FILE_LIFETIME="90"
+      - KB_DEPLOYMENT_CONFIG=/kb/module/deployment/conf/deployment.cfg
+      - FILE_LIFETIME=90
