@@ -71,9 +71,7 @@ _COMPRESSION_EXT = [
 
 # longer term there's probably a better way to do this but this is quick
 def _add_gzip(extension_list):
-    return _flatten(
-        [[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list]
-    )
+    return _flatten([[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list])
 
 
 file_format_to_extension_mapping = {
@@ -116,7 +114,5 @@ for type_, extensions in file_format_to_extension_mapping.items():
     for ext in extensions:
         if ext in extension_to_file_format_mapping:
             type2 = extension_to_file_format_mapping[ext]
-            raise ValueError(
-                f"Duplicate entry for extension {ext} in {type_} and {type2}"
-            )
+            raise ValueError(f"Duplicate entry for extension {ext} in {type_} and {type2}")
         extension_to_file_format_mapping[ext] = type_

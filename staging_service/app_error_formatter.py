@@ -68,8 +68,6 @@ def format_import_spec_errors(
             file2 = str(path_translations[error.source_2.file])
             tab2 = error.source_2.tab
         errs.append(
-            _IMPORT_SPEC_ERROR_FORMATTERS[error.error_type](
-                error.message, file1, tab1, file2, tab2
-            )
+            _IMPORT_SPEC_ERROR_FORMATTERS[error.error_type](error.message, file1, tab1, file2, tab2)
         )
     return errs

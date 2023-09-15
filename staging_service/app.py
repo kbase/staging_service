@@ -123,9 +123,7 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     res = parse_import_specifications(
         tuple(list(paths)),
         _file_type_resolver,
-        lambda e: logging.error(
-            "Unexpected error while parsing import specs", exc_info=e
-        ),
+        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
     )
     if res.results:
         types = {dt: result.result for dt, result in res.results.items()}
@@ -191,9 +189,7 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
     folder = data.get("output_directory")
     type_ = data.get("output_file_type")
     if type(folder) != str:
-        return _createJSONErrorResponse(
-            "output_directory is required and must be a string"
-        )
+        return _createJSONErrorResponse("output_directory is required and must be a string")
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
         return _createJSONErrorResponse(f"Invalid output_file_type: {type_}")
@@ -218,12 +214,8 @@ async def add_acl_concierge(request: web.Request):
     user_dir = Path.validate_path(username).full_path
     concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
     aclm = AclManager()
-    result = aclm.add_acl_concierge(
-        shared_directory=user_dir, concierge_path=concierge_path
-    )
-    result[
-        "msg"
-    ] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
+    result = aclm.add_acl_concierge(shared_directory=user_dir, concierge_path=concierge_path)
+    result["msg"] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
     result[
         "link"
     ] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
@@ -273,9 +265,7 @@ async def file_exists(request: web.Request):
         show_hidden = False
     # this scans the entire directory recursively just to see if one file exists... why?
     results = await dir_info(user_dir, show_hidden, query)
-    filtered_results = [
-        file_info for file_info in results if file_info["name"] == query
-    ]
+    filtered_results = [file_info for file_info in results if file_info["name"] == query]
     if filtered_results:
         exists = True
         just_is_folder = [file_info["isFolder"] for file_info in filtered_results]
@@ -322,9 +312,7 @@ async def download_files(request: web.Request):
     elif not os.path.isfile(path.full_path):
         raise web.HTTPBadRequest(text=f"{path.full_path} is a directory not a file")
     # hard coding the mime type to force download
-    return web.FileResponse(
-        path.full_path, headers={"content-type": "application/octet-stream"}
-    )
+    return web.FileResponse(path.full_path, headers={"content-type": "application/octet-stream"})
 
 
 @routes.get("/similar/{path:.+}")
@@ -413,9 +401,7 @@ async def upload_files_chunked(request: web.Request):
     counter = 0
     user_file = None
     destination_path = None
-    while (
-        counter < 100
-    ):  # TODO this is arbitrary to keep an attacker from creating infinite loop
+    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
 
@@ -487,9 +473,7 @@ async def define_upa(request: web.Request):
     except KeyError as key_error:
         raise web.HTTPBadRequest(text="must provide UPA field in body") from key_error
     await add_upa(path, UPA)
-    return web.Response(
-        text=f"successfully updated UPA {UPA} for file {path.user_path}"
-    )
+    return web.Response(text=f"successfully updated UPA {UPA} for file {path.user_path}")
 
 
 @routes.delete("/delete/{path:.+}")
@@ -533,9 +517,7 @@ async def rename(request: web.Request):
     try:
         new_path = body["newPath"]
     except KeyError as wrong_key:
-        raise web.HTTPBadRequest(
-            text="must provide newPath field in body"
-        ) from wrong_key
+        raise web.HTTPBadRequest(text="must provide newPath field in body") from wrong_key
     new_path = Path.validate_path(username, new_path)
     if os.path.exists(path.full_path):
         if not os.path.exists(new_path.full_path):
@@ -546,9 +528,7 @@ async def rename(request: web.Request):
             raise web.HTTPConflict(text="{new_path.user_path} allready exists")
     else:
         raise web.HTTPNotFound(text=f"{path.user_path} not found")
-    return web.Response(
-        text=f"successfully moved {path.user_path} to {new_path.user_path}"
-    )
+    return web.Response(text=f"successfully moved {path.user_path} to {new_path.user_path}")
 
 
 @routes.patch("/decompress/{path:.+}")
@@ -563,13 +543,9 @@ async def decompress(request: web.Request):
     # 2 could try again after doing an automatic rename scheme (add numbers to end)
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
-    if (
-        upper_file_extension == ".tar" and file_extension == ".gz"
-    ) or file_extension == ".tgz":
+    if (upper_file_extension == ".tar" and file_extension == ".gz") or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
-    elif upper_file_extension == ".tar" and (
-        file_extension == ".bz" or file_extension == ".bz2"
-    ):
+    elif upper_file_extension == ".tar" and (file_extension == ".bz" or file_extension == ".bz2"):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":
         await run_command("unzip", path.full_path, "-d", destination)
@@ -640,9 +616,7 @@ def inject_config_dependencies(config):
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
-    with open(
-        FILE_EXTENSION_MAPPINGS, "r", encoding="utf-8"
-    ) as file_extension_mappings_file:
+    with open(FILE_EXTENSION_MAPPINGS, "r", encoding="utf-8") as file_extension_mappings_file:
         AutoDetectUtils.set_mappings(json.load(file_extension_mappings_file))
         datatypes = defaultdict(set)
         extensions = defaultdict(set)
