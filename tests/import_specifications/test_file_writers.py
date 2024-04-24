@@ -194,12 +194,22 @@ def test_file_writers_fail():
     file_writers_fail(p, {"t": []}, E("The value for data type t must be a mapping"))
     file_writers_fail(p, {"t": 1}, E("The value for data type t must be a mapping"))
     file_writers_fail(p, {"t": {}}, E("Data type t missing order_and_display key"))
-    file_writers_fail(p, {"t": {"order_and_display": {}, "data": []}}, E("Data type t order_and_display value is not a list"))
-    file_writers_fail(p, {"t": {"order_and_display": [], "data": []}}, E("At least one entry is required for order_and_display for type t"))
-    file_writers_fail(p, {"t": {"order_and_display": [["foo", "bar"]]}}, E("Data type t missing data key"))
-    file_writers_fail(p, {"t": {"order_and_display": [["foo", "bar"]], "data": "foo"}}, E("Data type t data value is not a list"))
     file_writers_fail(
-        p, {"t": {"order_and_display": [["foo", "bar"], "baz"], "data": []}}, E("Invalid order_and_display entry for datatype t at index 1 - " + "the entry is not a list")
+        p, {"t": {"order_and_display": {}, "data": []}}, E("Data type t order_and_display value is not a list")
+    )
+    file_writers_fail(
+        p,
+        {"t": {"order_and_display": [], "data": []}},
+        E("At least one entry is required for order_and_display for type t"),
+    )
+    file_writers_fail(p, {"t": {"order_and_display": [["foo", "bar"]]}}, E("Data type t missing data key"))
+    file_writers_fail(
+        p, {"t": {"order_and_display": [["foo", "bar"]], "data": "foo"}}, E("Data type t data value is not a list")
+    )
+    file_writers_fail(
+        p,
+        {"t": {"order_and_display": [["foo", "bar"], "baz"], "data": []}},
+        E("Invalid order_and_display entry for datatype t at index 1 - " + "the entry is not a list"),
     )
     file_writers_fail(
         p,
@@ -215,15 +225,29 @@ def test_file_writers_fail():
         file_writers_fail(
             p,
             {"t": {"order_and_display": [(parm, "foo"), ["whee", "whoo"]], "data": []}},
-            E("Invalid order_and_display entry for datatype t at index 0 - " + "parameter ID cannot be a non-string or a whitespace only string"),
+            E(
+                "Invalid order_and_display entry for datatype t at index 0 - "
+                + "parameter ID cannot be a non-string or a whitespace only string"
+            ),
         )
         file_writers_fail(
             p,
             {"t": {"order_and_display": [("bar", "foo"), ["whee", parm]], "data": []}},
-            E("Invalid order_and_display entry for datatype t at index 1 - " + "parameter display name cannot be a non-string or a whitespace only string"),
+            E(
+                "Invalid order_and_display entry for datatype t at index 1 - "
+                + "parameter display name cannot be a non-string or a whitespace only string"
+            ),
         )
-    file_writers_fail(p, {"t": {"order_and_display": [("bar", "foo"), ["whee", "whoo"]], "data": ["foo"]}}, E("Data type t data row 0 is not a mapping"))
-    file_writers_fail(p, {"t": {"order_and_display": [("bar", "foo")], "data": [{"bar": 1}, []]}}, E("Data type t data row 1 is not a mapping"))
+    file_writers_fail(
+        p,
+        {"t": {"order_and_display": [("bar", "foo"), ["whee", "whoo"]], "data": ["foo"]}},
+        E("Data type t data row 0 is not a mapping"),
+    )
+    file_writers_fail(
+        p,
+        {"t": {"order_and_display": [("bar", "foo")], "data": [{"bar": 1}, []]}},
+        E("Data type t data row 1 is not a mapping"),
+    )
     file_writers_fail(
         p,
         {"t": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]], "data": [{"foo": 1, "whee": 2}, {"foo": 2}]}},
@@ -231,12 +255,22 @@ def test_file_writers_fail():
     )
     file_writers_fail(
         p,
-        {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]], "data": [{"foo": 2, "whee": 3, 5: 4}, {"foo": 1, "whee": 2}]}},
+        {
+            "ty": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"]],
+                "data": [{"foo": 2, "whee": 3, 5: 4}, {"foo": 1, "whee": 2}],
+            }
+        },
         E("Data type ty data row 0 does not have the same keys as order_and_display"),
     )
     file_writers_fail(
         p,
-        {"ty": {"order_and_display": [("foo", "bar"), ["whee", "whoo"]], "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}]}},
+        {
+            "ty": {
+                "order_and_display": [("foo", "bar"), ["whee", "whoo"]],
+                "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}],
+            }
+        },
         E("Data type ty data row 1's value for parameter whee " + "is not a number or a string"),
     )
 

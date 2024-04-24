@@ -88,13 +88,15 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         # replace this with jsonschema? don't worry about it for now
         _check_string(datatype, "A data type")
         spec = types[datatype]
-        if type(spec) != dict:
+        if type(spec) != dict:  # noqa: E721
             raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
             raise ImportSpecWriteException(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
         _check_is_sequence(spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value")
         if not len(spec[_ORDER_AND_DISPLAY]):
-            raise ImportSpecWriteException(f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}")
+            raise ImportSpecWriteException(
+                f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}"
+            )
         if _DATA not in spec:
             raise ImportSpecWriteException(f"Data type {datatype} missing {_DATA} key")
         _check_is_sequence(spec[_DATA], f"Data type {datatype} {_DATA} value")
@@ -111,7 +113,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
             param_ids.add(pid)
         for i, datarow in enumerate(spec[_DATA]):
             err = f"Data type {datatype} {_DATA} row {i}"
-            if type(datarow) != dict:
+            if type(datarow) != dict:  # noqa: E721
                 raise ImportSpecWriteException(err + " is not a mapping")
             if datarow.keys() != param_ids:
                 raise ImportSpecWriteException(err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
@@ -155,7 +157,12 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
         cols = len(dt[_ORDER_AND_DISPLAY])
         with open(folder / filename, "w", newline="") as f:
             csvw = csv.writer(f, delimiter=sep)  # handle sep escaping
-            csvw.writerow([f"{_DATA_TYPE} {datatype}{_HEADER_SEP} " + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"])
+            csvw.writerow(
+                [
+                    f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
+                    + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
+                ]
+            )
             pids = [i[0] for i in dt[_ORDER_AND_DISPLAY]]
             csvw.writerow(pids)
             csvw.writerow([i[1] for i in dt[_ORDER_AND_DISPLAY]])
@@ -170,7 +177,7 @@ def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
         # this is a programming error, not a user input error, so not using the custom
         # exception here
         raise ValueError("The folder cannot be null")
-    if type(types) != dict:
+    if type(types) != dict:  # noqa: E721
         raise ImportSpecWriteException("The types value must be a mapping")
     _check_import_specification(types)
 
@@ -196,7 +203,9 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
             _write_excel_row(sheet, xlrow, [row[pid] for pid in pids])
         _expand_excel_columns_to_max_width(sheet)
         # Add the hidden data *after* expanding the columns
-        sheet["A1"] = f"{_DATA_TYPE} {datatype}{_HEADER_SEP} " + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
+        sheet["A1"] = (
+            f"{_DATA_TYPE} {datatype}{_HEADER_SEP} " + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
+        )
         _write_excel_row(sheet, 2, pids)
         sheet.row_dimensions[1].hidden = True
         sheet.row_dimensions[2].hidden = True

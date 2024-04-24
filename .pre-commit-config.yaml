@@ -1,20 +1,28 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        files: '\.py$'
       - id: end-of-file-fixer
+        files: '\.py$'
       - id: check-yaml
+        # Keep this unchanged for YAML files
       - id: check-added-large-files
+        files: '\.py$'
 
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 24.3.0
     hooks:
       - id: black
         language_version: python3.12
+        files: '\.py$'
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
-        args: [ --config, pyproject.toml ]
+        args:
+          - --config=server/pyproject.toml
+          - --ignore=E203  # Ignore E203 directly in the pre-commit configuration
+        files: '\.py$'

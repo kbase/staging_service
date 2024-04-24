@@ -53,7 +53,7 @@ async def _generate_metadata(path: Path, source: str):
         data["source"] = source
     try:
         md5 = hashlib.md5(open(path.full_path, "rb").read()).hexdigest()
-    except:
+    except Exception:
         md5 = "n/a"
 
     data["md5"] = md5.split()[0]
@@ -62,7 +62,7 @@ async def _generate_metadata(path: Path, source: str):
     try:  # all things that expect a text file to decode output should be in this block
         data["head"] = _file_read_from_head(path.full_path)
         data["tail"] = _file_read_from_tail(path.full_path)
-    except:
+    except Exception:
         data["head"] = "not text file"
         data["tail"] = "not text file"
     async with aiofiles.open(path.metadata_path, mode="w") as f:
@@ -101,7 +101,7 @@ async def _only_source(path: Path):
             try:
                 data = await extant.read()
                 data = decoder.decode(data)
-            except:
+            except Exception:
                 data = {}
     else:
         data = {}
@@ -185,5 +185,7 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
         try:
             result[key] = data[key]
         except KeyError as no_data:
-            raise web.HTTPBadRequest(text="no data exists for key {key}".format(key=no_data.args))  # TODO check this exception message
+            raise web.HTTPBadRequest(
+                text="no data exists for key {key}".format(key=no_data.args)
+            )  # TODO check this exception message
     return result

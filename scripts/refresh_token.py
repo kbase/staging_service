@@ -12,7 +12,8 @@ CLIENT_ID = "26d64c4c-fcc2-4f7c-b056-62f185875af6"
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
 
 ##########################
-# If we ever need to re-request the refreshable tokens, uncomment this section and use the globus account with admin permissions
+# If we ever need to re-request the refreshable tokens,
+# uncomment this section and use the globus account with admin permissions
 # on the share to complete the web browser step.
 ##########################
 """

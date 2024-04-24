@@ -83,7 +83,11 @@ class KBaseAuth(object):
                 err = ret.json()
             except Exception:
                 ret.raise_for_status()
-            raise ValueError("Error connecting to auth service: {} {}\n{}".format(ret.status_code, ret.reason, err["error"]["message"]))
+            raise ValueError(
+                "Error connecting to auth service: {} {}\n{}".format(
+                    ret.status_code, ret.reason, err["error"]["message"]
+                )
+            )
 
         user = ret.json()["user_id"]
         self._cache.add_valid_token(token, user)

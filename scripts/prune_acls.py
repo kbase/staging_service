@@ -56,7 +56,9 @@ def remove_acl(acl):
     :param acl: ACL To Delete
     :return: Logs success or failure of deleting this ACL to the log
     """
-    logging.info("{}:About to remove ACL {} for {} (> {} days)".format(current_time, acl["id"], acl["path"], THRESHOLD_DAYS))
+    logging.info(
+        "{}:About to remove ACL {} for {} (> {} days)".format(current_time, acl["id"], acl["path"], THRESHOLD_DAYS)
+    )
     try:
         globus_transfer_client.delete_endpoint_acl_rule(endpoint_id, acl["id"])
     except TransferAPIError as error:

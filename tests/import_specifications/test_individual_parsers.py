@@ -7,7 +7,16 @@ from pathlib import Path
 from frozendict.core import frozendict
 from pytest import fixture
 
-from staging_service.import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel, ErrorType, Error, SpecificationSource, ParseResult, ParseResults
+from staging_service.import_specifications.individual_parsers import (
+    parse_csv,
+    parse_tsv,
+    parse_excel,
+    ErrorType,
+    Error,
+    SpecificationSource,
+    ParseResult,
+    ParseResults,
+)
 from tests.test_app import FileUtil
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
@@ -166,7 +175,9 @@ def test_xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir: Path
     _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir, "\t", parse_tsv)
 
 
-def _xsv_parse_success_with_internal_and_trailing_empty_lines(temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]):
+def _xsv_parse_success_with_internal_and_trailing_empty_lines(
+    temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]
+):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
     with open(input_, "w") as test_file:
@@ -226,7 +237,17 @@ def test_xsv_parse_fail_binary_file(temp_dir: Path):
 
     res = parse_csv(test_file)
 
-    assert res == ParseResults(errors=tuple([Error(ErrorType.PARSE_FAIL, "Not a text file: application/vnd.ms-excel", source_1=SpecificationSource(test_file))]))
+    assert res == ParseResults(
+        errors=tuple(
+            [
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Not a text file: application/vnd.ms-excel",
+                    source_1=SpecificationSource(test_file),
+                )
+            ]
+        )
+    )
 
 
 def test_xsv_parse_fail_directory(temp_dir: Path):
@@ -235,7 +256,9 @@ def test_xsv_parse_fail_directory(temp_dir: Path):
 
     res = parse_tsv(test_file)
 
-    assert res == ParseResults(errors=tuple([Error(ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file))]))
+    assert res == ParseResults(
+        errors=tuple([Error(ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file))])
+    )
 
 
 def _xsv_parse_fail(
@@ -260,7 +283,10 @@ def test_xsv_parse_fail_empty_file(temp_dir: Path):
 
 
 def test_xsv_parse_fail_bad_datatype_header(temp_dir: Path):
-    err = 'Invalid header; got "This is the wrong header", expected "Data type: ' + '<data_type>; Columns: <column count>; Version: <version>"'
+    err = (
+        'Invalid header; got "This is the wrong header", expected "Data type: '
+        + '<data_type>; Columns: <column count>; Version: <version>"'
+    )
     _xsv_parse_fail(temp_dir, ["This is the wrong header"], parse_csv, err)
 
 
@@ -407,8 +433,12 @@ def test_excel_parse_success():
                             frozendict({"header1": "bat", "header2": 4, "header3": None}),
                         ),
                     ),
-                    "type2": ParseResult(SpecificationSource(ex, "tab2"), (frozendict({"h1": "golly gee", "2": 42, "h3": "super"}),)),
-                    "type3": ParseResult(SpecificationSource(ex, "tab3"), (frozendict({"head1": "some data", "head2": 1}),)),
+                    "type2": ParseResult(
+                        SpecificationSource(ex, "tab2"), (frozendict({"h1": "golly gee", "2": 42, "h3": "super"}),)
+                    ),
+                    "type3": ParseResult(
+                        SpecificationSource(ex, "tab3"), (frozendict({"head1": "some data", "head2": 1}),)
+                    ),
                 }
             )
         )
@@ -472,7 +502,9 @@ def _excel_parse_fail(test_file: str, message: str = None, errors: list[Error] =
     if errors:
         assert res == ParseResults(errors=tuple(errors))
     else:
-        assert res == ParseResults(errors=tuple([Error(ErrorType.PARSE_FAIL, message, source_1=SpecificationSource(test_file))]))
+        assert res == ParseResults(
+            errors=tuple([Error(ErrorType.PARSE_FAIL, message, source_1=SpecificationSource(test_file))])
+        )
 
 
 def test_excel_parse_fail_no_file():
@@ -507,7 +539,10 @@ def test_excel_parse_1emptytab():
 
 def test_excel_parse_fail_bad_datatype_header():
     f = _get_test_file("testbadinitialheader.xls")
-    err1 = 'Invalid header; got "This header is wack, yo", expected "Data type: ' + '<data_type>; Columns: <column count>; Version: <version>"'
+    err1 = (
+        'Invalid header; got "This header is wack, yo", expected "Data type: '
+        + '<data_type>; Columns: <column count>; Version: <version>"'
+    )
     err2 = "Schema version 2 is larger than maximum processable version 1"
     _excel_parse_fail(
         f,
@@ -573,8 +608,20 @@ def test_excel_parse_fail_unequal_rows():
     _excel_parse_fail(
         f,
         errors=[
-            Error(ErrorType.INCORRECT_COLUMN_COUNT, "Incorrect number of items in line 3, expected 2, got 3", SpecificationSource(f, "2 cols, 3 human readable")),
-            Error(ErrorType.INCORRECT_COLUMN_COUNT, "Incorrect number of items in line 2, expected 2, got 3", SpecificationSource(f, "2 cols, 3 spec IDs")),
-            Error(ErrorType.INCORRECT_COLUMN_COUNT, "Incorrect number of items in line 5, expected 3, got 4", SpecificationSource(f, "3 cols, 4 data")),
+            Error(
+                ErrorType.INCORRECT_COLUMN_COUNT,
+                "Incorrect number of items in line 3, expected 2, got 3",
+                SpecificationSource(f, "2 cols, 3 human readable"),
+            ),
+            Error(
+                ErrorType.INCORRECT_COLUMN_COUNT,
+                "Incorrect number of items in line 2, expected 2, got 3",
+                SpecificationSource(f, "2 cols, 3 spec IDs"),
+            ),
+            Error(
+                ErrorType.INCORRECT_COLUMN_COUNT,
+                "Incorrect number of items in line 5, expected 3, got 4",
+                SpecificationSource(f, "3 cols, 4 data"),
+            ),
         ],
     )

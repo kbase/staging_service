@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Union, Optional as O
+from typing import Union, Optional as Opt
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict.core import frozendict
@@ -41,7 +41,7 @@ class SpecificationSource:
     """
 
     file: Path
-    tab: O[str] = None
+    tab: Opt[str] = None
 
     def __post_init__(self):
         if not self.file:
@@ -84,9 +84,9 @@ class Error:
 
     """
     error: ErrorType
-    message: O[str] = None
-    source_1: O[SpecificationSource] = None
-    source_2: O[SpecificationSource] = None
+    message: Opt[str] = None
+    source_1: Opt[SpecificationSource] = None
+    source_2: Opt[SpecificationSource] = None
 
     def __post_init__(self):
         if not self.error:
@@ -143,8 +143,8 @@ class ParseResults:
     parse_import_specifications method to create an instance of this class.
     """
 
-    results: O[frozendict[str, ParseResult]] = None
-    errors: O[tuple[Error, ...]] = None
+    results: Opt[frozendict[str, ParseResult]] = None
+    errors: Opt[tuple[Error, ...]] = None
 
     def __post_init__(self):
         if not (bool(self.results) ^ bool(self.errors)):  # xnor
@@ -163,15 +163,19 @@ class FileTypeResolution:
     unsupported_type - the file type if the type is not a supported type.
     """
 
-    parser: O[Callable[[Path], ParseResults]] = None
-    unsupported_type: O[str] = None
+    parser: Opt[Callable[[Path], ParseResults]] = None
+    unsupported_type: Opt[str] = None
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor
             raise ValueError("Exectly one of parser or unsupported_type must be supplied")
 
 
-def parse_import_specifications(paths: tuple[Path, ...], file_type_resolver: Callable[[Path], FileTypeResolution], log_error: Callable[[Exception], None]) -> ParseResults:
+def parse_import_specifications(
+    paths: tuple[Path, ...],
+    file_type_resolver: Callable[[Path], FileTypeResolution],
+    log_error: Callable[[Exception], None],
+) -> ParseResults:
     """
     Parse a set of import specification files and return the results.
 
@@ -200,7 +204,13 @@ def _parse(
     for p in paths:
         file_type = file_type_resolver(p)
         if file_type.unsupported_type:
-            errors.append(Error(ErrorType.PARSE_FAIL, f"{file_type.unsupported_type} " + "is not a supported file type for import specifications", SpecificationSource(p)))
+            errors.append(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    f"{file_type.unsupported_type} " + "is not a supported file type for import specifications",
+                    SpecificationSource(p),
+                )
+            )
             continue
         res = file_type.parser(p)
         if res.errors:

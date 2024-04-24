@@ -973,7 +973,13 @@ async def test_bulk_specification_success():
             excel = "importspec.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
                 df = pandas.DataFrame(
-                    [["Data type: fruit_bats; Columns: 2; Version: 1"], ["bat_name", "wing_count"], ["Name of Bat", "Number of wings"], ["George", 42], ["Fred", 1.5]]
+                    [
+                        ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42],
+                        ["Fred", 1.5],
+                    ]
                 )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
                 df = pandas.DataFrame(
@@ -990,7 +996,10 @@ async def test_bulk_specification_success():
             jsn = await resp.json()
             assert jsn == {
                 "types": {
-                    "genomes": [{"spec1": "val1", "spec2": "ꔆ", "spec3": 7}, {"spec1": "val3", "spec2": "val4", "spec3": 1}],
+                    "genomes": [
+                        {"spec1": "val1", "spec2": "ꔆ", "spec3": 7},
+                        {"spec1": "val3", "spec2": "val4", "spec3": 1},
+                    ],
                     "breakfastcereals": [
                         {"s1": "froot loops", "s2": "puffin", "s3": "gross"},
                         {"s1": "grape nuts", "s2": "dietary fiber", "s3": "also gross"},
@@ -1096,7 +1105,10 @@ async def test_bulk_specification_fail_parse_fail():
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
             # this also tests a number of bad file extensions - no need to create files
-            resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}" + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile.")
+            resp = await cli.get(
+                f"bulk_specification/?files={tsv},{csv},{excel}"
+                + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile."
+            )
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
@@ -1394,7 +1406,10 @@ async def test_write_bulk_specification_success_csv():
                 },
             )
             js = await resp.json()
-            assert js == {"output_file_type": "CSV", "files_created": {"genome": "testuser/specs/genome.csv", "reads": "testuser/specs/reads.csv"}}
+            assert js == {
+                "output_file_type": "CSV",
+                "files_created": {"genome": "testuser/specs/genome.csv", "reads": "testuser/specs/reads.csv"},
+            }
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
                 base / "specs/genome.csv",
@@ -1434,7 +1449,10 @@ async def test_write_bulk_specification_success_tsv():
                 },
             )
             js = await resp.json()
-            assert js == {"output_file_type": "TSV", "files_created": {"genome": "testuser/tsvspecs/genome.tsv", "reads": "testuser/tsvspecs/reads.tsv"}}
+            assert js == {
+                "output_file_type": "TSV",
+                "files_created": {"genome": "testuser/tsvspecs/genome.tsv", "reads": "testuser/tsvspecs/reads.tsv"},
+            }
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
                 base / "tsvspecs/genome.tsv",
@@ -1546,7 +1564,9 @@ async def test_write_bulk_specification_fail_no_output_dir():
 
 
 async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
-    await _write_bulk_specification_json_fail({"output_directory": 4}, "output_directory is required and must be a string")
+    await _write_bulk_specification_json_fail(
+        {"output_directory": 4}, "output_directory is required and must be a string"
+    )
 
 
 async def test_write_bulk_specification_fail_no_file_type():
@@ -1554,11 +1574,16 @@ async def test_write_bulk_specification_fail_no_file_type():
 
 
 async def test_write_bulk_specification_fail_wrong_file_type():
-    await _write_bulk_specification_json_fail({"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV")
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV"
+    )
 
 
 async def test_write_bulk_specification_fail_invalid_type_value():
-    await _write_bulk_specification_json_fail({"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}}, "The value for data type a must be a mapping")
+    await _write_bulk_specification_json_fail(
+        {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
+        "The value for data type a must be a mapping",
+    )
 
 
 async def test_importer_filetypes():

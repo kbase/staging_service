@@ -39,7 +39,9 @@ def _get_token(user_id, password, auth_svc):
     # note that currently globus usernames, and therefore kbase usernames,
     # cannot contain non-ascii characters. In python 2, quote doesn't handle
     # unicode, so if this changes this client will need to change.
-    body = "user_id=" + _requests.utils.quote(user_id) + "&password=" + _requests.utils.quote(password) + "&fields=token"
+    body = (
+        "user_id=" + _requests.utils.quote(user_id) + "&password=" + _requests.utils.quote(password) + "&fields=token"
+    )
     ret = _requests.post(auth_svc, data=body, allow_redirects=True)
     status = ret.status_code
     if status >= 200 and status <= 299:
@@ -51,7 +53,9 @@ def _get_token(user_id, password, auth_svc):
     return tok["token"]
 
 
-def _read_inifile(file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config")):  # @ReservedAssignment
+def _read_inifile(
+    file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config")
+):  # @ReservedAssignment
     # Another bandaid to read in the ~/.kbase_config file if one is present
     authdata = None
     if _os.path.exists(file):
@@ -168,7 +172,9 @@ class BaseClient(object):
             arg_hash["context"] = context
 
         body = _json.dumps(arg_hash, cls=_JSONObjectEncoder)
-        ret = _requests.post(url, data=body, headers=self._headers, timeout=self.timeout, verify=not self.trust_all_ssl_certificates)
+        ret = _requests.post(
+            url, data=body, headers=self._headers, timeout=self.timeout, verify=not self.trust_all_ssl_certificates
+        )
         ret.encoding = "utf-8"
         if ret.status_code == 500:
             if ret.headers.get(_CT) == _AJ:
@@ -194,7 +200,9 @@ class BaseClient(object):
         if not self.lookup_url:
             return self.url
         service, _ = service_method.split(".")
-        service_status_ret = self._call(self.url, "ServiceWizard.get_service_status", [{"module_name": service, "version": service_version}])
+        service_status_ret = self._call(
+            self.url, "ServiceWizard.get_service_status", [{"module_name": service, "version": service_version}]
+        )
         return service_status_ret["url"]
 
     def _set_up_context(self, service_ver=None, context=None):

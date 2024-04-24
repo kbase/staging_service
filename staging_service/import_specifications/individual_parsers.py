@@ -6,7 +6,7 @@ import csv
 import math
 import re
 from pathlib import Path
-from typing import Optional as O, Union, Any
+from typing import Optional as Opt, Union, Any
 
 import magic
 import pandas
@@ -32,8 +32,12 @@ _DATA_TYPE = "Data type:"
 _VERSION_STR = "Version:"
 _COLUMN_STR = "Columns:"
 _HEADER_SEP = ";"
-_EXPECTED_HEADER = f"{_DATA_TYPE} <data_type>{_HEADER_SEP} " + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>"
-_HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} " + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
+_EXPECTED_HEADER = (
+    f"{_DATA_TYPE} <data_type>{_HEADER_SEP} " + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>"
+)
+_HEADER_REGEX = re.compile(
+    f"{_DATA_TYPE} (\\w+){_HEADER_SEP} " + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)"
+)
 
 _MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty", "application/csv", "text/csv"}
 
@@ -63,10 +67,18 @@ def _parse_header(header: str, spec_source: SpecificationSource, maximum_version
     # return is (data type, column count)
     match = _HEADER_REGEX.fullmatch(header)
     if not match:
-        raise _ParseException(Error(ErrorType.PARSE_FAIL, f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"', spec_source))
+        raise _ParseException(
+            Error(ErrorType.PARSE_FAIL, f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"', spec_source)
+        )
     version = int(match[3])
     if version > maximum_version:
-        raise _ParseException(Error(ErrorType.PARSE_FAIL, f"Schema version {version} is larger than maximum processable " + f"version {maximum_version}", spec_source))
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"Schema version {version} is larger than maximum processable " + f"version {maximum_version}",
+                spec_source,
+            )
+        )
     return match[1], int(match[2])
 
 
@@ -83,7 +95,12 @@ def _csv_next(
         raise _ParseException(Error(ErrorType.PARSE_FAIL, error, spec_source))
     if expected_line_count and len(line) != expected_line_count:
         raise _ParseException(
-            Error(ErrorType.INCORRECT_COLUMN_COUNT, f"Incorrect number of items in line {line_number}, " + f"expected {expected_line_count}, got {len(line)}", spec_source)
+            Error(
+                ErrorType.INCORRECT_COLUMN_COUNT,
+                f"Incorrect number of items in line {line_number}, "
+                + f"expected {expected_line_count}, got {len(line)}",
+                spec_source,
+            )
         )
     return line
 
@@ -126,10 +143,14 @@ def _normalize_headers(headers: list[Any], line_number: int, spec_source: Specif
     ret = [str(s).strip() if not pandas.isna(s) else None for s in headers]
     for i, name in enumerate(ret, start=1):
         if not name:
-            raise _ParseException(Error(ErrorType.PARSE_FAIL, f"Missing header entry in row {line_number}, position {i}", spec_source))
+            raise _ParseException(
+                Error(ErrorType.PARSE_FAIL, f"Missing header entry in row {line_number}, position {i}", spec_source)
+            )
 
         if name in seen:
-            raise _ParseException(Error(ErrorType.PARSE_FAIL, f"Duplicate header name in row {line_number}: {name}", spec_source))
+            raise _ParseException(
+                Error(ErrorType.PARSE_FAIL, f"Duplicate header name in row {line_number}: {name}", spec_source)
+            )
         seen.add(name)
     return ret
 
@@ -153,7 +174,13 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                     if len(row) != columns:
                         # could collect errors (first 10?) and throw an exception with a list
                         # lets wait and see if that's really needed
-                        raise _ParseException(Error(ErrorType.INCORRECT_COLUMN_COUNT, f"Incorrect number of items in line {i}, " + f"expected {columns}, got {len(row)}", spcsrc))
+                        raise _ParseException(
+                            Error(
+                                ErrorType.INCORRECT_COLUMN_COUNT,
+                                f"Incorrect number of items in line {i}, " + f"expected {columns}, got {len(row)}",
+                                spcsrc,
+                            )
+                        )
                     results.append(frozendict({param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))}))
         if not results:
             raise _ParseException(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
@@ -181,11 +208,17 @@ def _process_excel_row(row: tuple[Any], rownum: int, expected_columns: int, spcs
         if pandas.isna(row[-1]):  # inefficient, but premature optimization...
             row = row[0:-1]
         else:
-            raise _ParseException(Error(ErrorType.INCORRECT_COLUMN_COUNT, f"Incorrect number of items in line {rownum}, " + f"expected {expected_columns}, got {len(row)}", spcsrc))
+            raise _ParseException(
+                Error(
+                    ErrorType.INCORRECT_COLUMN_COUNT,
+                    f"Incorrect number of items in line {rownum}, " + f"expected {expected_columns}, got {len(row)}",
+                    spcsrc,
+                )
+            )
     return row
 
 
-def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource) -> (O[str], O[ParseResult]):
+def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource) -> (Opt[str], Opt[ParseResult]):
     df = excel.parse(sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False)
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)

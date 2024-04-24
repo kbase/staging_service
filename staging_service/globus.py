@@ -25,7 +25,11 @@ async def _get_globus_ids(token):
         async with session.get(auth2_me_url, headers={"Authorization": token}) as resp:
             ret = await resp.json()
             if not resp.reason == "OK":
-                raise aiohttp.web.HTTPUnauthorized(text="Error connecting to auth service: {} {}\n{}".format(ret["error"]["httpcode"], resp.reason, ret["error"]["message"]))
+                raise aiohttp.web.HTTPUnauthorized(
+                    text="Error connecting to auth service: {} {}\n{}".format(
+                        ret["error"]["httpcode"], resp.reason, ret["error"]["message"]
+                    )
+                )
     return list(
         map(
             lambda x: x["provusername"],

@@ -115,10 +115,16 @@ async def bulk_specification(request: web.Request) -> web.json_response:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
-    res = parse_import_specifications(tuple(list(paths)), _file_type_resolver, lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e))
+    res = parse_import_specifications(
+        tuple(list(paths)),
+        _file_type_resolver,
+        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
+    )
     if res.results:
         types = {dt: result.result for dt, result in res.results.items()}
-        files = {dt: {"file": str(paths[result.source.file]), "tab": result.source.tab} for dt, result in res.results.items()}
+        files = {
+            dt: {"file": str(paths[result.source.file]), "tab": result.source.tab} for dt, result in res.results.items()
+        }
         return web.json_response({"types": types, "files": files})
     errtypes = {e.error for e in res.errors}
     errtext = json.dumps({"errors": format_import_spec_errors(res.errors, paths)})
@@ -161,9 +167,13 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
     username = await authorize_request(request)
     if request.content_type != _APP_JSON:
         # There should be a way to get aiohttp to handle this but I can't find it
-        return _createJSONErrorResponse(f"Required content-type is {_APP_JSON}", error_class=web.HTTPUnsupportedMediaType)
+        return _createJSONErrorResponse(
+            f"Required content-type is {_APP_JSON}", error_class=web.HTTPUnsupportedMediaType
+        )
     if not request.content_length:
-        return _createJSONErrorResponse("The content-length header is required and must be > 0", error_class=web.HTTPLengthRequired)
+        return _createJSONErrorResponse(
+            "The content-length header is required and must be > 0", error_class=web.HTTPLengthRequired
+        )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
     if type(data) != dict:  # noqa E721
@@ -198,7 +208,9 @@ async def add_acl_concierge(request: web.Request):
     aclm = AclManager()
     result = aclm.add_acl_concierge(shared_directory=user_dir, concierge_path=concierge_path)
     result["msg"] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
-    result["link"] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
+    result[
+        "link"
+    ] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
     return web.json_response(result)
 
 
@@ -400,13 +412,17 @@ async def upload_files_chunked(request: web.Request):
 
     filename: str = user_file.filename
     if filename.lstrip() != filename:
-        raise web.HTTPForbidden(text="cannot upload file with name beginning with space")  # forbidden isn't really the right code, should be 400
+        raise web.HTTPForbidden(
+            text="cannot upload file with name beginning with space"
+        )  # forbidden isn't really the right code, should be 400
     if "," in filename:
         raise web.HTTPForbidden(text="cannot upload file with ',' in name")  # for consistency we use 403 again
     # may want to make this configurable if we ever decide to add a hidden files toggle to
     # the staging area UI
     if filename.startswith("."):
-        raise web.HTTPForbidden(text="cannot upload file with name beginning with '.'")  # for consistency we use 403 again
+        raise web.HTTPForbidden(
+            text="cannot upload file with name beginning with '.'"
+        )  # for consistency we use 403 again
 
     size = 0
     destPath = os.path.join(destPath, filename)
@@ -421,7 +437,9 @@ async def upload_files_chunked(request: web.Request):
             f.write(chunk)
 
     if not os.path.exists(path.full_path):
-        error_msg = "We are sorry but upload was interrupted. Please try again.".format(path=path.full_path)
+        error_msg = "We are sorry but upload was interrupted. Please try again.".format(  # noqa F522
+            path=path.full_path
+        )
         raise web.HTTPNotFound(text=error_msg)
 
     response = await some_metadata(
@@ -447,7 +465,7 @@ async def define_UPA(request: web.Request):
     body = await request.post()
     try:
         UPA = body["UPA"]
-    except KeyError as wrong_key:
+    except KeyError:
         raise web.HTTPBadRequest(text="must provide UPA field in body")
     await add_upa(path, UPA)
     return web.Response(text="succesfully updated UPA {UPA} for file {path}".format(UPA=UPA, path=path.user_path))
@@ -493,7 +511,7 @@ async def rename(request: web.Request):
     body = await request.post()
     try:
         new_path = body["newPath"]
-    except KeyError as wrong_key:
+    except KeyError:
         raise web.HTTPBadRequest(text="must provide newPath field in body")
     new_path = Path.validate_path(username, new_path)
     if os.path.exists(path.full_path):
@@ -505,7 +523,9 @@ async def rename(request: web.Request):
             raise web.HTTPConflict(text="{new_path} allready exists".format(new_path=new_path.user_path))
     else:
         raise web.HTTPNotFound(text="{path} not found".format(path=path.user_path))
-    return web.Response(text="successfully moved {path} to {new_path}".format(path=path.user_path, new_path=new_path.user_path))
+    return web.Response(
+        text="successfully moved {path} to {new_path}".format(path=path.user_path, new_path=new_path.user_path)
+    )
 
 
 @routes.patch("/decompress/{path:.+}")

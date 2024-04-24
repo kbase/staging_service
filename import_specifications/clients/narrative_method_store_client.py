@@ -191,7 +191,9 @@ class NarrativeMethodStore(object):
            structure: parameter "pmid" of String, parameter "display_text" of
            String, parameter "link" of type "url"
         """
-        return self._client.call_method("NarrativeMethodStore.list_methods_full_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods_full_info", [params], self._service_ver, context
+        )
 
     def list_methods_spec(self, params, context=None):
         """
@@ -548,7 +550,9 @@ class NarrativeMethodStore(object):
            'release').) -> structure: parameter "tag" of String
         :returns: instance of mapping from String to String
         """
-        return self._client.call_method("NarrativeMethodStore.list_method_ids_and_names", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_method_ids_and_names", [params], self._service_ver, context
+        )
 
     def list_apps(self, params, context=None):
         """
@@ -593,7 +597,9 @@ class NarrativeMethodStore(object):
            parameter "screenshots" of list of type "ScreenShot" -> structure:
            parameter "url" of type "url"
         """
-        return self._client.call_method("NarrativeMethodStore.list_apps_full_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps_full_info", [params], self._service_ver, context
+        )
 
     def list_apps_spec(self, params, context=None):
         """
@@ -685,7 +691,9 @@ class NarrativeMethodStore(object):
            list of String, parameter "output_types" of list of String,
            parameter "app_type" of String
         """
-        return self._client.call_method("NarrativeMethodStore.get_method_brief_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_brief_info", [params], self._service_ver, context
+        )
 
     def get_method_full_info(self, params, context=None):
         """
@@ -722,7 +730,9 @@ class NarrativeMethodStore(object):
            structure: parameter "pmid" of String, parameter "display_text" of
            String, parameter "link" of type "url"
         """
-        return self._client.call_method("NarrativeMethodStore.get_method_full_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_full_info", [params], self._service_ver, context
+        )
 
     def get_method_spec(self, params, context=None):
         """
@@ -2452,7 +2462,9 @@ class NarrativeMethodStore(object):
            parameter "tag" of String
         :returns: instance of String
         """
-        return self._client.call_method("NarrativeMethodStore.load_widget_java_script", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.load_widget_java_script", [params], self._service_ver, context
+        )
 
     def register_repo(self, params, context=None):
         """

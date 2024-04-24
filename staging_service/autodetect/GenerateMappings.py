@@ -24,7 +24,39 @@ Functionality: Running this script will
 """
 from collections import defaultdict
 
-from staging_service.autodetect.Mappings import *
+from staging_service.autodetect.Mappings import (
+    sra_reads_id,
+    fastq_reads_noninterleaved_id,
+    fastq_reads_interleaved_id,
+    assembly_id,
+    gff_genome_id,
+    gff_metagenome_id,
+    genbank_genome_id,
+    decompress_id,
+    sample_set_id,
+    media_id,
+    expression_matrix_id,
+    metabolic_annotations_id,
+    metabolic_annotations_bulk_id,
+    fba_model_id,
+    phenotype_set_id,
+    escher_map_id,
+    import_specification,
+    SRA,
+    FASTQ,
+    FASTA,
+    GENBANK,
+    GFF,
+    ZIP,
+    CSV,
+    TSV,
+    EXCEL,
+    JSON,
+    SBML,
+    extension_to_file_format_mapping,
+    file_format_to_extension_mapping,
+)
+
 
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
@@ -59,7 +91,15 @@ file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
 file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
 file_format_to_app_mapping[ZIP] = [decompress_id]
 file_format_to_app_mapping[CSV] = [sample_set_id, import_specification]
-file_format_to_app_mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id, metabolic_annotations_bulk_id, fba_model_id, phenotype_set_id, import_specification]
+file_format_to_app_mapping[TSV] = [
+    media_id,
+    expression_matrix_id,
+    metabolic_annotations_id,
+    metabolic_annotations_bulk_id,
+    fba_model_id,
+    phenotype_set_id,
+    import_specification,
+]
 file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id, import_specification]
 file_format_to_app_mapping[JSON] = [escher_map_id]
 file_format_to_app_mapping[SBML] = [fba_model_id]

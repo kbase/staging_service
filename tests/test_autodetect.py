@@ -48,7 +48,9 @@ def test_reasonable_filenames():
     for heading in file_format_to_extension_mapping.keys():
         extensions = file_format_to_extension_mapping[heading]
         for extension in extensions:
-            good_filenames.append((f"{heading}.{extension}", heading.count("."), extensions_mapping[extension]["file_ext_type"]))
+            good_filenames.append(
+                (f"{heading}.{extension}", heading.count("."), extensions_mapping[extension]["file_ext_type"])
+            )
 
     for filename, heading_dotcount, ext in good_filenames:
         for filename_variant in [
@@ -60,8 +62,14 @@ def test_reasonable_filenames():
             possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(filename=filename_variant)
             assert possible_importers is not None
             expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
-            assert possible_importers == AutoDetectUtils._MAPPINGS["types"][expected_suffix.lower()]["mappings"], filename_variant
-            assert fileinfo == {"prefix": filename_variant[: -len(expected_suffix) - 1], "suffix": expected_suffix, "file_ext_type": ext}
+            assert (
+                possible_importers == AutoDetectUtils._MAPPINGS["types"][expected_suffix.lower()]["mappings"]
+            ), filename_variant
+            assert fileinfo == {
+                "prefix": filename_variant[: -len(expected_suffix) - 1],
+                "suffix": expected_suffix,
+                "file_ext_type": ext,
+            }
 
 
 def test_specific_filenames():
