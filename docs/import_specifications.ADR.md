@@ -13,7 +13,7 @@ to import one or more files in the staging area to KBase as KBase data types.
 
 ## Front end changes
 
-The design introduces a new StS data type, `import_specification`. The FE's current 
+The design introduces a new StS data type, `import_specification`. The FE's current
 behavior is to display any data types returned from the StS in the file dropdown, but silently
 ignore user-selected files for which the selected data type is unknown to the narrative, a bug.
 The FE will be updated to ignore unknown data types returned from the StS, allowing for phased,
@@ -47,7 +47,7 @@ The file, by row, is:
     * The version allows us to update the file format and increment the version,
        allowing backwards compatibility - the staging service can process the file appropriately
        depending on the version number.
-2. The IDs of the app inputs from the `spec.json` file. 
+2. The IDs of the app inputs from the `spec.json` file.
 3. The corresponding human readable names of the app inputs from the `display.yaml` file.
 4. (and beyond) Import specifications. Each line corresponds to a single import.
 
@@ -89,7 +89,7 @@ The front end will be expected to either
 ## User operations
 
 * The user uploads the import specification files to the staging area along with all the files
-  inluded in the specification. 
+  inluded in the specification.
 * The user selects the `Import Specification` type for the specification files.
   * The user may also select other files in the staging area to include in the import along
     with the files listed in the specification.
@@ -277,16 +277,16 @@ Note in this case the service MUST log the stack trace along with the filename f
 Dynamic scientific name to taxon lookup may be added to the Genbank (and the currently
 out of scope, but trivial to add GFF/FASTA Genome) importer in the near future. If that occurs,
 for the purpose of xSV import the user will be expected to provide the entire, correct,
-scientific name as returned from the taxon API. 
+scientific name as returned from the taxon API.
 
-* The user could get this name by starting a genome import and running the query from the 
+* The user could get this name by starting a genome import and running the query from the
   import app cell configuration screen.
   * This will be documented in the README.md for the template files.
 * As part of the UI work we could theoretically provide a landing page for looking up valid
   scientific names.
 * Presumably the UI would need to run the dynamic query and report an error to the user if the
   dynamic service returns 0 or > 1 entries.
-* Providing the scientific name vs. the taxon ID seems simpler because the machinery already 
+* Providing the scientific name vs. the taxon ID seems simpler because the machinery already
   exists to perform the query and is part of the spec.
 * Expect these plans to change as it becomes more clear how dynamic fields will work in the
   context of bulk import.

@@ -632,7 +632,7 @@ cannot decompress a <file extension> file
 
 ## Add Globus ACL
 
-After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for
 linking to globus.
 
 **URL** : `ci.kbase.us/services/staging_service/add-acl`
@@ -675,7 +675,7 @@ Error Connecting to auth service ...
 **Content**
 ```
 {
-    'success': False, 
+    'success': False,
     'error_type': 'TransferAPIError',
     'error': "Can't create ACL rule; it already exists",
     'error_code': 'Exists', 'shared_directory_basename': '/username/'
@@ -684,7 +684,7 @@ Error Connecting to auth service ...
 
 ## Remove Globus ACL
 
-After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for 
+After authenticating at this endpoint, AUTH is queried to get your filepath and globus id file for
 linking to globus.
 
 **URL** : `ci.kbase.us/services/staging_service/remove-acl`
@@ -704,7 +704,7 @@ linking to globus.
 ```
 {
     "message": "{\n  \"DATA_TYPE\": \"result\",\n  \"code\": \"Deleted\",
-    "message\": \"Access rule 'KBASE-examplex766ada0-x8aa-x1e8-xc7b-xa1d4c5c824a' deleted successfully\", 
+    "message\": \"Access rule 'KBASE-examplex766ada0-x8aa-x1e8-xc7b-xa1d4c5c824a' deleted successfully\",
     "request_id\": \"x2KFzfop05\",\n  \"resource\": \"/endpoint/KBaseExample2a-5e5b-11e6-8309-22000b97daec/access/KBaseExample-ada0-d8aa-11e8-8c7b-0a1d4c5c824a\"}",
     "Success": true
 }
@@ -727,7 +727,7 @@ Error Connecting to auth service ...
 **Content**
 ```
 {
-    'success': False, 
+    'success': False,
     'error_type': 'TransferAPIError',
     'error': "Can't create ACL rule; it already exists",
     'error_code': 'Exists', 'shared_directory_basename': '/username/'
@@ -801,7 +801,7 @@ Reponse:
   in the data file. Each data file row is provided in order for each type. Each row is
   provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are
   user-provided data, and each line corresponds to a single import or analysis.
-  
+
 ### Error Response
 
 Error reponses are of the general form:
@@ -985,7 +985,7 @@ Reponse:
 * `files` contains a mapping of each provided data type to the output template file for that type.
   In the case of Excel, all the file paths will be the same since the data types are all written
   to different tabs in the same file.
-  
+
 ### Error Response
 
 Method specific errors have the form:
@@ -1012,7 +1012,7 @@ This endpoint returns:
 For example,
  * if we pass in nothing we get a response with no mappings
  * if we pass in a list of files, such as ["file1.fasta", "file2.fq", "None"], we would get back a
-   response that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1 
+   response that maps to Fasta Importers and FastQ Importers, with a weight of 0 to 1
    which represents the probability that this is the correct importer for you.
  * for files for which there is no predicted app, the return is a null value
  * this endpoint is used to power the dropdowns for the staging service window in the Narrative
@@ -1071,7 +1071,7 @@ Response:
 
 **Content**
 ```
-must provide file_list field 
+must provide file_list field
 ```
 
 ## Get importer filetypes

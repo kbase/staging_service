@@ -1,8 +1,10 @@
-from .utils import Path
-import aiohttp
-import aiofiles
-import os
 import configparser
+import os
+
+import aiofiles
+import aiohttp
+
+from .utils import Path
 
 
 def _get_authme_url():
@@ -23,11 +25,7 @@ async def _get_globus_ids(token):
         async with session.get(auth2_me_url, headers={"Authorization": token}) as resp:
             ret = await resp.json()
             if not resp.reason == "OK":
-                raise aiohttp.web.HTTPUnauthorized(
-                    text="Error connecting to auth service: {} {}\n{}".format(
-                        ret["error"]["httpcode"], resp.reason, ret["error"]["message"]
-                    )
-                )
+                raise aiohttp.web.HTTPUnauthorized(text="Error connecting to auth service: {} {}\n{}".format(ret["error"]["httpcode"], resp.reason, ret["error"]["message"]))
     return list(
         map(
             lambda x: x["provusername"],
@@ -45,7 +43,7 @@ def is_globusid(path: Path, username: str):
 
 
 async def assert_globusid_exists(username, token):
-    """ ensures that a globus id exists if there is a valid one for user"""
+    """ensures that a globus id exists if there is a valid one for user"""
 
     # make root dir
     root = Path.validate_path(username, "")

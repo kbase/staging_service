@@ -6,10 +6,11 @@ error information.
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-# TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
-from frozendict.core import frozendict
 from pathlib import Path
 from typing import Union, Optional as O
+
+# TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
+from frozendict.core import frozendict
 
 # TODO should get mypy working at some point
 
@@ -20,6 +21,7 @@ class ErrorType(Enum):
     """
     The type of an error encountered when trying to parse import specifications.
     """
+
     FILE_NOT_FOUND = 1
     PARSE_FAIL = 2
     INCORRECT_COLUMN_COUNT = 3
@@ -37,6 +39,7 @@ class SpecificationSource:
     tab - the name of the spreadsheet file tab from which the import specification was obtained,
         if any.
     """
+
     file: Path
     tab: O[str] = None
 
@@ -45,9 +48,9 @@ class SpecificationSource:
             raise ValueError("file is required")
 
 
-_ERR_MESSAGE = 'message'
-_ERR_SOURCE_1 = 'source_1'
-_ERR_SOURCE_2 = 'source_2'
+_ERR_MESSAGE = "message"
+_ERR_SOURCE_1 = "source_1"
+_ERR_SOURCE_2 = "source_2"
 
 _ERRTYPE_TO_REQ_ARGS = {
     ErrorType.FILE_NOT_FOUND: (_ERR_SOURCE_1,),
@@ -57,6 +60,7 @@ _ERRTYPE_TO_REQ_ARGS = {
     ErrorType.NO_FILES_PROVIDED: tuple(),
     ErrorType.OTHER: (_ERR_MESSAGE,),
 }
+
 
 @dataclass(frozen=True)
 class Error:
@@ -111,6 +115,7 @@ class ParseResult:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create instances of this class.
     """
+
     source: SpecificationSource
     result: tuple[frozendict[str, PRIMITIVE_TYPE], ...]
 
@@ -137,6 +142,7 @@ class ParseResults:
     expected that the class creator do that error checking. Users should use the
     parse_import_specifications method to create an instance of this class.
     """
+
     results: O[frozendict[str, ParseResult]] = None
     errors: O[tuple[Error, ...]] = None
 
@@ -156,6 +162,7 @@ class FileTypeResolution:
     parser - a parser for the file
     unsupported_type - the file type if the type is not a supported type.
     """
+
     parser: O[Callable[[Path], ParseResults]] = None
     unsupported_type: O[str] = None
 
@@ -164,11 +171,7 @@ class FileTypeResolution:
             raise ValueError("Exectly one of parser or unsupported_type must be supplied")
 
 
-def parse_import_specifications(
-    paths: tuple[Path, ...],
-    file_type_resolver: Callable[[Path], FileTypeResolution],
-    log_error: Callable[[Exception], None]
-) -> ParseResults:
+def parse_import_specifications(paths: tuple[Path, ...], file_type_resolver: Callable[[Path], FileTypeResolution], log_error: Callable[[Exception], None]) -> ParseResults:
     """
     Parse a set of import specification files and return the results.
 
@@ -187,6 +190,7 @@ def parse_import_specifications(
         errors = tuple([Error(ErrorType.OTHER, str(e))])
         return ParseResults(errors=errors)
 
+
 def _parse(
     paths: tuple[Path, ...],
     file_type_resolver: Callable[[Path], FileTypeResolution],
@@ -196,12 +200,7 @@ def _parse(
     for p in paths:
         file_type = file_type_resolver(p)
         if file_type.unsupported_type:
-            errors.append(Error(
-                ErrorType.PARSE_FAIL,
-                f"{file_type.unsupported_type} "
-                    + "is not a supported file type for import specifications",
-                SpecificationSource(p)
-            ))
+            errors.append(Error(ErrorType.PARSE_FAIL, f"{file_type.unsupported_type} " + "is not a supported file type for import specifications", SpecificationSource(p)))
             continue
         res = file_type.parser(p)
         if res.errors:
@@ -209,12 +208,14 @@ def _parse(
         else:
             for data_type in res.results:
                 if data_type in results:
-                    errors.append(Error(
-                        ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
-                        f"Data type {data_type} appears in two importer specification sources",
-                        results[data_type].source,
-                        res.results[data_type].source
-                    ))
+                    errors.append(
+                        Error(
+                            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+                            f"Data type {data_type} appears in two importer specification sources",
+                            results[data_type].source,
+                            res.results[data_type].source,
+                        )
+                    )
                 else:
                     results[data_type] = res.results[data_type]
     if errors:

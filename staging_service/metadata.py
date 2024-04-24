@@ -1,11 +1,12 @@
-from json import JSONDecoder, JSONEncoder
-import aiofiles
-from .utils import run_command, Path
-import os
-from aiohttp import web
 import hashlib
+import os
 from difflib import SequenceMatcher
-from itertools import islice
+from json import JSONDecoder, JSONEncoder
+
+import aiofiles
+from aiohttp import web
+
+from .utils import Path
 
 decoder = JSONDecoder()
 encoder = JSONEncoder()
@@ -114,9 +115,7 @@ async def _only_source(path: Path):
     return data["source"]
 
 
-async def dir_info(
-    path: Path, show_hidden: bool, query: str = "", recurse=True
-) -> list:
+async def dir_info(path: Path, show_hidden: bool, query: str = "", recurse=True) -> list:
     """
     only call this on a validated full path
     """
@@ -125,15 +124,13 @@ async def dir_info(
         specific_path = Path.from_full_path(entry.path)
         # maybe should never show the special .globus_id file ever?
         # or moving it somewhere outside the user directory would be better
-        if not show_hidden and entry.name.startswith('.'):
+        if not show_hidden and entry.name.startswith("."):
             continue
         if entry.is_dir():
             if query == "" or specific_path.user_path.find(query) != -1:
                 response.append(await stat_data(specific_path))
             if recurse:
-                response.extend(
-                    await dir_info(specific_path, show_hidden, query, recurse)
-                )
+                response.extend(await dir_info(specific_path, show_hidden, query, recurse))
         if entry.is_file():
             if query == "" or specific_path.user_path.find(query) != -1:
                 data = await stat_data(specific_path)
@@ -162,9 +159,7 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
     file_stats = await stat_data(path)
     if file_stats["isFolder"]:
         return file_stats
-    if (not os.path.exists(path.metadata_path)) or (
-        os.stat(path.metadata_path).st_mtime < file_stats["mtime"] / 1000
-    ):
+    if (not os.path.exists(path.metadata_path)) or (os.stat(path.metadata_path).st_mtime < file_stats["mtime"] / 1000):
         # if metadata  does not exist or older than file: regenerate
         if source is None:  # TODO BUGFIX this will overwrite any source in the file
             source = _determine_source(path)
@@ -190,7 +185,5 @@ async def some_metadata(path: Path, desired_fields=False, source=None):
         try:
             result[key] = data[key]
         except KeyError as no_data:
-            raise web.HTTPBadRequest(
-                text="no data exists for key {key}".format(key=no_data.args)
-            )  # TODO check this exception message
+            raise web.HTTPBadRequest(text="no data exists for key {key}".format(key=no_data.args))  # TODO check this exception message
     return result

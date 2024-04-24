@@ -98,21 +98,13 @@ class AclManager:
 
         client = globus_sdk.NativeAppAuthClient(cf["client_id"])
         try:
-            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["transfer_token"], client
-            )
-            self.globus_transfer_client = globus_sdk.TransferClient(
-                authorizer=transfer_authorizer
-            )
-            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["auth_token"], client
-            )
+            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["transfer_token"], client)
+            self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["auth_token"], client)
             self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
         except globus_sdk.GlobusAPIError as error:
             logging.error(str(error.code) + error.raw_text)
-            raise HTTPInternalServerError(
-                text=str("Invalid Token Specified in globus.cfg file")
-            )
+            raise HTTPInternalServerError(text=str("Invalid Token Specified in globus.cfg file"))
 
     def _get_globus_identities(self, shared_directory: str):
         """
@@ -122,18 +114,14 @@ class AclManager:
         globus_id_filename = "{}.globus_id".format(shared_directory)
         with open(globus_id_filename, "r") as fp:
             ident = fp.read()
-            return self.globus_auth_client.get_identities(
-                usernames=ident.split("\n")[0]
-            )
+            return self.globus_auth_client.get_identities(usernames=ident.split("\n")[0])
 
     def _get_globus_identity(self, globus_id_filename: str):
         """
         Get the first identity for the username in the .globus_id file
         """
         try:
-            return self._get_globus_identities(globus_id_filename)["identities"][0][
-                "id"
-            ]
+            return self._get_globus_identities(globus_id_filename)["identities"][0]["id"]
         except FileNotFoundError as error:
             response = {
                 "success": False,
@@ -144,9 +132,7 @@ class AclManager:
             }
             logging.error(response)
 
-            raise HTTPInternalServerError(
-                text=json.dumps(response), content_type="application/json"
-            )
+            raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
         except globus_sdk.GlobusAPIError as error:
             response = {
@@ -158,9 +144,7 @@ class AclManager:
             }
             logging.error(response)
 
-            raise HTTPInternalServerError(
-                text=json.dumps(response), content_type="application/json"
-            )
+            raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
     def _add_acl(self, user_identity_id: str, shared_directory_basename: str):
         """
@@ -186,9 +170,7 @@ class AclManager:
             }
 
             logging.info(response)
-            logging.info(
-                "Shared %s with %s\n" % (shared_directory_basename, user_identity_id)
-            )
+            logging.info("Shared %s with %s\n" % (shared_directory_basename, user_identity_id))
 
             logging.info(response)
             return response
@@ -205,24 +187,18 @@ class AclManager:
             if error.code == "Exists":
                 raise HTTPOk(text=json.dumps(response), content_type="application/json")
 
-        raise HTTPInternalServerError(
-            text=json.dumps(response), content_type="application/json"
-        )
+        raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
     def _remove_acl(self, user_identity_id: str):
         """
         Get all ACLS and attempt to remove the correct ACL for the given user_identity
         """
         try:
-            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)[
-                "DATA"
-            ]
+            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)["DATA"]
             for acl in acls:
                 if user_identity_id == acl["principal"]:
                     if "id" in acl and acl["id"] is not None:
-                        resp = self.globus_transfer_client.delete_endpoint_acl_rule(
-                            self.endpoint_id, acl["id"]
-                        )
+                        resp = self.globus_transfer_client.delete_endpoint_acl_rule(self.endpoint_id, acl["id"])
                         return {"message": str(resp), "Success": True}
                     else:
                         return {
@@ -236,9 +212,7 @@ class AclManager:
                 "error_type": "Could Not Find or Delete User Identity Id (ACL)",
                 "user_identity_id": user_identity_id,
             }
-            raise HTTPInternalServerError(
-                text=json.dumps(response), content_type="application/json"
-            )
+            raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
         except globus_sdk.GlobusAPIError as error:
             response = {
@@ -246,9 +220,7 @@ class AclManager:
                 "error_type": "GlobusAPIError",
                 "user_identity_id": user_identity_id,
             }
-            raise HTTPInternalServerError(
-                text=json.dumps(response), content_type="application/json"
-            )
+            raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
     def add_acl_concierge(self, shared_directory: str, concierge_path: str):
         """

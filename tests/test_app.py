@@ -1,19 +1,18 @@
 import asyncio
 import configparser
 import hashlib
-import openpyxl
 import os
-import pandas
 import shutil
 import string
 import time
+from io import BytesIO
 from json import JSONDecoder
 from pathlib import Path
-from urllib.parse import urlencode,unquote
-from io import BytesIO
 from typing import Any
+from urllib.parse import urlencode, unquote
 
-
+import openpyxl
+import pandas
 from aiohttp import test_utils, FormData
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -22,7 +21,6 @@ import staging_service.app as app
 import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
-
 from tests.test_utils import check_file_contents, check_excel_contents
 
 if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
@@ -73,9 +71,7 @@ def mock_auth_app():
     async def mock_globus_id(*args, **kwargs):
         return ["testuser@globusid.org"]
 
-    globus._get_globus_ids = (
-        mock_globus_id  # TODO this doesn't allow testing of this fn does it
-    )
+    globus._get_globus_ids = mock_globus_id  # TODO this doesn't allow testing of this fn does it
     return application
 
 
@@ -122,9 +118,7 @@ class FileUtil:
 
 
 first_letter_alphabet = [c for c in string.ascii_lowercase + string.ascii_uppercase]
-username_alphabet = [
-    c for c in "_" + string.ascii_lowercase + string.ascii_uppercase + string.digits
-]
+username_alphabet = [c for c in "_" + string.ascii_lowercase + string.ascii_uppercase + string.digits]
 username_strat = st.text(max_size=99, min_size=1, alphabet=username_alphabet)
 username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alphabet)
 
@@ -137,22 +131,11 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 @given(username_first_strat, username_strat)
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
-    assert (
-            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
-    )
-    assert (
-            username + "/baz"
-            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
-    )
-    assert (
-            username + "/bar"
-            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
-    )
+    assert username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+    assert username + "/baz" == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+    assert username + "/bar" == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
-    assert (
-            username + "/foo/bar"
-            == utils.Path.validate_path(username, "../foo/bar").user_path
-    )
+    assert username + "/foo/bar" == utils.Path.validate_path(username, "../foo/bar").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "/foo/.").user_path
@@ -164,10 +147,7 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "").user_path
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
-    assert (
-            username + "/stuff.ext"
-            == utils.Path.validate_path(username, "/stuff.ext").user_path
-    )
+    assert username + "/stuff.ext" == utils.Path.validate_path(username, "/stuff.ext").user_path
 
 
 @given(username_first_strat, username_strat, st.text())
@@ -224,9 +204,7 @@ async def test_jbi_metadata():
         with FileUtil() as fs:
             d = fs.make_dir(os.path.join(username, "test"))
             f = fs.make_file(os.path.join(username, "test", "test_jgi.fastq"), txt)
-            f_jgi = fs.make_file(
-                os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata
-            )
+            f_jgi = fs.make_file(os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata)
             res1 = await cli.get(
                 os.path.join("jgi-metadata", "test", "test_jgi.fastq"),
                 headers={"Authorization": ""},
@@ -437,9 +415,7 @@ async def test_mv():
             f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
-            res1 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -456,9 +432,7 @@ async def test_mv():
             assert "successfully moved" in json_text
 
             # relist test directory
-            res3 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res3 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -472,9 +446,7 @@ async def test_mv():
             # assert res4.status == 403
 
             # testing missing body
-            res5 = await cli.patch(
-                os.path.join("mv", "test", "test_file_1"), headers={"Authorization": ""}
-            )
+            res5 = await cli.patch(os.path.join("mv", "test", "test_file_1"), headers={"Authorization": ""})
             assert res5.status == 400
 
             # testing missing newPath in body
@@ -511,9 +483,7 @@ async def test_delete():
             f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
-            res1 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -529,9 +499,7 @@ async def test_delete():
             assert "successfully deleted" in json_text
 
             # relist test directory
-            res3 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res3 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -558,9 +526,7 @@ async def test_list():
             d = fs.make_dir(os.path.join(username, "test"))
             f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             d2 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f3 = fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt
-            )
+            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
             res1 = await cli.get("list/..", headers={"Authorization": ""})
             assert res1.status == 404
             res2 = await cli.get(
@@ -596,9 +562,7 @@ async def test_list():
             assert sum(file_folder_count) == 2
 
             # testing sub-directory
-            res5 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res5 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res5.status == 200
             json_text = await res5.text()
             json = decoder.decode(json_text)
@@ -615,23 +579,17 @@ async def test_list():
             json_text = await res6.text()
             json = decoder.decode(json_text)
 
-            file_names = [
-                file_json["name"] for file_json in json if not file_json["isFolder"]
-            ]
+            file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" not in file_names
             assert ".globus_id" not in file_names
             assert len(file_names) == 2
 
             # testing list showHidden option
-            res7 = await cli.get(
-                "/list/", headers={"Authorization": ""}, params={"showHidden": "True"}
-            )
+            res7 = await cli.get("/list/", headers={"Authorization": ""}, params={"showHidden": "True"})
             assert res7.status == 200
             json_text = await res7.text()
             json = decoder.decode(json_text)
-            file_names = [
-                file_json["name"] for file_json in json if not file_json["isFolder"]
-            ]
+            file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" in file_names
             assert ".globus_id" in file_names
             assert len(file_names) == 4
@@ -662,9 +620,7 @@ async def test_download_errors():
 
             res1 = await cli.get("dwnload", headers={"Authorization": ""})
             assert res1.status == 404
-            res2 = await cli.get(
-                os.path.join("download", "test", ""), headers={"Authorization": ""}
-            )
+            res2 = await cli.get(os.path.join("download", "test", ""), headers={"Authorization": ""})
             assert res2.status == 400
 
 
@@ -676,21 +632,15 @@ async def test_similar():
             d = fs.make_dir(os.path.join(username, "test"))
             f = fs.make_file(os.path.join(username, "test", "test_file_1.fq"), txt)
             d1 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f1 = fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt
-            )
+            f1 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt)
             f2 = fs.make_file(
                 os.path.join(username, "test", "test_sub_dir", "test_file_right.fq"),
                 txt,
             )
-            f3 = fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "my_files"), txt
-            )
+            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "my_files"), txt)
 
             # testing similar file name
-            res1 = await cli.get(
-                "similar/test/test_file_1.fq", headers={"Authorization": ""}
-            )
+            res1 = await cli.get("similar/test/test_file_1.fq", headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -699,9 +649,7 @@ async def test_similar():
             assert json[1].get("name") in ["test_file_2.fq", "test_file_right.fq"]
 
             # testing non-existing file
-            res2 = await cli.get(
-                "similar/test/non-existing", headers={"Authorization": ""}
-            )
+            res2 = await cli.get("similar/test/non-existing", headers={"Authorization": ""})
             assert res2.status == 404
 
             # testing path is a directory
@@ -717,19 +665,11 @@ async def test_existence():
             d = fs.make_dir(os.path.join(username, "test"))
             f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             d2 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f3 = fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt
-            )
-            d3 = fs.make_dir(
-                os.path.join(username, "test", "test_sub_dir", "test_file_1")
-            )
-            d4 = fs.make_dir(
-                os.path.join(username, "test", "test_sub_dir", "test_sub_dir")
-            )
+            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
+            d3 = fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_file_1"))
+            d4 = fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_sub_dir"))
             f4 = fs.make_file(
-                os.path.join(
-                    username, "test", "test_sub_dir", "test_sub_dir", "test_file_1"
-                ),
+                os.path.join(username, "test", "test_sub_dir", "test_sub_dir", "test_file_1"),
                 txt,
             )
 
@@ -750,9 +690,7 @@ async def test_existence():
             assert json["isFolder"] is False
 
             # testing existence of folder
-            res3 = await cli.get(
-                "existence/test_sub_dir", headers={"Authorization": ""}
-            )
+            res3 = await cli.get("existence/test_sub_dir", headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -815,9 +753,7 @@ async def test_upload():
 
             files = {"destPath": "/", "uploads": open(f, "rb")}
 
-            res2 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
+            res2 = await cli.post(os.path.join("upload"), headers={"Authorization": ""}, data=files)
 
             assert res2.status == 200
 
@@ -826,7 +762,6 @@ async def _upload_file_fail_filename(filename: str, err: str):
     # Note two file uploads in a row causes a test error:
     # https://github.com/aio-libs/aiohttp/issues/3968
     async with AppClient(config, "fake") as cli:  # username is ignored by AppClient
-
         formdata = FormData()
         formdata.add_field("destPath", "/")
         formdata.add_field("uploads", BytesIO(b"sometext"), filename=filename)
@@ -838,18 +773,15 @@ async def _upload_file_fail_filename(filename: str, err: str):
 
 
 async def test_upload_fail_leading_space():
-    await _upload_file_fail_filename(
-        " test_file", "cannot upload file with name beginning with space")
+    await _upload_file_fail_filename(" test_file", "cannot upload file with name beginning with space")
 
 
 async def test_upload_fail_dotfile():
-    await _upload_file_fail_filename(
-        ".test_file", "cannot upload file with name beginning with '.'")
+    await _upload_file_fail_filename(".test_file", "cannot upload file with name beginning with '.'")
 
 
 async def test_upload_fail_comma_in_file():
-    await _upload_file_fail_filename(
-        "test,file", "cannot upload file with ',' in name")
+    await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name")
 
 
 @settings(deadline=None)
@@ -898,9 +830,7 @@ async def test_directory_decompression(contents):
                 assert not os.path.exists(d2)
                 assert not os.path.exists(f3)
                 assert os.path.exists(compressed)
-                resp = await cli.patch(
-                    "/decompress/" + name, headers={"Authorization": ""}
-                )
+                resp = await cli.patch("/decompress/" + name, headers={"Authorization": ""})
                 assert resp.status == 200
                 text = await resp.text()
                 assert "succesfully decompressed" in text
@@ -1020,48 +950,47 @@ async def test_bulk_specification_success():
             base = Path(fu.base_dir) / "testuser"
             tsv = "genomes.tsv"
             with open(base / tsv, "w") as f:
-                f.writelines([
-                    "Data type: genomes; Columns: 3; Version: 1\n",
-                    "spec1\tspec2\t   spec3   \n",
-                    "Spec 1\t Spec 2\t Spec 3\n",
-                    "val1 \t   ꔆ   \t    7\n",
-                    "val3\tval4\t1\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                        "val3\tval4\t1\n",
+                    ]
+                )
             csv = "somefolder/breakfastcereals.csv"
             with open(base / csv, "w") as f:
-                f.writelines([
-                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    "s1,s2,s3\n",
-                    "S 1,S 2,S 3\n",
-                    "froot loops ,   puffin   ,   gross\n",
-                    "grape nuts , dietary fiber, also gross\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                        "s1,s2,s3\n",
+                        "S 1,S 2,S 3\n",
+                        "froot loops ,   puffin   ,   gross\n",
+                        "grape nuts , dietary fiber, also gross\n",
+                    ]
+                )
             excel = "importspec.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
-                df = pandas.DataFrame([
-                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42],
-                    ["Fred", 1.5]
-                ])
+                df = pandas.DataFrame(
+                    [["Data type: fruit_bats; Columns: 2; Version: 1"], ["bat_name", "wing_count"], ["Name of Bat", "Number of wings"], ["George", 42], ["Fred", 1.5]]
+                )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
-                df = pandas.DataFrame([
-                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["entity_id", "preferred_food"],
-                    ["Entity ID", "Preferred Food"],
-                    ["That which ends all", "ꔆ"],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                        ["entity_id", "preferred_food"],
+                        ["Entity ID", "Preferred Food"],
+                        ["That which ends all", "ꔆ"],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
             resp = await cli.get(f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   ")
             jsn = await resp.json()
             assert jsn == {
                 "types": {
-                    "genomes": [
-                        {"spec1": "val1", "spec2": "ꔆ", "spec3": 7},
-                        {"spec1": "val3", "spec2": "val4", "spec3": 1}
-                    ],
+                    "genomes": [{"spec1": "val1", "spec2": "ꔆ", "spec3": 7}, {"spec1": "val3", "spec2": "val4", "spec3": 1}],
                     "breakfastcereals": [
                         {"s1": "froot loops", "s2": "puffin", "s3": "gross"},
                         {"s1": "grape nuts", "s2": "dietary fiber", "s3": "also gross"},
@@ -1070,18 +999,14 @@ async def test_bulk_specification_success():
                         {"bat_name": "George", "wing_count": 42},
                         {"bat_name": "Fred", "wing_count": 1.5},
                     ],
-                    "tree_sloths": [
-                        {"entity_id": "That which ends all", "preferred_food": "ꔆ"}
-                    ]
+                    "tree_sloths": [{"entity_id": "That which ends all", "preferred_food": "ꔆ"}],
                 },
                 "files": {
                     "genomes": {"file": "testuser/genomes.tsv", "tab": None},
-                    "breakfastcereals": {
-                        "file": "testuser/somefolder/breakfastcereals.csv",
-                        "tab": None},
+                    "breakfastcereals": {"file": "testuser/somefolder/breakfastcereals.csv", "tab": None},
                     "fruit_bats": {"file": "testuser/importspec.xlsx", "tab": "bats"},
                     "tree_sloths": {"file": "testuser/importspec.xlsx", "tab": "sloths"},
-                }
+                },
             }
             assert resp.status == 200
 
@@ -1102,17 +1027,17 @@ async def test_bulk_specification_fail_not_found():
             base = Path(fu.base_dir) / "testuser"
             tsv = "otherfolder/genomes.tsv"
             with open(base / tsv, "w") as f:
-                f.writelines([
-                    "Data type: genomes; Columns: 3; Version: 1\n",
-                    "spec1\tspec2\t   spec3   \n",
-                    "Spec 1\t Spec 2\t Spec 3\n",
-                    "val1 \t   ꔆ   \t    7\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                    ]
+                )
             resp = await cli.get(f"bulk_specification/?files={tsv},somefile.csv")
             jsn = await resp.json()
-            assert jsn == {"errors": [
-                {"type": "cannot_find_file", "file": "testuser/somefile.csv"}
-            ]}
+            assert jsn == {"errors": [{"type": "cannot_find_file", "file": "testuser/somefile.csv"}]}
             assert resp.status == 404
 
 
@@ -1128,83 +1053,99 @@ async def test_bulk_specification_fail_parse_fail():
             tsv = "otherfolder/genomes.tsv"
             # this one is fine
             with open(base / tsv, "w") as f:
-                f.writelines([
-                    "Data type: genomes; Columns: 3; Version: 1\n",
-                    "spec1\tspec2\t   spec3   \n",
-                    "Spec 1\t Spec 2\t Spec 3\n",
-                    "val1 \t   ꔆ   \t    7\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                    ]
+                )
             csv = "otherfolder/thing.csv"
             # this one has a misspelling in the header
             with open(base / csv, "w") as f:
-                f.writelines([
-                    "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
-                    "s1,s2,s3\n",
-                    "S 1,S 2,S 3\n",
-                    "froot loops ,   puffin   ,   gross\n",
-                ])
+                f.writelines(
+                    [
+                        "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
+                        "s1,s2,s3\n",
+                        "S 1,S 2,S 3\n",
+                        "froot loops ,   puffin   ,   gross\n",
+                    ]
+                )
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
                 # this one is fine
-                df = pandas.DataFrame([
-                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
                 # this one is missing a parameter ID
-                df = pandas.DataFrame([
-                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["", "preferred_food"],
-                    ["ID", "Foods I like"],
-                    ["Kevin Garibaldi", "Beeeaaaaans!"],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                        ["", "preferred_food"],
+                        ["ID", "Foods I like"],
+                        ["Kevin Garibaldi", "Beeeaaaaans!"],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
             # this also tests a number of bad file extensions - no need to create files
-            resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}"
-                + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile.")
+            resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}" + ",badfile,badfile.fasta.gz,badfile.sra,badfile.sys,badfile.")
             jsn = await resp.json()
-            assert jsn == {"errors": [
-                {"type": "cannot_parse_file",
-                 "message": 'Invalid header; got "Dater type: breakfastcereals; '
-                    + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
-                    + 'Columns: <column count>; Version: <version>"',
-                 "file": "testuser/otherfolder/thing.csv",
-                 "tab": None,
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "Missing header entry in row 2, position 1",
-                 "file": "testuser/stuff.xlsx",
-                 "tab": "sloths",
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "badfile is not a supported file type for import specifications",
-                 "file": "testuser/badfile",
-                 "tab": None,
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "fasta.gz is not a supported file type for import specifications",
-                 "file": "testuser/badfile.fasta.gz",
-                 "tab": None,
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "sra is not a supported file type for import specifications",
-                 "file": "testuser/badfile.sra",
-                 "tab": None,
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "sys is not a supported file type for import specifications",
-                 "file": "testuser/badfile.sys",
-                 "tab": None,
-                 },
-                {"type": "cannot_parse_file",
-                 "message": "badfile. is not a supported file type for import specifications",
-                 "file": "testuser/badfile.",
-                 "tab": None,
-                 },
-            ]}
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "message": 'Invalid header; got "Dater type: breakfastcereals; '
+                        + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
+                        + 'Columns: <column count>; Version: <version>"',
+                        "file": "testuser/otherfolder/thing.csv",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "Missing header entry in row 2, position 1",
+                        "file": "testuser/stuff.xlsx",
+                        "tab": "sloths",
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "badfile is not a supported file type for import specifications",
+                        "file": "testuser/badfile",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "fasta.gz is not a supported file type for import specifications",
+                        "file": "testuser/badfile.fasta.gz",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "sra is not a supported file type for import specifications",
+                        "file": "testuser/badfile.sra",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "sys is not a supported file type for import specifications",
+                        "file": "testuser/badfile.sys",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "message": "badfile. is not a supported file type for import specifications",
+                        "file": "testuser/badfile.",
+                        "tab": None,
+                    },
+                ]
+            }
             assert resp.status == 400
 
 
@@ -1216,55 +1157,66 @@ async def test_bulk_specification_fail_column_count():
             tsv = "genomes.tsv"
             # this one is fine
             with open(base / tsv, "w") as f:
-                f.writelines([
-                    "Data type: genomes; Columns: 3; Version: 1\n",
-                    "spec1\tspec2\t   spec3   \n",
-                    "Spec 1\t Spec 2\t Spec 3\n",
-                    "val1 \t   ꔆ   \t    7\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                    ]
+                )
             csv = "thing.csv"
             # this one is missing a column in the last row
             with open(base / csv, "w") as f:
-                f.writelines([
-                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    "s1,s2,s3\n",
-                    "S 1,S 2,S 3\n",
-                    "froot loops ,   puffin\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                        "s1,s2,s3\n",
+                        "S 1,S 2,S 3\n",
+                        "froot loops ,   puffin\n",
+                    ]
+                )
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
                 # this one has an extra column in the last row
-                df = pandas.DataFrame([
-                    ["Data type: fruit_bats; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42, 56],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: fruit_bats; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42, 56],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
                 # this one is fine
-                df = pandas.DataFrame([
-                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["entity_id", "preferred_food"],
-                    ["Entity ID", "Preferred Food"],
-                    ["That which ends all", "ꔆ"],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                        ["entity_id", "preferred_food"],
+                        ["Entity ID", "Preferred Food"],
+                        ["That which ends all", "ꔆ"],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
-            resp = await cli.get(
-                f"bulk_specification/?files={tsv},{csv},{excel}")
+            resp = await cli.get(f"bulk_specification/?files={tsv},{csv},{excel}")
             jsn = await resp.json()
-            assert jsn == {"errors": [
-                {"type": "incorrect_column_count",
-                 "message": "Incorrect number of items in line 4, expected 3, got 2",
-                 "file": "testuser/thing.csv",
-                 "tab": None,
-                 },
-                {"type": "incorrect_column_count",
-                 "message": "Incorrect number of items in line 4, expected 2, got 3",
-                 "file": "testuser/stuff.xlsx",
-                 "tab": "bats",
-                 },
-            ]}
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "incorrect_column_count",
+                        "message": "Incorrect number of items in line 4, expected 3, got 2",
+                        "file": "testuser/thing.csv",
+                        "tab": None,
+                    },
+                    {
+                        "type": "incorrect_column_count",
+                        "message": "Incorrect number of items in line 4, expected 2, got 3",
+                        "file": "testuser/stuff.xlsx",
+                        "tab": "bats",
+                    },
+                ]
+            }
             assert resp.status == 400
 
 
@@ -1276,69 +1228,82 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
             tsv = "genomes.tsv"
             # this one is fine
             with open(base / tsv, "w") as f:
-                f.writelines([
-                    "Data type: genomes; Columns: 3; Version: 1\n",
-                    "spec1\tspec2\t   spec3   \n",
-                    "Spec 1\t Spec 2\t Spec 3\n",
-                    "val1 \t   ꔆ   \t    7\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                    ]
+                )
             csv1 = "thing.csv"
             # this is the first of the breakfastcereals data sources, so fine
             with open(base / csv1, "w") as f:
-                f.writelines([
-                    "Data type: breakfastcereals; Columns: 3; Version: 1\n",
-                    "s1,s2,s3\n",
-                    "S 1,S 2,S 3\n",
-                    "froot loops ,   puffin, whee\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: breakfastcereals; Columns: 3; Version: 1\n",
+                        "s1,s2,s3\n",
+                        "S 1,S 2,S 3\n",
+                        "froot loops ,   puffin, whee\n",
+                    ]
+                )
             csv2 = "thing2.csv"
             # this data type is also breakfastcereals, so will cause an error
             with open(base / csv2, "w") as f:
-                f.writelines([
-                    "Data type: breakfastcereals; Columns: 2; Version: 1\n",
-                    "s1,s2\n",
-                    "S 1,S 2\n",
-                    "froot loops ,   puffin\n",
-                ])
+                f.writelines(
+                    [
+                        "Data type: breakfastcereals; Columns: 2; Version: 1\n",
+                        "s1,s2\n",
+                        "S 1,S 2\n",
+                        "froot loops ,   puffin\n",
+                    ]
+                )
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
                 # this data type is also breakfastcereals, so will cause an error
-                df = pandas.DataFrame([
-                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
                 # this one is fine
-                df = pandas.DataFrame([
-                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["entity_id", "preferred_food"],
-                    ["Entity ID", "Preferred Food"],
-                    ["That which ends all", "ꔆ"],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                        ["entity_id", "preferred_food"],
+                        ["Entity ID", "Preferred Food"],
+                        ["That which ends all", "ꔆ"],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
-            resp = await cli.get(
-                f"bulk_specification/?files={tsv},{csv1},{csv2},{excel}")
+            resp = await cli.get(f"bulk_specification/?files={tsv},{csv1},{csv2},{excel}")
             jsn = await resp.json()
             err = "Data type breakfastcereals appears in two importer specification sources"
-            assert jsn == {"errors": [
-                {"type": "multiple_specifications_for_data_type",
-                 "message": err,
-                 "file_1": "testuser/thing.csv",
-                 "tab_1": None,
-                 "file_2": "testuser/thing2.csv",
-                 "tab_2": None
-                 },
-                {"type": "multiple_specifications_for_data_type",
-                 "message": err,
-                 "file_1": "testuser/thing.csv",
-                 "tab_1": None,
-                 "file_2": "testuser/stuff.xlsx",
-                 "tab_2": "bats"
-                 },
-            ]}
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "multiple_specifications_for_data_type",
+                        "message": err,
+                        "file_1": "testuser/thing.csv",
+                        "tab_1": None,
+                        "file_2": "testuser/thing2.csv",
+                        "tab_2": None,
+                    },
+                    {
+                        "type": "multiple_specifications_for_data_type",
+                        "message": err,
+                        "file_1": "testuser/thing.csv",
+                        "tab_1": None,
+                        "file_2": "testuser/stuff.xlsx",
+                        "tab_2": "bats",
+                    },
+                ]
+            }
             assert resp.status == 400
 
 
@@ -1353,62 +1318,65 @@ async def test_bulk_specification_fail_multiple_specs_per_type_excel():
             base = Path(fu.base_dir) / "testuser"
             excel = "stuff.xlsx"
             with pandas.ExcelWriter(base / excel) as exw:
-                df = pandas.DataFrame([
-                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="bats", header=False, index=False)
-                df = pandas.DataFrame([
-                    ["Data type: tree_sloths; Columns: 2; Version: 1"],
-                    ["entity_id", "preferred_food"],
-                    ["Entity ID", "Preferred Food"],
-                    ["That which ends all", "ꔆ"],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: tree_sloths; Columns: 2; Version: 1"],
+                        ["entity_id", "preferred_food"],
+                        ["Entity ID", "Preferred Food"],
+                        ["That which ends all", "ꔆ"],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
-                df = pandas.DataFrame([
-                    ["Data type: breakfastcereals; Columns: 2; Version: 1"],
-                    ["bat_name", "wing_count"],
-                    ["Name of Bat", "Number of wings"],
-                    ["George", 42],
-                ])
+                df = pandas.DataFrame(
+                    [
+                        ["Data type: breakfastcereals; Columns: 2; Version: 1"],
+                        ["bat_name", "wing_count"],
+                        ["Name of Bat", "Number of wings"],
+                        ["George", 42],
+                    ]
+                )
                 df.to_excel(exw, sheet_name="otherbats", header=False, index=False)
 
             resp = await cli.get(f"bulk_specification/?files={excel}")
             jsn = await resp.json()
-            assert jsn == {"errors": [
-                {"type": "multiple_specifications_for_data_type",
-                 "message": "Found datatype breakfastcereals in multiple tabs",
-                 "file_1": "testuser/stuff.xlsx",
-                 "tab_1": "bats",
-                 "file_2": "testuser/stuff.xlsx",
-                 "tab_2": "otherbats"
-                 },
-            ]}
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "multiple_specifications_for_data_type",
+                        "message": "Found datatype breakfastcereals in multiple tabs",
+                        "file_1": "testuser/stuff.xlsx",
+                        "tab_1": "bats",
+                        "file_2": "testuser/stuff.xlsx",
+                        "tab_2": "otherbats",
+                    },
+                ]
+            }
             assert resp.status == 400
 
 
 _IMPORT_SPEC_TEST_DATA = {
     "genome": {
-        "order_and_display": [
-            ["id1", "display1"],
-            ["id2", "display2"]
-        ],
+        "order_and_display": [["id1", "display1"], ["id2", "display2"]],
         "data": [
             {"id1": 54, "id2": "boo"},
             {"id1": 32, "id2": "yikes"},
-        ]
+        ],
     },
     "reads": {
-        "order_and_display": [
-            ["name", "Reads File Name"],
-            ["inseam", "Reads inseam measurement in km"]
-        ],
+        "order_and_display": [["name", "Reads File Name"], ["inseam", "Reads inseam measurement in km"]],
         "data": [
             {"name": "myreads.fa", "inseam": 0.1},
-        ]
-    }
+        ],
+    },
 }
 
 
@@ -1417,20 +1385,16 @@ async def test_write_bulk_specification_success_csv():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
-            resp = await cli.post("write_bulk_specification/", json=
-                {
+            resp = await cli.post(
+                "write_bulk_specification/",
+                json={
                     "output_directory": "specs",
                     "output_file_type": "CSV",
                     "types": _IMPORT_SPEC_TEST_DATA,
-                })
+                },
+            )
             js = await resp.json()
-            assert js == {
-                "output_file_type": "CSV",
-                "files_created": {
-                    "genome": "testuser/specs/genome.csv",
-                    "reads": "testuser/specs/reads.csv"
-                }
-            }
+            assert js == {"output_file_type": "CSV", "files_created": {"genome": "testuser/specs/genome.csv", "reads": "testuser/specs/reads.csv"}}
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
                 base / "specs/genome.csv",
@@ -1440,7 +1404,7 @@ async def test_write_bulk_specification_success_csv():
                     "display1,display2\n",
                     "54,boo\n",
                     "32,yikes\n",
-                ]
+                ],
             )
             check_file_contents(
                 base / "specs/reads.csv",
@@ -1449,7 +1413,7 @@ async def test_write_bulk_specification_success_csv():
                     "name,inseam\n",
                     "Reads File Name,Reads inseam measurement in km\n",
                     "myreads.fa,0.1\n",
-                ]
+                ],
             )
 
 
@@ -1459,22 +1423,18 @@ async def test_write_bulk_specification_success_tsv():
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             types = dict(_IMPORT_SPEC_TEST_DATA)
-            types['reads'] = dict(types['reads'])
-            types['reads']['data'] = []
-            resp = await cli.post("write_bulk_specification", json=
-                {
+            types["reads"] = dict(types["reads"])
+            types["reads"]["data"] = []
+            resp = await cli.post(
+                "write_bulk_specification",
+                json={
                     "output_directory": "tsvspecs",
                     "output_file_type": "TSV",
                     "types": types,
-                })
+                },
+            )
             js = await resp.json()
-            assert js == {
-                "output_file_type": "TSV",
-                "files_created": {
-                    "genome": "testuser/tsvspecs/genome.tsv",
-                    "reads": "testuser/tsvspecs/reads.tsv"
-                }
-            }
+            assert js == {"output_file_type": "TSV", "files_created": {"genome": "testuser/tsvspecs/genome.tsv", "reads": "testuser/tsvspecs/reads.tsv"}}
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
                 base / "tsvspecs/genome.tsv",
@@ -1484,7 +1444,7 @@ async def test_write_bulk_specification_success_tsv():
                     "display1\tdisplay2\n",
                     "54\tboo\n",
                     "32\tyikes\n",
-                ]
+                ],
             )
             check_file_contents(
                 base / "tsvspecs/reads.tsv",
@@ -1492,7 +1452,7 @@ async def test_write_bulk_specification_success_tsv():
                     "Data type: reads; Columns: 2; Version: 1\n",
                     "name\tinseam\n",
                     "Reads File Name\tReads inseam measurement in km\n",
-                ]
+                ],
             )
 
 
@@ -1501,19 +1461,21 @@ async def test_write_bulk_specification_success_excel():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
-            resp = await cli.post("write_bulk_specification/", json=
-                {
+            resp = await cli.post(
+                "write_bulk_specification/",
+                json={
                     "output_directory": "",
                     "output_file_type": "EXCEL",
                     "types": _IMPORT_SPEC_TEST_DATA,
-                })
+                },
+            )
             js = await resp.json()
             assert js == {
                 "output_file_type": "EXCEL",
                 "files_created": {
                     "genome": "testuser/import_specification.xlsx",
                     "reads": "testuser/import_specification.xlsx",
-                }
+                },
             }
             wb = openpyxl.load_workbook(Path(fu.base_dir) / "testuser/import_specification.xlsx")
             assert wb.sheetnames == ["genome", "reads"]
@@ -1552,8 +1514,7 @@ async def test_write_bulk_specification_fail_wrong_data_type():
 
 async def test_write_bulk_specification_fail_no_content_length():
     async with AppClient(config) as cli:
-        resp = await cli.post(
-            "write_bulk_specification", headers={"content-type": "application/json"})
+        resp = await cli.post("write_bulk_specification", headers={"content-type": "application/json"})
         js = await resp.json()
         assert js == {"error": "The content-length header is required and must be > 0"}
         assert resp.status == 411
@@ -1577,35 +1538,27 @@ async def _write_bulk_specification_json_fail(json: Any, err: str):
 
 
 async def test_write_bulk_specification_fail_not_dict():
-    await _write_bulk_specification_json_fail(
-        ["foo"], "The top level JSON element must be a mapping")
+    await _write_bulk_specification_json_fail(["foo"], "The top level JSON element must be a mapping")
 
 
 async def test_write_bulk_specification_fail_no_output_dir():
-    await _write_bulk_specification_json_fail(
-        {}, "output_directory is required and must be a string")
+    await _write_bulk_specification_json_fail({}, "output_directory is required and must be a string")
 
 
 async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
-    await _write_bulk_specification_json_fail(
-        {"output_directory": 4}, "output_directory is required and must be a string")
+    await _write_bulk_specification_json_fail({"output_directory": 4}, "output_directory is required and must be a string")
 
 
 async def test_write_bulk_specification_fail_no_file_type():
-    await _write_bulk_specification_json_fail(
-        {"output_directory": "foo"}, "Invalid output_file_type: None")
+    await _write_bulk_specification_json_fail({"output_directory": "foo"}, "Invalid output_file_type: None")
 
 
 async def test_write_bulk_specification_fail_wrong_file_type():
-    await _write_bulk_specification_json_fail(
-        {"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV")
+    await _write_bulk_specification_json_fail({"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV")
 
 
 async def test_write_bulk_specification_fail_invalid_type_value():
-    await _write_bulk_specification_json_fail(
-        {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
-         "The value for data type a must be a mapping"
-    )
+    await _write_bulk_specification_json_fail({"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}}, "The value for data type a must be a mapping")
 
 
 async def test_importer_filetypes():

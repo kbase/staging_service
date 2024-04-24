@@ -1,9 +1,11 @@
-from .app import app_factory
-from aiohttp import web
 import asyncio
-import os
-import uvloop
 import configparser
+import os
+
+import uvloop
+from aiohttp import web
+
+from .app import app_factory
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())  # for speed of event loop
 

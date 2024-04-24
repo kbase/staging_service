@@ -18,7 +18,7 @@ class AutoDetectUtils:
             The fileinfo dict, containing:
                 the file prefix
                 the file suffix, if a suffix matched a mapping
-                the file types, if a suffix matched a mapping, otherwise an empty list 
+                the file types, if a suffix matched a mapping, otherwise an empty list
         """
         dotcount = filename.count(".")
         if dotcount:
@@ -32,10 +32,11 @@ class AutoDetectUtils:
                     prefix = ".".join(parts[0:i])
                     return (
                         m["types"][suffix]["mappings"],
-                        {"prefix": prefix,
-                         "suffix": parts[-1],
-                         "file_ext_type": m["types"][suffix]["file_ext_type"],
-                        }
+                        {
+                            "prefix": prefix,
+                            "suffix": parts[-1],
+                            "file_ext_type": m["types"][suffix]["file_ext_type"],
+                        },
                     )
         return None, {"prefix": filename, "suffix": None, "file_ext_type": []}
 

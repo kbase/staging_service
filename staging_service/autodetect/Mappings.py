@@ -55,14 +55,18 @@ metabolic_annotations_bulk_id = "metabolic_annotation_bulk"
 attribute_mapping_id = "attribute_mapping"
 escher_map_id = "escher_map"
 
+
 def _flatten(some_list):
     return list(itertools.chain.from_iterable(some_list))
 
+
 _COMPRESSION_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+
 
 # longer term there's probably a better way to do this but this is quick
 def _add_gzip(extension_list):
     return _flatten([[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list])
+
 
 file_format_to_extension_mapping = {
     FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),
@@ -88,8 +92,8 @@ file_format_to_extension_mapping = {
     #     "phylip",
     #     "stockholm",
     # ],
-    TSV: ["tsv"],            # See Note 1 below
-    CSV: ["csv"],            # See Note 1 below
+    TSV: ["tsv"],  # See Note 1 below
+    CSV: ["csv"],  # See Note 1 below
     JSON: ["json"],
     EXCEL: ["xls", "xlsx"],  # See Note 1 below
     ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],

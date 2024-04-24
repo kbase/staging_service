@@ -1,8 +1,10 @@
-from .utils import Path
-from json import JSONDecoder
-import aiofiles
 import os
+from json import JSONDecoder
+
+import aiofiles
 from aiohttp import web
+
+from .utils import Path
 
 decoder = JSONDecoder()
 
@@ -13,10 +15,4 @@ async def read_metadata_for(path: Path):
             data = await json.read()
             return decoder.decode(data)
     else:
-        raise web.HTTPNotFound(
-            text="could not find associated JGI metadata file for {path}".format(
-                path=path.user_path
-            )
-        )
-
-
+        raise web.HTTPNotFound(text="could not find associated JGI metadata file for {path}".format(path=path.user_path))

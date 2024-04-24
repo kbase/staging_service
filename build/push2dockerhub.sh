@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # This script is intended to be run in the deploy stage of a travis build
 # It checks to make sure that this is a not a PR, and that we have the secure
 # environment variables available and then checks if this is either the master

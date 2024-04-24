@@ -59,9 +59,7 @@ file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
 file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
 file_format_to_app_mapping[ZIP] = [decompress_id]
 file_format_to_app_mapping[CSV] = [sample_set_id, import_specification]
-file_format_to_app_mapping[TSV] = [
-    media_id, expression_matrix_id, metabolic_annotations_id, metabolic_annotations_bulk_id,
-    fba_model_id, phenotype_set_id, import_specification]
+file_format_to_app_mapping[TSV] = [media_id, expression_matrix_id, metabolic_annotations_id, metabolic_annotations_bulk_id, fba_model_id, phenotype_set_id, import_specification]
 file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id, import_specification]
 file_format_to_app_mapping[JSON] = [escher_map_id]
 file_format_to_app_mapping[SBML] = [fba_model_id]
@@ -88,7 +86,6 @@ for filecat, apps in file_format_to_app_mapping.items():
 # and 1 being a perfect weight score of 100%
 extensions_mapping = {}
 for app_id in app_id_to_extensions:
-
     perfect_match_weight = 1
     for extension in app_id_to_extensions[app_id]:
         if extension not in extensions_mapping:
@@ -98,7 +95,7 @@ for app_id in app_id_to_extensions:
                 # detection. For backwards compatibilily, we'd leave the current FASTQ type and
                 # add a FASTQ-FWD or FWD type or something.
                 "file_ext_type": [extension_to_file_format_mapping[extension]],
-                "mappings": []
+                "mappings": [],
             }
         extensions_mapping[extension]["mappings"].append(
             {
@@ -116,6 +113,7 @@ if __name__ == "__main__":
         # this is currently unused by the code base, but we include it to make it easy to
         # see what file extensions are registered for each app
         "app_to_ext": app_id_to_extensions,
-        "types": extensions_mapping}
+        "types": extensions_mapping,
+    }
     with open("supported_apps_w_extensions.json", "w") as f:
         json.dump(obj=data, fp=f, indent=2)

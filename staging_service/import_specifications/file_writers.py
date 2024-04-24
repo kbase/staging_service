@@ -31,12 +31,12 @@ All the write_* functions in this module have the same function signature:
 import collections
 import csv
 import numbers
-
-from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.utils import get_column_letter
 from pathlib import Path
 from typing import Any
+
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 
 # this version is synonymous to the versions in individual_parsers.py. However, this module
 # should only ever write the most recent format for import specifictions, while the parsers
@@ -59,6 +59,7 @@ _EXT_TSV = "tsv"
 _EXT_EXCEL = "xlsx"
 _SEP_CSV = ","
 _SEP_TSV = "\t"
+
 
 def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
     f"""
@@ -90,21 +91,17 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         if type(spec) != dict:
             raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
-            raise ImportSpecWriteException(
-                f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
-        _check_is_sequence(
-            spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value")
+            raise ImportSpecWriteException(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
+        _check_is_sequence(spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value")
         if not len(spec[_ORDER_AND_DISPLAY]):
-            raise ImportSpecWriteException(
-                f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}")
+            raise ImportSpecWriteException(f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}")
         if _DATA not in spec:
             raise ImportSpecWriteException(f"Data type {datatype} missing {_DATA} key")
         _check_is_sequence(spec[_DATA], f"Data type {datatype} {_DATA} value")
 
         param_ids = set()
         for i, id_display in enumerate(spec[_ORDER_AND_DISPLAY]):
-            err = (f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} "
-                    + f"at index {i} ")
+            err = f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} " + f"at index {i} "
             _check_is_sequence(id_display, err + "- the entry")
             if len(id_display) != 2:
                 raise ImportSpecWriteException(err + "- expected 2 item list")
@@ -117,18 +114,15 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
             if type(datarow) != dict:
                 raise ImportSpecWriteException(err + " is not a mapping")
             if datarow.keys() != param_ids:
-                raise ImportSpecWriteException(
-                    err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
+                raise ImportSpecWriteException(err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
             for pid, v in datarow.items():
                 if v is not None and not isinstance(v, numbers.Number) and not isinstance(v, str):
-                    raise ImportSpecWriteException(
-                        err + f"'s value for parameter {pid} is not a number or a string")
+                    raise ImportSpecWriteException(err + f"'s value for parameter {pid} is not a number or a string")
 
 
 def _check_string(tocheck: Any, errprefix: str):
     if not isinstance(tocheck, str) or not tocheck.strip():
-        raise ImportSpecWriteException(
-            errprefix + " cannot be a non-string or a whitespace only string")
+        raise ImportSpecWriteException(errprefix + " cannot be a non-string or a whitespace only string")
 
 
 def _check_is_sequence(tocheck: Any, errprefix: str):
@@ -159,10 +153,9 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
         filename = datatype + "." + ext
         dt = types[datatype]
         cols = len(dt[_ORDER_AND_DISPLAY])
-        with open(folder / filename, "w", newline='') as f:
+        with open(folder / filename, "w", newline="") as f:
             csvw = csv.writer(f, delimiter=sep)  # handle sep escaping
-            csvw.writerow([f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
-                           + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"])
+            csvw.writerow([f"{_DATA_TYPE} {datatype}{_HEADER_SEP} " + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"])
             pids = [i[0] for i in dt[_ORDER_AND_DISPLAY]]
             csvw.writerow(pids)
             csvw.writerow([i[1] for i in dt[_ORDER_AND_DISPLAY]])
@@ -203,8 +196,7 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
             _write_excel_row(sheet, xlrow, [row[pid] for pid in pids])
         _expand_excel_columns_to_max_width(sheet)
         # Add the hidden data *after* expanding the columns
-        sheet['A1'] = (f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
-                       + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}")
+        sheet["A1"] = f"{_DATA_TYPE} {datatype}{_HEADER_SEP} " + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
         _write_excel_row(sheet, 2, pids)
         sheet.row_dimensions[1].hidden = True
         sheet.row_dimensions[2].hidden = True
@@ -219,6 +211,7 @@ def _write_excel_row(sheet: Worksheet, row: int, contents: list[Any]):
     # https://stackoverflow.com/a/33921552/643675
     for col, val in enumerate(contents, start=1):
         sheet.cell(row=row, column=col).value = val
+
 
 def _expand_excel_columns_to_max_width(sheet: Worksheet):
     # https://stackoverflow.com/a/40935194/643675
@@ -235,4 +228,5 @@ class ImportSpecWriteException(Exception):
     """
     An exception thrown when writing an import specification fails.
     """
+
     pass
