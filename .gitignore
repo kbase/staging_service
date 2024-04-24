@@ -108,3 +108,9 @@ data/
 .virtualenvs/
 test.env
 run_tests_single.sh
+_attic
+
+# IDEs
+
+# jetbrains
+.idea

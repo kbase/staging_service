@@ -1,19 +1,10 @@
-#!/bin/bash
-# if you change this file and the places it looks for local paths:
-# please also update the launch.json for vscode accordingly
-# the things that must be kept in sync are KB_DEPLOYMENT_CONFIG and PYTHONPATH
+#!/usr/bin/env bash
 
-#top section for local running
-DIR="$( cd "$( dirname "$0" )" && pwd )"
-if [ -d "$DIR/../../staging_service" ]; then
-    PYTHONPATH="$DIR/../../staging_service"
-    export KB_DEPLOYMENT_CONFIG="$DIR/../conf/local.cfg"
-    export FILE_LIFETIME="90"
-fi
+#
+# This is the production entrypoint, whose sole job is to start the service.
+# The service starts via staging_service/__main__.py which is why the python
+# invocation below references the staging_service directory.
+#
 
-#bottom section for running inside docker
-if [ -d "kb/deployment/lib/staging_service" ]; then
-    PYTHONPATH="kb/deployment/lib/staging_service"
-    # environment variable for KB_DEPLOYMENT_CONFIG set in docker-compose.yml
-fi
-python3 -m staging_service
+export PYTHONPATH="/kb/deployment/lib"
+python -m staging_service

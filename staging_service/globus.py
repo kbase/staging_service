@@ -64,7 +64,5 @@ async def assert_globusid_exists(username, token):
         # such as the commented code below, for multiple linked accounts
         # text = '\n'.join(globus_ids)
         text = globus_ids[0]
-        async with aiofiles.open(
-            path.full_path, mode="w", encoding="utf-8"
-        ) as globus_file:
+        async with aiofiles.open(path.full_path, mode="w", encoding="utf-8") as globus_file:
             await globus_file.writelines(text)
