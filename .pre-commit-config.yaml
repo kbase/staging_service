@@ -33,11 +33,8 @@ repos:
         additional_dependencies: [ flake8 ]
 
 
-#  - repo: https://github.com/astral-sh/ruff-pre-commit
-#    # Ruff version.
-#    rev: v0.4.1
-#    hooks:
-#      # Run the linter.
-#      - id: ruff
-#      # Run the formatter.
-#      - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.1
+    hooks:
+      - id: ruff
+      - id: ruff-format
