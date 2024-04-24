@@ -1,0 +1,23 @@
+name: Pre-commit Hooks
+
+
+on: [pull_request]
+
+jobs:
+  run-pre-commit:
+    runs-on: self-hosted
+    timeout-minutes: 2 
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install pre-commit
+      run: pip install pre-commit
+
+    - name: Run pre-commit Hooks
+      run: pre-commit run --all-files
