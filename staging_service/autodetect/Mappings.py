@@ -60,7 +60,11 @@ def _flatten(some_list):
     return list(itertools.chain.from_iterable(some_list))
 
 
-_COMPRESSION_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+_COMPRESSION_EXT = [
+    "",
+    ".gz",
+    ".gzip",
+]  # empty string to keep the uncompressed extension
 
 
 # longer term there's probably a better way to do this but this is quick

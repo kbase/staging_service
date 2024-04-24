@@ -25,6 +25,7 @@ All the write_* functions in this module have the same function signature:
     Leave the `data` list empty to write an empty template.
 :returns: A mapping of the data types to the files to which they were written.
 """
+
 # note that we can't use an f string here to interpolate the variables below, e.g.
 # order_and_display, etc.
 

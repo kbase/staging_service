@@ -22,6 +22,7 @@ Functionality: Running this script will
 * Note: We should serve the generated content from memory
 * Note: This doesn't handle if we want to have different output types based on file extensions feeding into the same app
 """
+
 from collections import defaultdict
 
 from staging_service.autodetect.Mappings import (
@@ -85,7 +86,10 @@ app_id_to_title = {
 file_format_to_app_mapping = {}
 
 file_format_to_app_mapping[SRA] = [sra_reads_id]
-file_format_to_app_mapping[FASTQ] = [fastq_reads_interleaved_id, fastq_reads_noninterleaved_id]
+file_format_to_app_mapping[FASTQ] = [
+    fastq_reads_interleaved_id,
+    fastq_reads_noninterleaved_id,
+]
 file_format_to_app_mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_id]
 file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
 file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
@@ -100,7 +104,12 @@ file_format_to_app_mapping[TSV] = [
     phenotype_set_id,
     import_specification,
 ]
-file_format_to_app_mapping[EXCEL] = [sample_set_id, media_id, fba_model_id, import_specification]
+file_format_to_app_mapping[EXCEL] = [
+    sample_set_id,
+    media_id,
+    fba_model_id,
+    import_specification,
+]
 file_format_to_app_mapping[JSON] = [escher_map_id]
 file_format_to_app_mapping[SBML] = [fba_model_id]
 

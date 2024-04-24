@@ -4,6 +4,7 @@ A very basic KBase auth client for the Python server.
 @author: gaprice@lbl.gov
 modified for python3 and authV2
 """
+
 import hashlib
 import time as _time
 

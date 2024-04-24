@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional as O
+from typing import Optional as Opt
 from unittest.mock import Mock, call
 
 from frozendict import frozendict
@@ -21,7 +21,7 @@ from staging_service.import_specifications.file_parser import (
 from tests.test_utils import assert_exception_correct
 
 
-def spcsrc(path: str, tab: O[str] = None):
+def spcsrc(path: str, tab: Opt[str] = None):
     return SpecificationSource(Path(path), tab)
 
 
@@ -44,17 +44,19 @@ def test_SpecificationSource_init_fail():
     specificationSource_init_fail(None, ValueError("file is required"))
 
 
-def specificationSource_init_fail(file_: O[str], expected: Exception):
+def specificationSource_init_fail(file_: Opt[str], expected: Exception):
     with raises(Exception) as got:
         SpecificationSource(file_)
     assert_exception_correct(got.value, expected)
 
 
 def test_FileTypeResolution_init_w_parser_success():
-    p = lambda path: ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
+    def p(path):
+        return ParseResults(errors=(Error(ErrorType.OTHER, "foo"),))
+
     ftr = FileTypeResolution(p)
 
-    assert ftr.parser is p  # Here only identity equality makes sense
+    assert ftr.parser is p  # Check for identity equality
     assert ftr.unsupported_type is None
 
 
@@ -73,7 +75,9 @@ def test_FileTypeResolution_init_fail():
 
 
 def fileTypeResolution_init_fail(
-    parser: O[Callable[[Path], ParseResults]], unexpected_type: O[str], expected: Exception
+    parser: Opt[Callable[[Path], ParseResults]],
+    unexpected_type: Opt[str],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         FileTypeResolution(parser, unexpected_type)
@@ -117,7 +121,12 @@ def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
 
 
 def test_Error_init_w_MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE_success():
-    e = Error(ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE, "foo", spcsrc("foo2"), spcsrc("yay"))
+    e = Error(
+        ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+        "foo",
+        spcsrc("foo2"),
+        spcsrc("yay"),
+    )
 
     assert e.error == ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     assert e.message == "foo"
@@ -156,7 +165,11 @@ def test_Error_init_fail():
     # arguments are error type, message string, 1st source, 2nd source, exception
     error_init_fail(None, None, None, None, ValueError("error is required"))
     error_init_fail(
-        ErrorType.FILE_NOT_FOUND, None, None, None, ValueError("source_1 is required for a FILE_NOT_FOUND error")
+        ErrorType.FILE_NOT_FOUND,
+        None,
+        None,
+        None,
+        ValueError("source_1 is required for a FILE_NOT_FOUND error"),
     )
     err = "message, source_1 is required for a PARSE_FAIL error"
     error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
@@ -170,14 +183,20 @@ def test_Error_init_fail():
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
     error_init_fail(ms, "msg", None, spcsrc("bar"), ValueError(err))
     error_init_fail(ms, "msg", spcsrc("foo"), None, ValueError(err))
-    error_init_fail(ErrorType.OTHER, None, None, None, ValueError("message is required for a OTHER error"))
+    error_init_fail(
+        ErrorType.OTHER,
+        None,
+        None,
+        None,
+        ValueError("message is required for a OTHER error"),
+    )
 
 
 def error_init_fail(
-    errortype: O[ErrorType],
-    message: O[str],
-    source_1: O[SpecificationSource],
-    source_2: O[SpecificationSource],
+    errortype: Opt[ErrorType],
+    message: Opt[str],
+    source_1: Opt[SpecificationSource],
+    source_2: Opt[SpecificationSource],
     expected: Exception,
 ):
     with raises(Exception) as got:
@@ -199,7 +218,9 @@ def test_ParseResult_init_fail():
 
 
 def parseResult_init_fail(
-    source: O[SpecificationSource], result: O[tuple[frozendict[str, PRIMITIVE_TYPE], ...]], expected: Exception
+    source: Opt[SpecificationSource],
+    result: Opt[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         ParseResult(source, result)
@@ -207,7 +228,12 @@ def parseResult_init_fail(
 
 
 PR_RESULTS = frozendict(
-    {"data_type": ParseResult(spcsrc("some_file", "tab"), (frozendict({"fasta_file": "foo.fa", "do_thing": 1}),))}
+    {
+        "data_type": ParseResult(
+            spcsrc("some_file", "tab"),
+            (frozendict({"fasta_file": "foo.fa", "do_thing": 1}),),
+        )
+    }
 )  # make a tuple!
 
 PR_ERROR = (
@@ -242,7 +268,11 @@ def test_ParseResults_init_fail():
     parseResults_init_fail(PR_RESULTS, PR_ERROR, ValueError(err))
 
 
-def parseResults_init_fail(results: O[frozendict[str, ParseResult]], errors: O[tuple[Error, ...]], expected: Exception):
+def parseResults_init_fail(
+    results: Opt[frozendict[str, ParseResult]],
+    errors: Opt[tuple[Error, ...]],
+    expected: Exception,
+):
     with raises(Exception) as got:
         ParseResults(results, errors)
     assert_exception_correct(got.value, expected)
@@ -265,7 +295,8 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    spcsrc("myfile.xlsx", "tab1"), (frozendict({"foo": "bar"}), frozendict({"baz": "bat"}))
+                    spcsrc("myfile.xlsx", "tab1"),
+                    (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)),  # tuple!
             }
@@ -276,7 +307,8 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type_other": ParseResult(
-                    spcsrc("somefile.csv"), (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"}))
+                    spcsrc("somefile.csv"),
+                    (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 )
             }
         )
@@ -288,11 +320,13 @@ def test_parse_import_specifications_success():
         frozendict(
             {
                 "type1": ParseResult(
-                    spcsrc("myfile.xlsx", "tab1"), (frozendict({"foo": "bar"}), frozendict({"baz": "bat"}))
+                    spcsrc("myfile.xlsx", "tab1"),
+                    (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
                 "type2": ParseResult(spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)),  # tuple!
                 "type_other": ParseResult(
-                    spcsrc("somefile.csv"), (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"}))
+                    spcsrc("somefile.csv"),
+                    (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
                 ),
             }
         )
@@ -348,7 +382,12 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
 
     # check that other errors are also returned, and the results are ignored
     parser1.return_value = ParseResults(
-        errors=tuple([Error(ErrorType.OTHER, "foo"), Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv"))])
+        errors=tuple(
+            [
+                Error(ErrorType.OTHER, "foo"),
+                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("foo.csv")),
+            ]
+        )
     )
     parser2.return_value = ParseResults(frozendict({"foo": ParseResult(spcsrc("a"), tuple([frozendict({"a": "b"})]))}))
 
@@ -396,7 +435,12 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
 
     # check that other errors are also returned, and the results are ignored
     parser1.return_value = ParseResults(
-        errors=tuple([Error(ErrorType.OTHER, "other"), Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx"))])
+        errors=tuple(
+            [
+                Error(ErrorType.OTHER, "other"),
+                Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc("myfile.xlsx")),
+            ]
+        )
     )
     parser2.return_value = ParseResults(
         frozendict(

@@ -34,21 +34,30 @@ _FORMAT_VERSION = 1  # evolve the format by making changes and incrementing the 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate a bulk import template for an app")
     parser.add_argument(
-        "app_id", help="The app ID to process, for example kb_uploadmethods/import_sra_as_reads_from_staging"
+        "app_id",
+        help="The app ID to process, for example kb_uploadmethods/import_sra_as_reads_from_staging",
     )
     parser.add_argument(
         "data_type",
-        help="The datatype corresponding to the the app. This id is shared between the "
-        + "staging service and the narrative, for example sra_reads",
+        help="The datatype corresponding to the the app."
+        + "This id is shared between the staging service and the narrative, for example sra_reads",
     )
-    parser.add_argument("--tsv", action="store_true", help="Create a TSV file rather than a CSV file (the default)")
+    parser.add_argument(
+        "--tsv",
+        action="store_true",
+        help="Create a TSV file rather than a CSV file (the default)",
+    )
     parser.add_argument(
         "--env",
         choices=["prod", "appdev", "next", "ci"],
         default="prod",
         help="The KBase environment to query, default prod",
     )
-    parser.add_argument("--print-spec", action="store_true", help="Print the input specification for the app to stderr")
+    parser.add_argument(
+        "--print-spec",
+        action="store_true",
+        help="Print the input specification for the app to stderr",
+    )
     return parser.parse_args()
 
 

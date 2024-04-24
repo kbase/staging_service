@@ -68,7 +68,11 @@ def _parse_header(header: str, spec_source: SpecificationSource, maximum_version
     match = _HEADER_REGEX.fullmatch(header)
     if not match:
         raise _ParseException(
-            Error(ErrorType.PARSE_FAIL, f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"', spec_source)
+            Error(
+                ErrorType.PARSE_FAIL,
+                f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"',
+                spec_source,
+            )
         )
     version = int(match[3])
     if version > maximum_version:
@@ -144,12 +148,20 @@ def _normalize_headers(headers: list[Any], line_number: int, spec_source: Specif
     for i, name in enumerate(ret, start=1):
         if not name:
             raise _ParseException(
-                Error(ErrorType.PARSE_FAIL, f"Missing header entry in row {line_number}, position {i}", spec_source)
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    f"Missing header entry in row {line_number}, position {i}",
+                    spec_source,
+                )
             )
 
         if name in seen:
             raise _ParseException(
-                Error(ErrorType.PARSE_FAIL, f"Duplicate header name in row {line_number}: {name}", spec_source)
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    f"Duplicate header name in row {line_number}: {name}",
+                    spec_source,
+                )
             )
         seen.add(name)
     return ret
@@ -275,7 +287,13 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except ValueError as e:
         if "Excel file format cannot be determined" in str(e):
-            return _error(Error(ErrorType.PARSE_FAIL, "Not a supported Excel file type", source_1=spcsrc))
+            return _error(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Not a supported Excel file type",
+                    source_1=spcsrc,
+                )
+            )
         raise e  # bail out, not sure what's wrong, not sure how to test either
     if errors:
         return ParseResults(errors=tuple(errors))

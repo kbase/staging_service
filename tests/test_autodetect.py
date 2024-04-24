@@ -49,7 +49,11 @@ def test_reasonable_filenames():
         extensions = file_format_to_extension_mapping[heading]
         for extension in extensions:
             good_filenames.append(
-                (f"{heading}.{extension}", heading.count("."), extensions_mapping[extension]["file_ext_type"])
+                (
+                    f"{heading}.{extension}",
+                    heading.count("."),
+                    extensions_mapping[extension]["file_ext_type"],
+                )
             )
 
     for filename, heading_dotcount, ext in good_filenames:
@@ -77,9 +81,18 @@ def test_specific_filenames():
     Test some made up filenames to check that multi-dot extensions are handled correctly
     """
     test_data = [
-        ("filename", (None, {"prefix": "filename", "suffix": None, "file_ext_type": []})),
-        ("file.name", (None, {"prefix": "file.name", "suffix": None, "file_ext_type": []})),
-        ("fil.en.ame", (None, {"prefix": "fil.en.ame", "suffix": None, "file_ext_type": []})),
+        (
+            "filename",
+            (None, {"prefix": "filename", "suffix": None, "file_ext_type": []}),
+        ),
+        (
+            "file.name",
+            (None, {"prefix": "file.name", "suffix": None, "file_ext_type": []}),
+        ),
+        (
+            "fil.en.ame",
+            (None, {"prefix": "fil.en.ame", "suffix": None, "file_ext_type": []}),
+        ),
         (
             "file.gZ",
             (
@@ -90,7 +103,11 @@ def test_specific_filenames():
                         "title": "Decompress/Unpack",
                     }
                 ],
-                {"prefix": "file", "suffix": "gZ", "file_ext_type": ["CompressedFileFormatArchive"]},
+                {
+                    "prefix": "file",
+                    "suffix": "gZ",
+                    "file_ext_type": ["CompressedFileFormatArchive"],
+                },
             ),
         ),
         (
@@ -103,7 +120,11 @@ def test_specific_filenames():
                         "title": "Decompress/Unpack",
                     }
                 ],
-                {"prefix": "file.name", "suffix": "gZ", "file_ext_type": ["CompressedFileFormatArchive"]},
+                {
+                    "prefix": "file.name",
+                    "suffix": "gZ",
+                    "file_ext_type": ["CompressedFileFormatArchive"],
+                },
             ),
         ),
         (
@@ -126,7 +147,11 @@ def test_specific_filenames():
                         "title": "GFF/FASTA MetaGenome",
                     },
                 ],
-                {"prefix": "oscar_the_grouch_does_meth", "suffix": "FaStA.gz", "file_ext_type": ["FASTA"]},
+                {
+                    "prefix": "oscar_the_grouch_does_meth",
+                    "suffix": "FaStA.gz",
+                    "file_ext_type": ["FASTA"],
+                },
             ),
         ),
         (
@@ -144,7 +169,11 @@ def test_specific_filenames():
                         "title": "GFF/FASTA MetaGenome",
                     },
                 ],
-                {"prefix": "look.at.all.these.frigging.dots", "suffix": "gff2.gzip", "file_ext_type": ["GFF"]},
+                {
+                    "prefix": "look.at.all.these.frigging.dots",
+                    "suffix": "gff2.gzip",
+                    "file_ext_type": ["GFF"],
+                },
             ),
         ),
     ]
@@ -184,7 +213,11 @@ def test_zip_mappings():
             "title": "Decompress/Unpack",
         }
     ]
-    assert fileinfo == {"prefix": "test", "suffix": "tar.gz", "file_ext_type": ["CompressedFileFormatArchive"]}
+    assert fileinfo == {
+        "prefix": "test",
+        "suffix": "tar.gz",
+        "file_ext_type": ["CompressedFileFormatArchive"],
+    }
 
 
 def test_get_mappings():
@@ -217,7 +250,11 @@ def test_get_mappings():
         ],
         "fileinfo": [
             {"prefix": "filename", "suffix": None, "file_ext_type": []},
-            {"prefix": "file.name", "suffix": "Gz", "file_ext_type": ["CompressedFileFormatArchive"]},
+            {
+                "prefix": "file.name",
+                "suffix": "Gz",
+                "file_ext_type": ["CompressedFileFormatArchive"],
+            },
             {"prefix": "some.dots", "suffix": "gff3.gz", "file_ext_type": ["GFF"]},
         ],
     }

@@ -1,4 +1,4 @@
-""" Unit tests for the metadata handling routines. """
+"""Unit tests for the metadata handling routines."""
 
 import json
 import uuid
@@ -39,7 +39,13 @@ async def test_incomplete_metadata_file_update(temp_dir: Path):
 
 
 async def _incomplete_metadata_file_update(temp_dir, metadict, source):
-    target = Path(str(temp_dir / "full"), str(temp_dir / "meta"), "user_path", "myfilename", "super_fake_jgi_path")
+    target = Path(
+        str(temp_dir / "full"),
+        str(temp_dir / "meta"),
+        "user_path",
+        "myfilename",
+        "super_fake_jgi_path",
+    )
 
     with open(target.full_path, "w") as p:
         p.writelines(make_test_lines(1, 6))

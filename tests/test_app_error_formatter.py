@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from staging_service.app_error_formatter import format_import_spec_errors
-from staging_service.import_specifications.file_parser import ErrorType, Error, SpecificationSource
+from staging_service.import_specifications.file_parser import (
+    ErrorType,
+    Error,
+    SpecificationSource,
+)
 
 
 def _ss(file: str, tab: str = None) -> SpecificationSource:
@@ -28,7 +32,12 @@ def test_format_import_spec_errors_all_the_errors_no_tabs():
         Error(ErrorType.OTHER, "foobar1", _ss("file1")),
         Error(ErrorType.PARSE_FAIL, "foobar2", _ss("file2")),
         Error(ErrorType.INCORRECT_COLUMN_COUNT, "foobar3", _ss("file3")),
-        Error(ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE, "foobar4", _ss("file4"), _ss("file5")),
+        Error(
+            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+            "foobar4",
+            _ss("file4"),
+            _ss("file5"),
+        ),
         Error(ErrorType.NO_FILES_PROVIDED),
         Error(ErrorType.FILE_NOT_FOUND, source_1=_ss("file6")),
     ]
@@ -73,7 +82,12 @@ def test_format_import_spec_errors_all_the_errors_with_tabs():
     errors = [
         Error(ErrorType.PARSE_FAIL, "foobar1", _ss("file1", "tab1")),
         Error(ErrorType.INCORRECT_COLUMN_COUNT, "foobar2", _ss("file2", "tab2")),
-        Error(ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE, "foobar3", _ss("file3", "tab3"), _ss("file4", "tab4")),
+        Error(
+            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+            "foobar3",
+            _ss("file3", "tab3"),
+            _ss("file4", "tab4"),
+        ),
     ]
     paths = {
         Path("file1"): Path("f1"),
@@ -82,7 +96,12 @@ def test_format_import_spec_errors_all_the_errors_with_tabs():
         Path("file4"): Path("f4"),
     }
     assert format_import_spec_errors(errors, paths) == [
-        {"type": "cannot_parse_file", "message": "foobar1", "file": "f1", "tab": "tab1"},
+        {
+            "type": "cannot_parse_file",
+            "message": "foobar1",
+            "file": "f1",
+            "tab": "tab1",
+        },
         {
             "type": "incorrect_column_count",
             "message": "foobar2",

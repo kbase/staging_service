@@ -3,6 +3,7 @@
 """
 Deletes ACLS from globus, and then clears out directories older than THRESHOLD (60) days
 """
+
 from __future__ import print_function  # for python 2
 
 import configparser
@@ -20,7 +21,10 @@ Setup clients and read token
 current_time = time.time()
 THRESHOLD_DAYS = 60
 
-admin_acls = ["9cb619d0-4417-11e8-8e06-0a6d4e044368", "580118b2-dc53-11e6-9d02-22000a1e3b52"]
+admin_acls = [
+    "9cb619d0-4417-11e8-8e06-0a6d4e044368",
+    "580118b2-dc53-11e6-9d02-22000a1e3b52",
+]
 admin_names = ["dolsonadmin", "dolson"]
 
 config = configparser.ConfigParser()

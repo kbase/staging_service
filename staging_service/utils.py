@@ -151,7 +151,7 @@ class AclManager:
         Attempt to add acl for the given user id and directory
         """
         try:
-            resp = self.globus_transfer_client.add_endpoint_acl_rule(
+            self.globus_transfer_client.add_endpoint_acl_rule(
                 self.endpoint_id,
                 dict(
                     DATA_TYPE="access",
@@ -214,7 +214,7 @@ class AclManager:
             }
             raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
-        except globus_sdk.GlobusAPIError as error:
+        except globus_sdk.GlobusAPIError:
             response = {
                 "success": False,
                 "error_type": "GlobusAPIError",

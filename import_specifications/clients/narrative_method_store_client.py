@@ -192,7 +192,10 @@ class NarrativeMethodStore(object):
            String, parameter "link" of type "url"
         """
         return self._client.call_method(
-            "NarrativeMethodStore.list_methods_full_info", [params], self._service_ver, context
+            "NarrativeMethodStore.list_methods_full_info",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def list_methods_spec(self, params, context=None):
@@ -541,7 +544,12 @@ class NarrativeMethodStore(object):
            "target_property" of String, parameter "target_type_transform" of
            String, parameter "job_id_output_field" of String
         """
-        return self._client.call_method("NarrativeMethodStore.list_methods_spec", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods_spec",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def list_method_ids_and_names(self, params, context=None):
         """
@@ -551,7 +559,10 @@ class NarrativeMethodStore(object):
         :returns: instance of mapping from String to String
         """
         return self._client.call_method(
-            "NarrativeMethodStore.list_method_ids_and_names", [params], self._service_ver, context
+            "NarrativeMethodStore.list_method_ids_and_names",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def list_apps(self, params, context=None):
@@ -598,7 +609,10 @@ class NarrativeMethodStore(object):
            parameter "url" of type "url"
         """
         return self._client.call_method(
-            "NarrativeMethodStore.list_apps_full_info", [params], self._service_ver, context
+            "NarrativeMethodStore.list_apps_full_info",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def list_apps_spec(self, params, context=None):
@@ -643,7 +657,12 @@ class NarrativeMethodStore(object):
         """
         :returns: instance of mapping from String to String
         """
-        return self._client.call_method("NarrativeMethodStore.list_app_ids_and_names", [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_app_ids_and_names",
+            [],
+            self._service_ver,
+            context,
+        )
 
     def list_types(self, params, context=None):
         """
@@ -692,7 +711,10 @@ class NarrativeMethodStore(object):
            parameter "app_type" of String
         """
         return self._client.call_method(
-            "NarrativeMethodStore.get_method_brief_info", [params], self._service_ver, context
+            "NarrativeMethodStore.get_method_brief_info",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def get_method_full_info(self, params, context=None):
@@ -731,7 +753,10 @@ class NarrativeMethodStore(object):
            String, parameter "link" of type "url"
         """
         return self._client.call_method(
-            "NarrativeMethodStore.get_method_full_info", [params], self._service_ver, context
+            "NarrativeMethodStore.get_method_full_info",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def get_method_spec(self, params, context=None):
@@ -1091,7 +1116,12 @@ class NarrativeMethodStore(object):
            parameter "categories" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method("NarrativeMethodStore.get_app_brief_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_brief_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_app_full_info(self, params, context=None):
         """
@@ -1112,7 +1142,12 @@ class NarrativeMethodStore(object):
            parameter "screenshots" of list of type "ScreenShot" -> structure:
            parameter "url" of type "url"
         """
-        return self._client.call_method("NarrativeMethodStore.get_app_full_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_full_info",
+            [params],
+            self._service_ver,
+            context,
+        )
 
     def get_app_spec(self, params, context=None):
         """
@@ -2463,7 +2498,10 @@ class NarrativeMethodStore(object):
         :returns: instance of String
         """
         return self._client.call_method(
-            "NarrativeMethodStore.load_widget_java_script", [params], self._service_ver, context
+            "NarrativeMethodStore.load_widget_java_script",
+            [params],
+            self._service_ver,
+            context,
         )
 
     def register_repo(self, params, context=None):
@@ -2495,4 +2533,9 @@ class NarrativeMethodStore(object):
            two values: 'beta' or 'release'.) -> structure: parameter
            "module_name" of String, parameter "tag" of String
         """
-        return self._client.call_method("NarrativeMethodStore.push_repo_to_tag", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.push_repo_to_tag",
+            [params],
+            self._service_ver,
+            context,
+        )

@@ -5,6 +5,7 @@ A very basic KBase auth client for the Python server.
 
 @author: gaprice@lbl.gov
 """
+
 import hashlib
 import threading as _threading
 import time as _time

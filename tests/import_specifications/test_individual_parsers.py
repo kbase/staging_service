@@ -70,10 +70,38 @@ def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseR
                     SpecificationSource(input_),
                     tuple(
                         [
-                            frozendict({"spec1": "val1", "spec2": "val2", "spec3": 7, "spec4": 3.2}),
-                            frozendict({"spec1": "val3", "spec2": "val4", "spec3": 1, "spec4": 8.9}),
-                            frozendict({"spec1": "val5", "spec2": None, "spec3": None, "spec4": 42.42}),
-                            frozendict({"spec1": "val6", "spec2": None, "spec3": None, "spec4": 3.14}),
+                            frozendict(
+                                {
+                                    "spec1": "val1",
+                                    "spec2": "val2",
+                                    "spec3": 7,
+                                    "spec4": 3.2,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "val3",
+                                    "spec2": "val4",
+                                    "spec3": 1,
+                                    "spec4": 8.9,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "val5",
+                                    "spec2": None,
+                                    "spec3": None,
+                                    "spec4": 42.42,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "val6",
+                                    "spec2": None,
+                                    "spec3": None,
+                                    "spec4": 3.14,
+                                }
+                            ),
                         ]
                     ),
                 )
@@ -115,9 +143,30 @@ def _xsv_parse_success_nan_inf(temp_dir: Path, sep: str, parser: Callable[[Path]
                     SpecificationSource(input_),
                     tuple(
                         [
-                            frozendict({"spec1": "inf", "-Inf": "val2", "nan": "NaN", "inf": 3.2}),
-                            frozendict({"spec1": "Inf", "-Inf": "val4", "nan": "-inf", "inf": 8.9}),
-                            frozendict({"spec1": "val5", "-Inf": "-Inf", "nan": None, "inf": "nan"}),
+                            frozendict(
+                                {
+                                    "spec1": "inf",
+                                    "-Inf": "val2",
+                                    "nan": "NaN",
+                                    "inf": 3.2,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "Inf",
+                                    "-Inf": "val4",
+                                    "nan": "-inf",
+                                    "inf": 8.9,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "val5",
+                                    "-Inf": "-Inf",
+                                    "nan": None,
+                                    "inf": "nan",
+                                }
+                            ),
                         ]
                     ),
                 )
@@ -204,8 +253,22 @@ def _xsv_parse_success_with_internal_and_trailing_empty_lines(
                     SpecificationSource(input_),
                     tuple(
                         [
-                            frozendict({"spec1": "val3", "spec2": "val4", "spec3": 1, "spec4": 8.9}),
-                            frozendict({"spec1": "val1", "spec2": "val2", "spec3": 7, "spec4": 3.2}),
+                            frozendict(
+                                {
+                                    "spec1": "val3",
+                                    "spec2": "val4",
+                                    "spec3": 1,
+                                    "spec4": 8.9,
+                                }
+                            ),
+                            frozendict(
+                                {
+                                    "spec1": "val1",
+                                    "spec2": "val2",
+                                    "spec3": 7,
+                                    "spec4": 3.2,
+                                }
+                            ),
                         ]
                     ),
                 )
@@ -257,7 +320,15 @@ def test_xsv_parse_fail_directory(temp_dir: Path):
     res = parse_tsv(test_file)
 
     assert res == ParseResults(
-        errors=tuple([Error(ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file))])
+        errors=tuple(
+            [
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "The given path is a directory",
+                    SpecificationSource(test_file),
+                )
+            ]
+        )
     )
 
 
@@ -434,10 +505,12 @@ def test_excel_parse_success():
                         ),
                     ),
                     "type2": ParseResult(
-                        SpecificationSource(ex, "tab2"), (frozendict({"h1": "golly gee", "2": 42, "h3": "super"}),)
+                        SpecificationSource(ex, "tab2"),
+                        (frozendict({"h1": "golly gee", "2": 42, "h3": "super"}),),
                     ),
                     "type3": ParseResult(
-                        SpecificationSource(ex, "tab3"), (frozendict({"head1": "some data", "head2": 1}),)
+                        SpecificationSource(ex, "tab3"),
+                        (frozendict({"head1": "some data", "head2": 1}),),
                     ),
                 }
             )
@@ -503,7 +576,15 @@ def _excel_parse_fail(test_file: str, message: str = None, errors: list[Error] =
         assert res == ParseResults(errors=tuple(errors))
     else:
         assert res == ParseResults(
-            errors=tuple([Error(ErrorType.PARSE_FAIL, message, source_1=SpecificationSource(test_file))])
+            errors=tuple(
+                [
+                    Error(
+                        ErrorType.PARSE_FAIL,
+                        message,
+                        source_1=SpecificationSource(test_file),
+                    )
+                ]
+            )
         )
 
 
@@ -530,7 +611,13 @@ def test_excel_parse_fail_non_excel_file(temp_dir: Path):
         "Head 1, Head 2, Head 3\n",
         "1, 2, 3\n",
     ]
-    _xsv_parse_fail(temp_dir, lines, parse_excel, "Not a supported Excel file type", extension=".xlsx")
+    _xsv_parse_fail(
+        temp_dir,
+        lines,
+        parse_excel,
+        "Not a supported Excel file type",
+        extension=".xlsx",
+    )
 
 
 def test_excel_parse_1emptytab():
@@ -558,28 +645,52 @@ def test_excel_parse_fail_headers_only():
     _excel_parse_fail(f, "No non-header data in file")
 
 
+def format_message(t):
+    return f"Found datatype {t} in multiple tabs"
+
+
 def test_excel_parse_fail_colliding_datatypes():
     f = _get_test_file("testdatatypecollisions.xls")
-    l = lambda t: f"Found datatype {t} in multiple tabs"
+    msg = format_message
+
     err = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     _excel_parse_fail(
         f,
         errors=[
-            Error(err, l("type2"), SpecificationSource(f, "dt2"), SpecificationSource(f, "dt2_2")),
-            Error(err, l("type3"), SpecificationSource(f, "dt3"), SpecificationSource(f, "dt3_2")),
-            Error(err, l("type2"), SpecificationSource(f, "dt2"), SpecificationSource(f, "dt2_3")),
+            Error(
+                err,
+                msg("type2"),
+                SpecificationSource(f, "dt2"),
+                SpecificationSource(f, "dt2_2"),
+            ),
+            Error(
+                err,
+                msg("type3"),
+                SpecificationSource(f, "dt3"),
+                SpecificationSource(f, "dt3_2"),
+            ),
+            Error(
+                err,
+                msg("type2"),
+                SpecificationSource(f, "dt2"),
+                SpecificationSource(f, "dt2_3"),
+            ),
         ],
     )
 
 
+def duplicate_header_message(h):
+    return f"Duplicate header name in row 2: {h}"
+
+
 def test_excel_parse_fail_duplicate_headers():
     f = _get_test_file("testduplicateheaders.xlsx")
-    l = lambda h: f"Duplicate header name in row 2: {h}"
+    msg = duplicate_header_message
     _excel_parse_fail(
         f,
         errors=[
-            Error(ErrorType.PARSE_FAIL, l("head1"), SpecificationSource(f, "dt2")),
-            Error(ErrorType.PARSE_FAIL, l("head2"), SpecificationSource(f, "dt3")),
+            Error(ErrorType.PARSE_FAIL, msg("head1"), SpecificationSource(f, "dt2")),
+            Error(ErrorType.PARSE_FAIL, msg("head2"), SpecificationSource(f, "dt3")),
         ],
     )
 
@@ -591,8 +702,16 @@ def test_excel_parse_fail_missing_header_item():
     _excel_parse_fail(
         f,
         errors=[
-            Error(ErrorType.PARSE_FAIL, err1, SpecificationSource(f, "missing header item error")),
-            Error(ErrorType.PARSE_FAIL, err2, SpecificationSource(f, "whitespace header item")),
+            Error(
+                ErrorType.PARSE_FAIL,
+                err1,
+                SpecificationSource(f, "missing header item error"),
+            ),
+            Error(
+                ErrorType.PARSE_FAIL,
+                err2,
+                SpecificationSource(f, "whitespace header item"),
+            ),
         ],
     )
 

@@ -1,0 +1,2 @@
+[flake8]
+per-file-ignores =    tests/test_app.py:F841

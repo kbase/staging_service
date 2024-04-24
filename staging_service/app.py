@@ -168,11 +168,13 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
     if request.content_type != _APP_JSON:
         # There should be a way to get aiohttp to handle this but I can't find it
         return _createJSONErrorResponse(
-            f"Required content-type is {_APP_JSON}", error_class=web.HTTPUnsupportedMediaType
+            f"Required content-type is {_APP_JSON}",
+            error_class=web.HTTPUnsupportedMediaType,
         )
     if not request.content_length:
         return _createJSONErrorResponse(
-            "The content-length header is required and must be > 0", error_class=web.HTTPLengthRequired
+            "The content-length header is required and must be > 0",
+            error_class=web.HTTPLengthRequired,
         )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
@@ -208,9 +210,9 @@ async def add_acl_concierge(request: web.Request):
     aclm = AclManager()
     result = aclm.add_acl_concierge(shared_directory=user_dir, concierge_path=concierge_path)
     result["msg"] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
-    result[
-        "link"
-    ] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
+    result["link"] = (
+        f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
+    )
     return web.json_response(result)
 
 

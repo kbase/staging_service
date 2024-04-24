@@ -1012,9 +1012,15 @@ async def test_bulk_specification_success():
                 },
                 "files": {
                     "genomes": {"file": "testuser/genomes.tsv", "tab": None},
-                    "breakfastcereals": {"file": "testuser/somefolder/breakfastcereals.csv", "tab": None},
+                    "breakfastcereals": {
+                        "file": "testuser/somefolder/breakfastcereals.csv",
+                        "tab": None,
+                    },
                     "fruit_bats": {"file": "testuser/importspec.xlsx", "tab": "bats"},
-                    "tree_sloths": {"file": "testuser/importspec.xlsx", "tab": "sloths"},
+                    "tree_sloths": {
+                        "file": "testuser/importspec.xlsx",
+                        "tab": "sloths",
+                    },
                 },
             }
             assert resp.status == 200
@@ -1384,7 +1390,10 @@ _IMPORT_SPEC_TEST_DATA = {
         ],
     },
     "reads": {
-        "order_and_display": [["name", "Reads File Name"], ["inseam", "Reads inseam measurement in km"]],
+        "order_and_display": [
+            ["name", "Reads File Name"],
+            ["inseam", "Reads inseam measurement in km"],
+        ],
         "data": [
             {"name": "myreads.fa", "inseam": 0.1},
         ],
@@ -1408,7 +1417,10 @@ async def test_write_bulk_specification_success_csv():
             js = await resp.json()
             assert js == {
                 "output_file_type": "CSV",
-                "files_created": {"genome": "testuser/specs/genome.csv", "reads": "testuser/specs/reads.csv"},
+                "files_created": {
+                    "genome": "testuser/specs/genome.csv",
+                    "reads": "testuser/specs/reads.csv",
+                },
             }
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
@@ -1451,7 +1463,10 @@ async def test_write_bulk_specification_success_tsv():
             js = await resp.json()
             assert js == {
                 "output_file_type": "TSV",
-                "files_created": {"genome": "testuser/tsvspecs/genome.tsv", "reads": "testuser/tsvspecs/reads.tsv"},
+                "files_created": {
+                    "genome": "testuser/tsvspecs/genome.tsv",
+                    "reads": "testuser/tsvspecs/reads.tsv",
+                },
             }
             base = Path(fu.base_dir) / "testuser"
             check_file_contents(
@@ -1575,7 +1590,8 @@ async def test_write_bulk_specification_fail_no_file_type():
 
 async def test_write_bulk_specification_fail_wrong_file_type():
     await _write_bulk_specification_json_fail(
-        {"output_directory": "foo", "output_file_type": "XSV"}, "Invalid output_file_type: XSV"
+        {"output_directory": "foo", "output_file_type": "XSV"},
+        "Invalid output_file_type: XSV",
     )
 
 

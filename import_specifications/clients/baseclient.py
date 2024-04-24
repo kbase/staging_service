@@ -54,7 +54,7 @@ def _get_token(user_id, password, auth_svc):
 
 
 def _read_inifile(
-    file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config")
+    file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config"),
 ):  # @ReservedAssignment
     # Another bandaid to read in the ~/.kbase_config file if one is present
     authdata = None
@@ -65,7 +65,14 @@ def _read_inifile(
             # strip down whatever we read to only what is legit
             authdata = {
                 x: config.get("authentication", x) if config.has_option("authentication", x) else None
-                for x in ("user_id", "token", "client_secret", "keyfile", "keyfile_passphrase", "password")
+                for x in (
+                    "user_id",
+                    "token",
+                    "client_secret",
+                    "keyfile",
+                    "keyfile_passphrase",
+                    "password",
+                )
             }
         except Exception as e:
             print("Error while reading INI file {}: {}".format(file, e))
@@ -165,7 +172,12 @@ class BaseClient(object):
             raise ValueError("Timeout value must be at least 1 second")
 
     def _call(self, url, method, params, context=None):
-        arg_hash = {"method": method, "params": params, "version": "1.1", "id": str(_random.random())[2:]}
+        arg_hash = {
+            "method": method,
+            "params": params,
+            "version": "1.1",
+            "id": str(_random.random())[2:],
+        }
         if context:
             if type(context) is not dict:
                 raise ValueError("context is not type dict as required.")
@@ -173,7 +185,11 @@ class BaseClient(object):
 
         body = _json.dumps(arg_hash, cls=_JSONObjectEncoder)
         ret = _requests.post(
-            url, data=body, headers=self._headers, timeout=self.timeout, verify=not self.trust_all_ssl_certificates
+            url,
+            data=body,
+            headers=self._headers,
+            timeout=self.timeout,
+            verify=not self.trust_all_ssl_certificates,
         )
         ret.encoding = "utf-8"
         if ret.status_code == 500:
@@ -201,7 +217,9 @@ class BaseClient(object):
             return self.url
         service, _ = service_method.split(".")
         service_status_ret = self._call(
-            self.url, "ServiceWizard.get_service_status", [{"module_name": service, "version": service_version}]
+            self.url,
+            "ServiceWizard.get_service_status",
+            [{"module_name": service, "version": service_version}],
         )
         return service_status_ret["url"]
 
