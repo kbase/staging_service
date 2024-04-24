@@ -1,0 +1,9 @@
+[tool.black]
+line_length = 180
+multi_line_output = 3
+extend-exclude = '''Pipfile.lock'''
+
+
+[flake8]
+max-line-length = 180
+exclude = '''Pipfile.lock'''
