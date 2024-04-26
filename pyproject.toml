@@ -11,7 +11,7 @@ line-length = 100
 
 
 [tool.ruff]
-select = [
+lint.select = [
     # core
     "F", # Pyflakes
     "E", # pycodestyle errors
@@ -27,15 +27,15 @@ select = [
 # E203: whitespace before ‘,’, ‘;’, or ‘:’
 # E501: line length
 # W503: line break after binary operator
-ignore = [
+lint.ignore = [
     "E203",
     "E501",
     "S101",
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
+lint.fixable = ["ALL"]
+lint.unfixable = []
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -67,7 +67,7 @@ exclude = [
     "sample_data",
     "venv",
 ]
-per-file-ignores = { }
+lint.per-file-ignores = { }
 
 # Same as Black.
 line-length = 100

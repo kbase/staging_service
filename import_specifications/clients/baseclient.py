@@ -52,8 +52,7 @@ def _get_token(user_id, password, auth_svc):
         tok = _json.loads(ret.text)
     elif status == 403:
         raise Exception(
-            "Authentication failed: Bad user_id/password "
-            + "combination for user %s" % (user_id)
+            "Authentication failed: Bad user_id/password " + "combination for user %s" % (user_id)
         )
     else:
         raise Exception(ret.text)
@@ -61,9 +60,7 @@ def _get_token(user_id, password, auth_svc):
 
 
 def _read_inifile(
-    file=_os.environ.get(
-        "KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config"
-    ),
+    file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config"),
 ):  # @ReservedAssignment
     # Another bandaid to read in the ~/.kbase_config file if one is present
     authdata = None
@@ -102,9 +99,7 @@ class ServerError(Exception):
         # data = JSON RPC 2.0, error = 1.1
 
     def __str__(self):
-        return (
-            self.name + ": " + str(self.code) + ". " + self.message + "\n" + self.data
-        )
+        return self.name + ": " + str(self.code) + ". " + self.message + "\n" + self.data
 
 
 class _JSONObjectEncoder(_json.JSONEncoder):
@@ -181,10 +176,7 @@ class BaseClient(object):
             if authdata is not None:
                 if authdata.get("token") is not None:
                     self._headers["AUTHORIZATION"] = authdata["token"]
-                elif (
-                    authdata.get("user_id") is not None
-                    and authdata.get("password") is not None
-                ):
+                elif authdata.get("user_id") is not None and authdata.get("password") is not None:
                     self._headers["AUTHORIZATION"] = _get_token(
                         authdata["user_id"], authdata["password"], auth_svc
                     )

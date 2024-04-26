@@ -89,7 +89,11 @@ file_format_to_app_mapping[FASTQ] = [
     fastq_reads_interleaved_id,
     fastq_reads_noninterleaved_id,
 ]
-file_format_to_app_mapping[FASTA] = [assembly_id, gff_genome_id, gff_metagenome_id]
+file_format_to_app_mapping[FASTA] = [
+    assembly_id,
+    gff_genome_id,
+    gff_metagenome_id,
+]
 file_format_to_app_mapping[GENBANK] = [genbank_genome_id]
 file_format_to_app_mapping[GFF] = [gff_genome_id, gff_metagenome_id]
 file_format_to_app_mapping[ZIP] = [decompress_id]
