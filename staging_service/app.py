@@ -179,11 +179,11 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
         )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
-    if type(data) != dict:  # noqa E721
+    if not isinstance(data, dict):
         return _createJSONErrorResponse("The top level JSON element must be a mapping")
     folder = data.get("output_directory")
     type_ = data.get("output_file_type")
-    if type(folder) != str:  # noqa E721
+    if not isinstance(data, dict):
         return _createJSONErrorResponse("output_directory is required and must be a string")
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
@@ -450,9 +450,8 @@ async def upload_files_chunked(request: web.Request):
             f.write(chunk)
 
     if not os.path.exists(path.full_path):
-        error_msg = "We are sorry but upload was interrupted. Please try again.".format(  # noqa F522
-            path=path.full_path
-        )
+        # TODO add in path.full_path to error message
+        error_msg = "We are sorry but the upload was interrupted. Please try again."
         raise web.HTTPNotFound(text=error_msg)
 
     response = await some_metadata(

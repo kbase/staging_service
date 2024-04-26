@@ -89,7 +89,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         # replace this with jsonschema? don't worry about it for now
         _check_string(datatype, "A data type")
         spec = types[datatype]
-        if not isinstance(type(spec), dict):  # noqa: E721
+        if not isinstance(spec, dict):  # noqa: E721
             raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
             raise ImportSpecWriteException(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
@@ -116,7 +116,7 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
             param_ids.add(pid)
         for i, datarow in enumerate(spec[_DATA]):
             err = f"Data type {datatype} {_DATA} row {i}"
-            if not isinstance(type(datarow), dict):
+            if not isinstance(datarow, dict):
                 raise ImportSpecWriteException(err + " is not a mapping")
             if datarow.keys() != param_ids:
                 raise ImportSpecWriteException(
