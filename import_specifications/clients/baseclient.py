@@ -40,21 +40,30 @@ def _get_token(user_id, password, auth_svc):
     # cannot contain non-ascii characters. In python 2, quote doesn't handle
     # unicode, so if this changes this client will need to change.
     body = (
-        "user_id=" + _requests.utils.quote(user_id) + "&password=" + _requests.utils.quote(password) + "&fields=token"
+        "user_id="
+        + _requests.utils.quote(user_id)
+        + "&password="
+        + _requests.utils.quote(password)
+        + "&fields=token"
     )
     ret = _requests.post(auth_svc, data=body, allow_redirects=True)
     status = ret.status_code
     if status >= 200 and status <= 299:
         tok = _json.loads(ret.text)
     elif status == 403:
-        raise Exception("Authentication failed: Bad user_id/password " + "combination for user %s" % (user_id))
+        raise Exception(
+            "Authentication failed: Bad user_id/password "
+            + "combination for user %s" % (user_id)
+        )
     else:
         raise Exception(ret.text)
     return tok["token"]
 
 
 def _read_inifile(
-    file=_os.environ.get("KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config"),
+    file=_os.environ.get(
+        "KB_DEPLOYMENT_CONFIG", _os.environ["HOME"] + "/.kbase_config"
+    ),
 ):  # @ReservedAssignment
     # Another bandaid to read in the ~/.kbase_config file if one is present
     authdata = None
@@ -64,7 +73,11 @@ def _read_inifile(
             config.read(file)
             # strip down whatever we read to only what is legit
             authdata = {
-                x: config.get("authentication", x) if config.has_option("authentication", x) else None
+                x: (
+                    config.get("authentication", x)
+                    if config.has_option("authentication", x)
+                    else None
+                )
                 for x in (
                     "user_id",
                     "token",
@@ -89,7 +102,9 @@ class ServerError(Exception):
         # data = JSON RPC 2.0, error = 1.1
 
     def __str__(self):
-        return self.name + ": " + str(self.code) + ". " + self.message + "\n" + self.data
+        return (
+            self.name + ": " + str(self.code) + ". " + self.message + "\n" + self.data
+        )
 
 
 class _JSONObjectEncoder(_json.JSONEncoder):
@@ -166,8 +181,13 @@ class BaseClient(object):
             if authdata is not None:
                 if authdata.get("token") is not None:
                     self._headers["AUTHORIZATION"] = authdata["token"]
-                elif authdata.get("user_id") is not None and authdata.get("password") is not None:
-                    self._headers["AUTHORIZATION"] = _get_token(authdata["user_id"], authdata["password"], auth_svc)
+                elif (
+                    authdata.get("user_id") is not None
+                    and authdata.get("password") is not None
+                ):
+                    self._headers["AUTHORIZATION"] = _get_token(
+                        authdata["user_id"], authdata["password"], auth_svc
+                    )
         if self.timeout < 1:
             raise ValueError("Timeout value must be at least 1 second")
 
@@ -255,7 +275,9 @@ class BaseClient(object):
         check_job_failures = 0
         while check_job_failures < _CHECK_JOB_RETRYS:
             time.sleep(async_job_check_time)
-            async_job_check_time = async_job_check_time * self.async_job_check_time_scale_percent / 100.0
+            async_job_check_time = (
+                async_job_check_time * self.async_job_check_time_scale_percent / 100.0
+            )
             if async_job_check_time > self.async_job_check_max_time:
                 async_job_check_time = self.async_job_check_max_time
 
@@ -272,7 +294,9 @@ class BaseClient(object):
                 if len(job_state["result"]) == 1:
                     return job_state["result"][0]
                 return job_state["result"]
-        raise RuntimeError("_check_job failed {} times and exceeded limit".format(check_job_failures))
+        raise RuntimeError(
+            "_check_job failed {} times and exceeded limit".format(check_job_failures)
+        )
 
     def call_method(self, service_method, args, service_ver=None, context=None):
         """

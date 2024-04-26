@@ -58,7 +58,6 @@ from staging_service.autodetect.Mappings import (
     file_format_to_extension_mapping,
 )
 
-
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
 
