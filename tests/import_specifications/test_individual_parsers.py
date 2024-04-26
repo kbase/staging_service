@@ -45,7 +45,9 @@ def test_xsv_parse_success(temp_dir: Path):
     _xsv_parse_success(temp_dir, "\t", parse_tsv)
 
 
-def _xsv_parse_success(temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]):
+def _xsv_parse_success(
+    temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]
+):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
     with open(input_, "w") as test_file:
@@ -119,7 +121,9 @@ def test_xsv_parse_success_nan_inf(temp_dir: Path):
     _xsv_parse_success_nan_inf(temp_dir, "\t", parse_tsv)
 
 
-def _xsv_parse_success_nan_inf(temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]):
+def _xsv_parse_success_nan_inf(
+    temp_dir: Path, sep: str, parser: Callable[[Path], ParseResults]
+):
     s = sep
     input_ = temp_dir / str(uuid.uuid4())
     with open(input_, "w") as test_file:
@@ -208,7 +212,9 @@ def _xsv_parse_success_with_numeric_headers(
                     SpecificationSource(input_),
                     tuple(
                         [
-                            frozendict({"1": "val3", "2.0": "val4", "3": 1, "4.1": 8.9}),
+                            frozendict(
+                                {"1": "val3", "2.0": "val4", "3": 1, "4.1": 8.9}
+                            ),
                         ]
                     ),
                 )
@@ -295,7 +301,9 @@ def test_xsv_parse_fail_no_file(temp_dir: Path):
     res = parse_csv(input_)
 
     assert res == ParseResults(
-        errors=tuple([Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(input_))])
+        errors=tuple(
+            [Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(input_))]
+        )
     )
 
 
@@ -349,7 +357,9 @@ def _xsv_parse_fail(
         test_file.writelines(lines)
 
     res = parser(input_)
-    expected = ParseResults(errors=tuple([Error(err_type, message, SpecificationSource(input_))]))
+    expected = ParseResults(
+        errors=tuple([Error(err_type, message, SpecificationSource(input_))])
+    )
     assert res == expected
 
 
@@ -367,12 +377,16 @@ def test_xsv_parse_fail_bad_datatype_header(temp_dir: Path):
 
 def test_xsv_parse_fail_bad_version(temp_dir: Path):
     err = "Schema version 87 is larger than maximum processable version 1"
-    _xsv_parse_fail(temp_dir, ["Data type: foo; Columns: 22; Version: 87"], parse_csv, err)
+    _xsv_parse_fail(
+        temp_dir, ["Data type: foo; Columns: 22; Version: 87"], parse_csv, err
+    )
 
 
 def test_xsv_parse_fail_missing_column_headers(temp_dir: Path):
     err = "Missing 2nd header line"
-    _xsv_parse_fail(temp_dir, ["Data type: foo; Columns: 3; Version: 1\n"], parse_csv, err)
+    _xsv_parse_fail(
+        temp_dir, ["Data type: foo; Columns: 3; Version: 1\n"], parse_csv, err
+    )
 
     err = "Missing 3rd header line"
     lines = ["Data type: foo; Columns: 3; Version: 1\n", "head1, head2, head3\n"]
@@ -502,10 +516,18 @@ def test_excel_parse_success():
                     "type1": ParseResult(
                         SpecificationSource(ex, "tab1"),
                         (
-                            frozendict({"header1": "foo", "header2": 1, "header3": 6.7}),
-                            frozendict({"header1": "bar", "header2": 2, "header3": 8.9}),
-                            frozendict({"header1": "baz", "header2": None, "header3": 3.4}),
-                            frozendict({"header1": "bat", "header2": 4, "header3": None}),
+                            frozendict(
+                                {"header1": "foo", "header2": 1, "header3": 6.7}
+                            ),
+                            frozendict(
+                                {"header1": "bar", "header2": 2, "header3": 8.9}
+                            ),
+                            frozendict(
+                                {"header1": "baz", "header2": None, "header3": 3.4}
+                            ),
+                            frozendict(
+                                {"header1": "bat", "header2": 4, "header3": None}
+                            ),
                         ),
                     ),
                     "type2": ParseResult(
@@ -596,7 +618,9 @@ def _excel_parse_fail(
 
 def test_excel_parse_fail_no_file():
     f = _get_test_file("testtabs3full2nodata1empty0.xls")
-    _excel_parse_fail(f, errors=[Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(f))])
+    _excel_parse_fail(
+        f, errors=[Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(f))]
+    )
 
 
 def test_excel_parse_fail_directory(temp_dir):
@@ -604,11 +628,15 @@ def test_excel_parse_fail_directory(temp_dir):
         f = temp_dir / d
         os.makedirs(f, exist_ok=True)
         err = "The given path is a directory"
-        _excel_parse_fail(f, errors=[Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f))])
+        _excel_parse_fail(
+            f, errors=[Error(ErrorType.PARSE_FAIL, err, SpecificationSource(f))]
+        )
 
 
 def test_excel_parse_fail_empty_file(temp_dir: Path):
-    _xsv_parse_fail(temp_dir, [], parse_excel, "Not a supported Excel file type", extension=".xls")
+    _xsv_parse_fail(
+        temp_dir, [], parse_excel, "Not a supported Excel file type", extension=".xls"
+    )
 
 
 def test_excel_parse_fail_non_excel_file(temp_dir: Path):
@@ -627,7 +655,9 @@ def test_excel_parse_fail_non_excel_file(temp_dir: Path):
 
 
 def test_excel_parse_1emptytab():
-    _excel_parse_fail(_get_test_file("testtabs1empty.xls"), "No non-header data in file")
+    _excel_parse_fail(
+        _get_test_file("testtabs1empty.xls"), "No non-header data in file"
+    )
 
 
 def test_excel_parse_fail_bad_datatype_header():
