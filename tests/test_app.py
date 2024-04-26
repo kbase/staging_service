@@ -202,9 +202,9 @@ async def test_jbi_metadata():
 
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_jgi.fastq"), txt)
-            f_jgi = fs.make_file(os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_jgi.fastq"), txt)
+            fs.make_file(os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata)
             res1 = await cli.get(
                 os.path.join("jgi-metadata", "test", "test_jgi.fastq"),
                 headers={"Authorization": ""},
@@ -230,8 +230,8 @@ async def test_metadata():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             res1 = await cli.get(
                 os.path.join("metadata", "test", "test_file_1"),
                 headers={"Authorization": ""},
@@ -330,8 +330,8 @@ async def test_define_UPA():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             # generating metadata file
             res1 = await cli.get(
                 os.path.join("metadata", "test", "test_file_1"),
@@ -411,8 +411,8 @@ async def test_mv():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
             res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
@@ -479,8 +479,8 @@ async def test_delete():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
             res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
@@ -523,10 +523,10 @@ async def test_list():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
-            d2 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
             res1 = await cli.get("list/..", headers={"Authorization": ""})
             assert res1.status == 404
             res2 = await cli.get(
@@ -572,7 +572,7 @@ async def test_list():
             assert sum(file_folder_count) == 1
 
             # testing list dot-files
-            f4 = fs.make_file(os.path.join(username, "test", ".test_file_1"), txt)
+            fs.make_file(os.path.join(username, "test", ".test_file_1"), txt)
             # f5 = fs.make_file(os.path.join(username, 'test', '.globus_id'), txt)
             res6 = await cli.get("/list/", headers={"Authorization": ""})
             assert res6.status == 200
@@ -600,8 +600,8 @@ async def test_download(txt):
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             res = await cli.get(
                 os.path.join("download", "test", "test_file_1"),
@@ -616,7 +616,7 @@ async def test_download_errors():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
+            fs.make_dir(os.path.join(username, "test"))
 
             res1 = await cli.get("dwnload", headers={"Authorization": ""})
             assert res1.status == 404
@@ -629,15 +629,15 @@ async def test_similar():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1.fq"), txt)
-            d1 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f1 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt)
-            f2 = fs.make_file(
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1.fq"), txt)
+            fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt)
+            fs.make_file(
                 os.path.join(username, "test", "test_sub_dir", "test_file_right.fq"),
                 txt,
             )
-            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "my_files"), txt)
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "my_files"), txt)
 
             # testing similar file name
             res1 = await cli.get("similar/test/test_file_1.fq", headers={"Authorization": ""})
@@ -662,13 +662,13 @@ async def test_existence():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
-            d2 = fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            f3 = fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
-            d3 = fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_file_1"))
-            d4 = fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_sub_dir"))
-            f4 = fs.make_file(
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
+            fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
+            fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_file_1"))
+            fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_sub_dir"))
+            fs.make_file(
                 os.path.join(username, "test", "test_sub_dir", "test_sub_dir", "test_file_1"),
                 txt,
             )
@@ -718,10 +718,10 @@ async def test_search():
     username = "testuser"
     async with AppClient(config, username) as cli:
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
-            f = fs.make_file(os.path.join(username, "test", "test1"), txt)
-            d2 = fs.make_dir(os.path.join(username, "test", "test2"))
-            f3 = fs.make_file(os.path.join(username, "test", "test2", "test3"), txt)
+            fs.make_dir(os.path.join(username, "test"))
+            fs.make_file(os.path.join(username, "test", "test1"), txt)
+            fs.make_dir(os.path.join(username, "test", "test2"))
+            fs.make_file(os.path.join(username, "test", "test2", "test3"), txt)
             res1 = await cli.get("search/", headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
@@ -748,7 +748,7 @@ async def test_upload():
         assert res1.status == 400
 
         with FileUtil() as fs:
-            d = fs.make_dir(os.path.join(username, "test"))
+            fs.make_dir(os.path.join(username, "test"))
             f = fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             files = {"destPath": "/", "uploads": open(f, "rb")}
