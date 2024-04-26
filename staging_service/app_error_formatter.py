@@ -33,11 +33,7 @@ _IMPORT_SPEC_ERROR_FORMATTERS = {
         "file": file1,
         "tab": tab1,
     },
-    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg,
-    file1,
-    tab1,
-    file2,
-    tab2: {
+    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg, file1, tab1, file2, tab2: {
         "type": "multiple_specifications_for_data_type",
         "message": msg,
         "file_1": file1,
@@ -71,7 +67,5 @@ def format_import_spec_errors(
         if e.source_2:
             file2 = str(path_translations[e.source_2.file])
             tab2 = e.source_2.tab
-        errs.append(
-            _IMPORT_SPEC_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2)
-        )
+        errs.append(_IMPORT_SPEC_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2))
     return errs

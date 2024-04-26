@@ -41,9 +41,7 @@ class TokenCache(object):
         token = hashlib.sha256(token.encode("utf8")).hexdigest()
         self._cache[token] = [user, _time.time(), expire_time]
         if len(self._cache) > self._maxsize:
-            for i, (t, _) in enumerate(
-                sorted(self._cache.items(), key=lambda v: v[1][1])
-            ):
+            for i, (t, _) in enumerate(sorted(self._cache.items(), key=lambda v: v[1][1])):
                 if i <= self._halfmax:
                     del self._cache[t]
                 else:
@@ -69,9 +67,7 @@ class KBaseAuth2(object):
         if user:
             return user
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                self._authurl, headers={"Authorization": token}
-            ) as resp:
+            async with session.get(self._authurl, headers={"Authorization": token}) as resp:
                 ret = await resp.json()
                 if not resp.reason == "OK":
                     raise aiohttp.web.HTTPUnauthorized(

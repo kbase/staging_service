@@ -179,9 +179,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
     try:
         filetype = magic.from_file(str(path), mime=True)
         if filetype not in _MAGIC_TEXT_FILES:
-            return _error(
-                Error(ErrorType.PARSE_FAIL, "Not a text file: " + filetype, spcsrc)
-            )
+            return _error(Error(ErrorType.PARSE_FAIL, "Not a text file: " + filetype, spcsrc))
         with open(path, newline="") as input_:
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
             dthd = _csv_next(rdr, 1, None, spcsrc, "Missing data type / version header")
@@ -204,24 +202,15 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                             )
                         )
                     results.append(
-                        frozendict(
-                            {
-                                param_ids[j]: _normalize_xsv(row[j])
-                                for j in range(len(row))
-                            }
-                        )
+                        frozendict({param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))})
                     )
         if not results:
-            raise _ParseException(
-                Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc)
-            )
+            raise _ParseException(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
         return ParseResults(frozendict({datatype: ParseResult(spcsrc, tuple(results))}))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
-        return _error(
-            Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc)
-        )
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except _ParseException as e:
         return _error(e.args[0])
 
@@ -257,9 +246,7 @@ def _process_excel_row(
 def _process_excel_tab(
     excel: pandas.ExcelFile, spcsrc: SpecificationSource
 ) -> (Opt[str], Opt[ParseResult]):
-    df = excel.parse(
-        sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False
-    )
+    df = excel.parse(sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False)
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)
     # at this point we know that at least 4 lines are present - expecting the data type header,
@@ -275,9 +262,7 @@ def _process_excel_tab(
         row = _process_excel_row(row, i, columns, spcsrc)
         if any(map(lambda x: not pandas.isna(x), row)):  # skip empty rows
             results.append(
-                frozendict(
-                    {param_ids[j]: _normalize_pandas(row[j]) for j in range(len(row))}
-                )
+                frozendict({param_ids[j]: _normalize_pandas(row[j]) for j in range(len(row))})
             )
     return datatype, ParseResult(spcsrc, tuple(results))
 
@@ -316,9 +301,7 @@ def parse_excel(path: Path) -> ParseResults:
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
-        return _error(
-            Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc)
-        )
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except ValueError as e:
         if "Excel file format cannot be determined" in str(e):
             return _error(

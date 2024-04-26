@@ -93,13 +93,7 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
     if ftype in _IMPSPEC_FILE_TO_PARSER:
         return FileTypeResolution(parser=_IMPSPEC_FILE_TO_PARSER[ftype])
     else:
-        ext = (
-            fi["suffix"]
-            if fi["suffix"]
-            else path.suffix[1:]
-            if path.suffix
-            else path.name
-        )
+        ext = fi["suffix"] if fi["suffix"] else path.suffix[1:] if path.suffix else path.name
         return FileTypeResolution(unsupported_type=ext)
 
 
@@ -124,9 +118,7 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     res = parse_import_specifications(
         tuple(list(paths)),
         _file_type_resolver,
-        lambda e: logging.error(
-            "Unexpected error while parsing import specs", exc_info=e
-        ),
+        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
     )
     if res.results:
         types = {dt: result.result for dt, result in res.results.items()}
@@ -192,9 +184,7 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
     folder = data.get("output_directory")
     type_ = data.get("output_file_type")
     if type(folder) != str:  # noqa E721
-        return _createJSONErrorResponse(
-            "output_directory is required and must be a string"
-        )
+        return _createJSONErrorResponse("output_directory is required and must be a string")
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
         return _createJSONErrorResponse(f"Invalid output_file_type: {type_}")
@@ -219,12 +209,8 @@ async def add_acl_concierge(request: web.Request):
     user_dir = Path.validate_path(username).full_path
     concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
     aclm = AclManager()
-    result = aclm.add_acl_concierge(
-        shared_directory=user_dir, concierge_path=concierge_path
-    )
-    result["msg"] = (
-        f"Requesting Globus Perms for the following globus dir: {concierge_path}"
-    )
+    result = aclm.add_acl_concierge(shared_directory=user_dir, concierge_path=concierge_path)
+    result["msg"] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
     result["link"] = (
         f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
     )
@@ -298,9 +284,7 @@ async def list_files(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info.get("path", ""))
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text="path {path} does not exist".format(path=path.user_path))
     elif os.path.isfile(path.full_path):
         raise web.HTTPBadRequest(
             text="{path} is a file not a directory".format(path=path.full_path)
@@ -325,17 +309,13 @@ async def download_files(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info.get("path", ""))
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text="path {path} does not exist".format(path=path.user_path))
     elif not os.path.isfile(path.full_path):
         raise web.HTTPBadRequest(
             text="{path} is a directory not a file".format(path=path.full_path)
         )
     # hard coding the mime type to force download
-    return web.FileResponse(
-        path.full_path, headers={"content-type": "application/octet-stream"}
-    )
+    return web.FileResponse(path.full_path, headers={"content-type": "application/octet-stream"})
 
 
 @routes.get("/similar/{path:.+}")
@@ -346,9 +326,7 @@ async def similar_files(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text="path {path} does not exist".format(path=path.user_path))
     elif os.path.isdir(path.full_path):
         raise web.HTTPBadRequest(
             text="{path} is a directory not a file".format(path=path.full_path)
@@ -400,9 +378,7 @@ async def get_metadata(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text="path {path} does not exist".format(path=path.user_path))
     return web.json_response(await some_metadata(path))
 
 
@@ -430,9 +406,7 @@ async def upload_files_chunked(request: web.Request):
     counter = 0
     user_file = None
     destPath = None
-    while (
-        counter < 100
-    ):  # TODO this is arbitrary to keep an attacker from creating infinite loop
+    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
 
@@ -498,9 +472,7 @@ async def define_UPA(request: web.Request):
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
-        raise web.HTTPNotFound(
-            text="no file found found on path {}".format(path.user_path)
-        )
+        raise web.HTTPNotFound(text="no file found found on path {}".format(path.user_path))
     if not request.has_body:
         raise web.HTTPBadRequest(text="must provide UPA field in body")
     body = await request.post()
@@ -510,9 +482,7 @@ async def define_UPA(request: web.Request):
         raise web.HTTPBadRequest(text="must provide UPA field in body")
     await add_upa(path, UPA)
     return web.Response(
-        text="succesfully updated UPA {UPA} for file {path}".format(
-            UPA=UPA, path=path.user_path
-        )
+        text="succesfully updated UPA {UPA} for file {path}".format(UPA=UPA, path=path.user_path)
     )
 
 
@@ -537,9 +507,7 @@ async def delete(request: web.Request):
         if os.path.exists(path.metadata_path):
             shutil.rmtree(path.metadata_path)
     else:
-        raise web.HTTPNotFound(
-            text="could not delete {path}".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text="could not delete {path}".format(path=path.user_path))
     return web.Response(text="successfully deleted {path}".format(path=path.user_path))
 
 
@@ -591,13 +559,9 @@ async def decompress(request: web.Request):
     # 2 could try again after doign an automatic rename scheme (add nubmers to end)
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
-    if (
-        upper_file_extension == ".tar" and file_extension == ".gz"
-    ) or file_extension == ".tgz":
+    if (upper_file_extension == ".tar" and file_extension == ".gz") or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
-    elif upper_file_extension == ".tar" and (
-        file_extension == ".bz" or file_extension == ".bz2"
-    ):
+    elif upper_file_extension == ".tar" and (file_extension == ".bz" or file_extension == ".bz2"):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":
         await run_command("unzip", path.full_path, "-d", destination)
@@ -608,9 +572,7 @@ async def decompress(request: web.Request):
     elif file_extension == ".bz2" or file_extension == "bzip2":
         await run_command("bzip2", "-d", path.full_path)
     else:
-        raise web.HTTPBadRequest(
-            text="cannot decompress a {ext} file".format(ext=file_extension)
-        )
+        raise web.HTTPBadRequest(text="cannot decompress a {ext} file".format(ext=file_extension))
     return web.Response(text="succesfully decompressed " + path.user_path)
 
 

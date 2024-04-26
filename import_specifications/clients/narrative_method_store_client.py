@@ -49,9 +49,7 @@ class NarrativeMethodStore(object):
         Returns the current running version of the NarrativeMethodStore.
         :returns: instance of String
         """
-        return self._client.call_method(
-            "NarrativeMethodStore.ver", [], self._service_ver, context
-        )
+        return self._client.call_method("NarrativeMethodStore.ver", [], self._service_ver, context)
 
     def status(self, context=None):
         """

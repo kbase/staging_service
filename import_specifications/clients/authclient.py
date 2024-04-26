@@ -46,9 +46,7 @@ class TokenCache(object):
         with self._lock:
             self._cache[token] = [user, _time.time()]
             if len(self._cache) > self._maxsize:
-                sorted_items = sorted(
-                    list(self._cache.items()), key=(lambda v: v[1][1])
-                )
+                sorted_items = sorted(list(self._cache.items()), key=(lambda v: v[1][1]))
                 for i, (t, _) in enumerate(sorted_items):
                     if i <= self._halfmax:
                         del self._cache[t]
