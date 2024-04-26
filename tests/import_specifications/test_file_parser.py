@@ -112,7 +112,9 @@ def test_Error_init_w_PARSE_FAIL_success():
 
 
 def test_Error_init_w_INCORRECT_COLUMN_COUNT_success():
-    e = Error(ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile"))
+    e = Error(
+        ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile")
+    )
 
     assert e.error == ErrorType.INCORRECT_COLUMN_COUNT
     assert e.message == "42"
@@ -175,10 +177,14 @@ def test_Error_init_fail():
     error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
     err = "message, source_1 is required for a INCORRECT_COLUMN_COUNT error"
-    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err))
-    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err))
+    error_init_fail(
+        ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err)
+    )
+    error_init_fail(
+        ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err)
+    )
     ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
-    err = "message, source_1, source_2 is required for a " + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
+    err = "message, source_1, source_2 is required for a MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
     error_init_fail(ms, None, None, None, ValueError(err))
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
     error_init_fail(ms, "msg", None, spcsrc("bar"), ValueError(err))
@@ -213,7 +219,9 @@ def test_ParseResult_init_success():
 
 def test_ParseResult_init_fail():
     parseResult_init_fail(None, None, ValueError("source is required"))
-    parseResult_init_fail(None, (frozendict({"foo": "bar"}),), ValueError("source is required"))
+    parseResult_init_fail(
+        None, (frozendict({"foo": "bar"}),), ValueError("source is required")
+    )
     parseResult_init_fail(spcsrc("foo"), None, ValueError("result is required"))
 
 
@@ -278,7 +286,9 @@ def parseResults_init_fail(
     assert_exception_correct(got.value, expected)
 
 
-def _ftr(parser: Callable[[Path], ParseResults] = None, notype: str = None) -> FileTypeResolution:
+def _ftr(
+    parser: Callable[[Path], ParseResults] = None, notype: str = None
+) -> FileTypeResolution:
     return FileTypeResolution(parser, notype)
 
 
@@ -298,7 +308,9 @@ def test_parse_import_specifications_success():
                     spcsrc("myfile.xlsx", "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
-                "type2": ParseResult(spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)),  # tuple!
+                "type2": ParseResult(
+                    spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)
+                ),  # tuple!
             }
         )
     )
@@ -314,7 +326,9 @@ def test_parse_import_specifications_success():
         )
     )
 
-    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger)
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+    )
 
     assert res == ParseResults(
         frozendict(
@@ -323,7 +337,9 @@ def test_parse_import_specifications_success():
                     spcsrc("myfile.xlsx", "tab1"),
                     (frozendict({"foo": "bar"}), frozendict({"baz": "bat"})),
                 ),
-                "type2": ParseResult(spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)),  # tuple!
+                "type2": ParseResult(
+                    spcsrc("myfile.xlsx", "tab2"), (frozendict({"whee": "whoo"}),)
+                ),  # tuple!
                 "type_other": ParseResult(
                     spcsrc("somefile.csv"),
                     (frozendict({"foo": "bar2"}), frozendict({"baz": "bat2"})),
@@ -355,7 +371,9 @@ def test_parse_import_specification_resolver_exception():
     # test that other errors aren't included in the result
     parser1.return_value = ParseResults(errors=tuple([Error(ErrorType.OTHER, "foo")]))
 
-    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger)
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
+    )
 
     assert res == ParseResults(errors=tuple([Error(ErrorType.OTHER, "crapsticks")]))
 
@@ -389,9 +407,13 @@ def test_parse_import_specification_unsupported_type_and_parser_error():
             ]
         )
     )
-    parser2.return_value = ParseResults(frozendict({"foo": ParseResult(spcsrc("a"), tuple([frozendict({"a": "b"})]))}))
+    parser2.return_value = ParseResults(
+        frozendict({"foo": ParseResult(spcsrc("a"), tuple([frozendict({"a": "b"})]))})
+    )
 
-    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")), resolver, logger)
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.jpeg")), resolver, logger
+    )
 
     assert res == ParseResults(
         errors=tuple(
@@ -461,7 +483,9 @@ def test_parse_import_specification_multiple_specs_and_parser_error():
         )
     )
 
-    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")), resolver, logger)
+    res = parse_import_specifications(
+        (Path("myfile.xlsx"), Path("somefile.csv"), Path("x.tsv")), resolver, logger
+    )
 
     assert res == ParseResults(
         errors=tuple(

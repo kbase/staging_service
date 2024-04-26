@@ -32,7 +32,9 @@ _FORMAT_VERSION = 1  # evolve the format by making changes and incrementing the 
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Generate a bulk import template for an app")
+    parser = argparse.ArgumentParser(
+        description="Generate a bulk import template for an app"
+    )
     parser.add_argument(
         "app_id",
         help="The app ID to process, for example kb_uploadmethods/import_sra_as_reads_from_staging",
@@ -65,7 +67,9 @@ def is_file_input(param):
     if param["field_type"] != "dynamic_dropdown":
         return False
     if "dynamic_dropdown_options" not in param:
-        raise ValueError("Missing dynamic_dropdown_options field for dynamic_dropdown input")
+        raise ValueError(
+            "Missing dynamic_dropdown_options field for dynamic_dropdown input"
+        )
     return param["dynamic_dropdown_options"].get("data_source") == "ftp_staging"
 
 
@@ -105,7 +109,8 @@ def main():
     params = sort_params(spec[0]["parameters"])
     sep = "\t" if args.tsv else ", "
     print(
-        f"Data type: {args.data_type}{_HEADER_SEP} " + f"Columns: {len(params)}{_HEADER_SEP} Version: {_FORMAT_VERSION}"
+        f"Data type: {args.data_type}{_HEADER_SEP} "
+        + f"Columns: {len(params)}{_HEADER_SEP} Version: {_FORMAT_VERSION}"
     )
     # we could theoretically use the parameter order to note for the users the type of each
     # column - e.g. file input, output name, params, advanced params

@@ -33,7 +33,11 @@ _IMPORT_SPEC_ERROR_FORMATTERS = {
         "file": file1,
         "tab": tab1,
     },
-    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg, file1, tab1, file2, tab2: {
+    ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE: lambda msg,
+    file1,
+    tab1,
+    file2,
+    tab2: {
         "type": "multiple_specifications_for_data_type",
         "message": msg,
         "file_1": file1,
@@ -44,7 +48,9 @@ _IMPORT_SPEC_ERROR_FORMATTERS = {
 }
 
 
-def format_import_spec_errors(errors: list[Error], path_translations: dict[Path, Path]) -> list[dict[str, str]]:
+def format_import_spec_errors(
+    errors: list[Error], path_translations: dict[Path, Path]
+) -> list[dict[str, str]]:
     """
     Formats a list of bulk import specification errors into a list of str->str dicts.
 
@@ -65,5 +71,7 @@ def format_import_spec_errors(errors: list[Error], path_translations: dict[Path,
         if e.source_2:
             file2 = str(path_translations[e.source_2.file])
             tab2 = e.source_2.tab
-        errs.append(_IMPORT_SPEC_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2))
+        errs.append(
+            _IMPORT_SPEC_ERROR_FORMATTERS[e.error](e.message, file1, tab1, file2, tab2)
+        )
     return errs

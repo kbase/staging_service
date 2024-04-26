@@ -49,7 +49,9 @@ class NarrativeMethodStore(object):
         Returns the current running version of the NarrativeMethodStore.
         :returns: instance of String
         """
-        return self._client.call_method("NarrativeMethodStore.ver", [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.ver", [], self._service_ver, context
+        )
 
     def status(self, context=None):
         """
@@ -60,7 +62,9 @@ class NarrativeMethodStore(object):
            parameter "git_spec_commit" of String, parameter "update_interval"
            of String
         """
-        return self._client.call_method("NarrativeMethodStore.status", [], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.status", [], self._service_ver, context
+        )
 
     def list_categories(self, params, context=None):
         """
@@ -112,7 +116,9 @@ class NarrativeMethodStore(object):
            String to String, parameter "landing_page_url_prefix" of String,
            parameter "loading_error" of String
         """
-        return self._client.call_method("NarrativeMethodStore.list_categories", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_categories", [params], self._service_ver, context
+        )
 
     def get_category(self, params, context=None):
         """
@@ -124,7 +130,9 @@ class NarrativeMethodStore(object):
            String, parameter "parent_ids" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method("NarrativeMethodStore.get_category", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_category", [params], self._service_ver, context
+        )
 
     def list_methods(self, params, context=None):
         """
@@ -151,7 +159,9 @@ class NarrativeMethodStore(object):
            list of String, parameter "output_types" of list of String,
            parameter "app_type" of String
         """
-        return self._client.call_method("NarrativeMethodStore.list_methods", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_methods", [params], self._service_ver, context
+        )
 
     def list_methods_full_info(self, params, context=None):
         """
@@ -582,7 +592,9 @@ class NarrativeMethodStore(object):
            parameter "categories" of list of String, parameter
            "loading_error" of String
         """
-        return self._client.call_method("NarrativeMethodStore.list_apps", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps", [params], self._service_ver, context
+        )
 
     def list_apps_full_info(self, params, context=None):
         """
@@ -651,7 +663,9 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "from" of String, parameter "to" of String,
            parameter "description" of String
         """
-        return self._client.call_method("NarrativeMethodStore.list_apps_spec", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_apps_spec", [params], self._service_ver, context
+        )
 
     def list_app_ids_and_names(self, context=None):
         """
@@ -686,7 +700,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method("NarrativeMethodStore.list_types", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.list_types", [params], self._service_ver, context
+        )
 
     def get_method_brief_info(self, params, context=None):
         """
@@ -1102,7 +1118,9 @@ class NarrativeMethodStore(object):
            "target_property" of String, parameter "target_type_transform" of
            String, parameter "job_id_output_field" of String
         """
-        return self._client.call_method("NarrativeMethodStore.get_method_spec", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_method_spec", [params], self._service_ver, context
+        )
 
     def get_app_brief_info(self, params, context=None):
         """
@@ -1180,7 +1198,9 @@ class NarrativeMethodStore(object):
            [0,1]), parameter "from" of String, parameter "to" of String,
            parameter "description" of String
         """
-        return self._client.call_method("NarrativeMethodStore.get_app_spec", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_app_spec", [params], self._service_ver, context
+        )
 
     def get_type_info(self, params, context=None):
         """
@@ -1199,7 +1219,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method("NarrativeMethodStore.get_type_info", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.get_type_info", [params], self._service_ver, context
+        )
 
     def validate_method(self, params, context=None):
         """
@@ -1628,7 +1650,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method("NarrativeMethodStore.validate_method", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_method", [params], self._service_ver, context
+        )
 
     def validate_app(self, params, context=None):
         """
@@ -2055,7 +2079,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method("NarrativeMethodStore.validate_app", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_app", [params], self._service_ver, context
+        )
 
     def validate_type(self, params, context=None):
         """
@@ -2482,7 +2508,9 @@ class NarrativeMethodStore(object):
            "landing_page_url_prefix" of String, parameter "loading_error" of
            String
         """
-        return self._client.call_method("NarrativeMethodStore.validate_type", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.validate_type", [params], self._service_ver, context
+        )
 
     def load_widget_java_script(self, params, context=None):
         """
@@ -2511,21 +2539,27 @@ class NarrativeMethodStore(object):
            ******************************) -> structure: parameter "git_url"
            of String, parameter "git_commit_hash" of String
         """
-        return self._client.call_method("NarrativeMethodStore.register_repo", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.register_repo", [params], self._service_ver, context
+        )
 
     def disable_repo(self, params, context=None):
         """
         :param params: instance of type "DisableRepoParams" -> structure:
            parameter "module_name" of String
         """
-        return self._client.call_method("NarrativeMethodStore.disable_repo", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.disable_repo", [params], self._service_ver, context
+        )
 
     def enable_repo(self, params, context=None):
         """
         :param params: instance of type "EnableRepoParams" -> structure:
            parameter "module_name" of String
         """
-        return self._client.call_method("NarrativeMethodStore.enable_repo", [params], self._service_ver, context)
+        return self._client.call_method(
+            "NarrativeMethodStore.enable_repo", [params], self._service_ver, context
+        )
 
     def push_repo_to_tag(self, params, context=None):
         """

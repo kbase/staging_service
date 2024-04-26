@@ -16,5 +16,7 @@ async def read_metadata_for(path: Path):
             return decoder.decode(data)
     else:
         raise web.HTTPNotFound(
-            text="could not find associated JGI metadata file for {path}".format(path=path.user_path)
+            text="could not find associated JGI metadata file for {path}".format(
+                path=path.user_path
+            )
         )

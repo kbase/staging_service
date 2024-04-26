@@ -225,7 +225,10 @@ def test_file_writers_fail():
     file_writers_fail(
         p,
         {"t": {"order_and_display": [["foo", "bar"], "baz"], "data": []}},
-        E("Invalid order_and_display entry for datatype t at index 1 - " + "the entry is not a list"),
+        E(
+            "Invalid order_and_display entry for datatype t at index 1 - "
+            + "the entry is not a list"
+        ),
     )
     file_writers_fail(
         p,
@@ -235,7 +238,10 @@ def test_file_writers_fail():
                 "data": [],
             }
         },
-        E("Invalid order_and_display entry for datatype t at index 2 - " + "expected 2 item list"),
+        E(
+            "Invalid order_and_display entry for datatype t at index 2 - "
+            + "expected 2 item list"
+        ),
     )
     file_writers_fail(
         p,
@@ -245,7 +251,10 @@ def test_file_writers_fail():
                 "data": [],
             }
         },
-        E("Invalid order_and_display entry for datatype t at index 0 - " + "expected 2 item list"),
+        E(
+            "Invalid order_and_display entry for datatype t at index 0 - "
+            + "expected 2 item list"
+        ),
     )
     for parm in [None, "  \t   ", 1]:
         file_writers_fail(
@@ -307,7 +316,10 @@ def test_file_writers_fail():
                 "data": [{"foo": 2, "whee": 3}, {"foo": 1, "whee": []}],
             }
         },
-        E("Data type ty data row 1's value for parameter whee " + "is not a number or a string"),
+        E(
+            "Data type ty data row 1's value for parameter whee "
+            + "is not a number or a string"
+        ),
     )
 
 

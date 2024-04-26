@@ -60,7 +60,9 @@ transfer_rt = globus_transfer_data["refresh_token"]
 transfer_at = globus_transfer_data["access_token"]
 expires_at_s = globus_transfer_data["expires_at_seconds"]
 
-authorizer = globus_sdk.RefreshTokenAuthorizer(transfer_rt, client, access_token=None, expires_at=expires_at_s)
+authorizer = globus_sdk.RefreshTokenAuthorizer(
+    transfer_rt, client, access_token=None, expires_at=expires_at_s
+)
 
 print((authorizer.access_token))
 parser.set("general", "transfer_token", authorizer.access_token)
@@ -72,7 +74,9 @@ transfer_rt = globus_transfer_data["refresh_token"]
 transfer_at = globus_transfer_data["access_token"]
 expires_at_s = globus_transfer_data["expires_at_seconds"]
 
-authorizer = globus_sdk.RefreshTokenAuthorizer(transfer_rt, client, access_token=None, expires_at=expires_at_s)
+authorizer = globus_sdk.RefreshTokenAuthorizer(
+    transfer_rt, client, access_token=None, expires_at=expires_at_s
+)
 
 print((authorizer.access_token))
 parser.set("general", "auth_token", authorizer.access_token)

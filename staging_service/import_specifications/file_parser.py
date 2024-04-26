@@ -102,7 +102,9 @@ class Error:
         for attr in attrs:
             if not getattr(self, attr):
                 # grammar sucks but this is not expected to be seen by end users so meh
-                raise ValueError(f"{', '.join(attrs)} is required for a {self.error.name} error")
+                raise ValueError(
+                    f"{', '.join(attrs)} is required for a {self.error.name} error"
+                )
 
 
 @dataclass(frozen=True)
@@ -172,7 +174,9 @@ class FileTypeResolution:
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor
-            raise ValueError("Exectly one of parser or unsupported_type must be supplied")
+            raise ValueError(
+                "Exectly one of parser or unsupported_type must be supplied"
+            )
 
 
 def parse_import_specifications(
@@ -211,7 +215,8 @@ def _parse(
             errors.append(
                 Error(
                     ErrorType.PARSE_FAIL,
-                    f"{file_type.unsupported_type} " + "is not a supported file type for import specifications",
+                    f"{file_type.unsupported_type} "
+                    + "is not a supported file type for import specifications",
                     SpecificationSource(p),
                 )
             )

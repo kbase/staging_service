@@ -33,7 +33,9 @@ async def test_incomplete_metadata_file_update(temp_dir: Path):
     the contents of the current metadata file was incorrect.
     See https://kbase-jira.atlassian.net/browse/PTV-1767
     """
-    await _incomplete_metadata_file_update(temp_dir, {"source": "some place", "UPA": "1/2/3"}, "some place")
+    await _incomplete_metadata_file_update(
+        temp_dir, {"source": "some place", "UPA": "1/2/3"}, "some place"
+    )
 
     await _incomplete_metadata_file_update(temp_dir, {"UPA": "1/2/3"}, "Unknown")
 
