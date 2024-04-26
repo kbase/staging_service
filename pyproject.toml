@@ -6,6 +6,7 @@
 #|
 #    combinatrix/combinatrix(Impl|Server).py
 #)'''
+line-length = 100
 
 
 
