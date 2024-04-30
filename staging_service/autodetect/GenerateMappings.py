@@ -1,7 +1,7 @@
 """
-* This script generates various potential api responses and serves as a list of supported apps 
+* This script generates various potential api responses and serves as a list of supported apps
   and extensions for the staging service endpoint .
-* Afterwards, we can pick a json file and edit those, or keep editing this file in the future 
+* Afterwards, we can pick a json file and edit those, or keep editing this file in the future
   to generate the mappings
 
 
@@ -24,19 +24,41 @@ Functionality: Running this script will
 * Note: This doesn't handle if we want to have different output types based on file extensions
   feeding into the same app
 """
+
 from collections import defaultdict
 
-from staging_service.autodetect.Mappings import CSV, EXCEL, FASTA, FASTQ, GENBANK, GFF, JSON, SBML, SRA, TSV, ZIP, \
-    assembly_id, \
-    decompress_id, \
-    escher_map_id, \
-    expression_matrix_id, \
-    extension_to_file_format_mapping, fastq_reads_interleaved_id, \
-    fastq_reads_noninterleaved_id, \
-    fba_model_id, file_format_to_extension_mapping, genbank_genome_id, gff_genome_id, gff_metagenome_id, \
-    import_specification, media_id, \
-    metabolic_annotations_bulk_id, \
-    metabolic_annotations_id, phenotype_set_id, sample_set_id, sra_reads_id
+from staging_service.autodetect.Mappings import (
+    CSV,
+    EXCEL,
+    FASTA,
+    FASTQ,
+    GENBANK,
+    GFF,
+    JSON,
+    SBML,
+    SRA,
+    TSV,
+    ZIP,
+    assembly_id,
+    decompress_id,
+    escher_map_id,
+    expression_matrix_id,
+    extension_to_file_format_mapping,
+    fastq_reads_interleaved_id,
+    fastq_reads_noninterleaved_id,
+    fba_model_id,
+    file_format_to_extension_mapping,
+    genbank_genome_id,
+    gff_genome_id,
+    gff_metagenome_id,
+    import_specification,
+    media_id,
+    metabolic_annotations_bulk_id,
+    metabolic_annotations_id,
+    phenotype_set_id,
+    sample_set_id,
+    sra_reads_id,
+)
 
 # Note that some upload apps are not included - in particular batch apps, which are now
 # redundant, and MSAs and attribute mappings because they're out of scope at the current time.
@@ -104,9 +126,7 @@ file_format_to_app_mapping[SBML] = [fba_model_id]
 app_id_to_extensions = defaultdict(list)
 for filecat, apps in file_format_to_app_mapping.items():
     for app_id in apps:
-        app_id_to_extensions[app_id].extend(
-            file_format_to_extension_mapping[filecat]
-        )
+        app_id_to_extensions[app_id].extend(file_format_to_extension_mapping[filecat])
 
 # Create the mapping between file extensions and apps
 # For example, the .gbk and .genkbank extensions map to app with id of "genbank_genome"

@@ -1,15 +1,10 @@
 #!/usr/bin/env python2.7
 # This needs to be placed in cron on the api host to keep the globus token refreshed
+import pickle
+from configparser import SafeConfigParser
 
 # for python 2
-from globus_sdk import TransferClient
-from globus_sdk import AuthClient
-from globus_sdk import TransferAPIError
 import globus_sdk
-import traceback
-import argparse
-import os
-import pickle
 
 CLIENT_ID = "26d64c4c-fcc2-4f7c-b056-62f185875af6"
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
@@ -43,7 +38,7 @@ with open('/opt/kb-ftp-api/f', 'wb') as f:
 #######################
 
 # open the globus cfg file for writing
-from configparser import SafeConfigParser
+
 
 parser = SafeConfigParser()
 parser.read("/root/.globus.cfg")

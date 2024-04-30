@@ -3,6 +3,7 @@
 """
 Deletes ACLS from globus, and then clears out directories older than THRESHOLD (60) days
 """
+
 from __future__ import print_function  # for python 2
 
 import logging
@@ -34,9 +35,7 @@ endpoint_id = cf["endpoint_id"]
 
 client = globus_sdk.NativeAppAuthClient(cf["client_id"])
 try:
-    transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(
-        cf["transfer_token"], client
-    )
+    transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["transfer_token"], client)
     globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
     auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["auth_token"], client)
     globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
@@ -54,9 +53,7 @@ def remove_directory(directory):
         logging.info("About to delete {}".format(directory))
         # shutil.rmtree(directory)
     except OSError as error:
-        logging.error(
-            "Couldn't delete {} {} {}".format(directory, error.message, error.filename)
-        )
+        logging.error("Couldn't delete {} {} {}".format(directory, error.message, error.filename))
 
 
 def remove_acl(acl):
@@ -81,9 +78,7 @@ def main():
 
     old_acls = get_old_acls()
 
-    logging.info(
-        "{}:ATTEMPTING TO DELETE {} OLD ACLS".format(current_time, len(old_acls))
-    )
+    logging.info("{}:ATTEMPTING TO DELETE {} OLD ACLS".format(current_time, len(old_acls)))
     for acl in old_acls:
         remove_acl(acl.acl)
         remove_directory(acl.dir)

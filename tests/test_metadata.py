@@ -1,4 +1,4 @@
-""" Unit tests for the metadata handling routines. """
+"""Unit tests for the metadata handling routines."""
 
 import json
 import uuid

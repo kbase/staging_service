@@ -31,9 +31,7 @@ _FORMAT_VERSION = 1  # evolve the format by making changes and incrementing the 
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Generate a bulk import template for an app"
-    )
+    parser = argparse.ArgumentParser(description="Generate a bulk import template for an app")
     parser.add_argument(
         "app_id",
         help="The app ID to process, for example kb_uploadmethods/import_sra_as_reads_from_staging",
@@ -66,9 +64,7 @@ def is_file_input(param):
     if param["field_type"] != "dynamic_dropdown":
         return False
     if "dynamic_dropdown_options" not in param:
-        raise ValueError(
-            "Missing dynamic_dropdown_options field for dynamic_dropdown input"
-        )
+        raise ValueError("Missing dynamic_dropdown_options field for dynamic_dropdown input")
     return param["dynamic_dropdown_options"].get("data_source") == "ftp_staging"
 
 

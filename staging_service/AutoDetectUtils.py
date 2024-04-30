@@ -1,8 +1,9 @@
 """
-This class is in charge of determining possible importers by determining the suffix 
-of the filepath pulled in, and by looking up the appropriate mappings in the 
+This class is in charge of determining possible importers by determining the suffix
+of the filepath pulled in, and by looking up the appropriate mappings in the
 supported_apps_w_extensions.json file
 """
+
 from typing import Any, Dict, Optional, Tuple, Union
 
 Mappings = dict[str, Any]

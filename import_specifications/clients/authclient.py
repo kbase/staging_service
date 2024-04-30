@@ -5,6 +5,7 @@ A very basic KBase auth client for the Python server.
 
 @author: gaprice@lbl.gov
 """
+
 import time as _time
 import requests as _requests
 import threading as _threading
@@ -44,9 +45,7 @@ class TokenCache(object):
         with self._lock:
             self._cache[token] = [user, _time.time()]
             if len(self._cache) > self._maxsize:
-                sorted_items = sorted(
-                    list(self._cache.items()), key=(lambda v: v[1][1])
-                )
+                sorted_items = sorted(list(self._cache.items()), key=(lambda v: v[1][1]))
                 for i, (t, _) in enumerate(sorted_items):
                     if i <= self._halfmax:
                         del self._cache[t]

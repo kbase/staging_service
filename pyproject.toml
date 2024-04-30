@@ -1,0 +1,78 @@
+[tool.black]
+# don't format the installed clients or the SDK-generated files.
+extend-exclude = '''
+import_specifications/clients/authclient.py
+'''
+line-length = 100
+
+
+
+
+[tool.ruff]
+lint.select = [
+    # core
+    "F", # Pyflakes
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+#    "C90", # mccabe + #TODO disable complexity checks
+#    "I", # isort #TODO enable sort of imports
+#    "N", # pep8-naming #Todo enable proper naming
+#    "D", # pydocstyle - disabled for now
+#    "UP", # pyupgrade # TODO Enable Type Annotations
+]
+
+# E203: whitespace before ‘,’, ‘;’, or ‘:’
+# E501: line length
+# W503: line break after binary operator
+lint.ignore = [
+    "E203",
+    "E501",
+    "S101",
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "__pypackages__",
+    "_build",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git-rewrite",
+    ".git",
+    ".github",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "*.pyc",
+    "buck-out",
+    "build",
+    "deps",
+    "dist",
+    "node_modules",
+    "other_schema",
+    "python-coverage",
+    "sample_data",
+    "venv",
+    "import_specifications/clients/authclient.py",
+    "import_specifications/clients/baseclient.py",
+]
+lint.per-file-ignores = { }
+
+# Same as Black.
+line-length = 100
+
+# Assume Python 3.12.
+target-version = "py312"
+
+[tool.ruff.pydocstyle]
+convention = "google"
