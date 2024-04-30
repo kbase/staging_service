@@ -1,4 +1,4 @@
-name: Ruff Linter
+name: Linters
 
 on: [pull_request]
 
@@ -16,10 +16,13 @@ jobs:
         python-version: '3.9'
 
     - name: Install ruff
-      run: pip install ruff
+      run: pip install
 
     - name: Run ruff format checker
       run: ruff format --check --config pyproject.toml
 
     - name: Run ruff format checker
       run: ruff check --config pyproject.toml
+
+    - name: Run pre-commit
+      run: pip install pre-commit && pre-commit run --all-files
