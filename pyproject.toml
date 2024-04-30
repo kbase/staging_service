@@ -1,11 +1,8 @@
 [tool.black]
 # don't format the installed clients or the SDK-generated files.
-#extend-exclude = '''
-#lib/(
-#    installed_clients/*
-#|
-#    combinatrix/combinatrix(Impl|Server).py
-#)'''
+extend-exclude = '''
+import_specifications/clients/authclient.py
+'''
 line-length = 100
 
 
@@ -20,7 +17,7 @@ lint.select = [
 #    "C90", # mccabe + #TODO disable complexity checks
 #    "I", # isort #TODO enable sort of imports
 #    "N", # pep8-naming #Todo enable proper naming
-    # "D", # pydocstyle - disabled for now
+#    "D", # pydocstyle - disabled for now
 #    "UP", # pyupgrade # TODO Enable Type Annotations
 ]
 
@@ -66,6 +63,8 @@ exclude = [
     "python-coverage",
     "sample_data",
     "venv",
+    "import_specifications/clients/authclient.py",
+    "import_specifications/clients/baseclient.py",
 ]
 lint.per-file-ignores = { }
 

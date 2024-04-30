@@ -184,11 +184,11 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
         )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
-    if type(data) != dict:
+    if not isinstance(data, dict):
         return _createJSONErrorResponse("The top level JSON element must be a mapping")
     folder = data.get("output_directory")
     type_ = data.get("output_file_type")
-    if type(folder) != str:
+    if not isinstance(folder, str):
         return _createJSONErrorResponse("output_directory is required and must be a string")
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
