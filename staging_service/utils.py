@@ -31,12 +31,10 @@ async def run_command(*args):
     if process.returncode == 0:
         return stdout.decode().strip()
     else:
-        error_msg = (
-            "command {cmd} failed\nreturn code: {returncode}\nerror: {error}".format(
-                cmd=" ".join(args),
-                returncode=process.returncode,
-                error=stderr.decode().strip(),
-            )
+        error_msg = "command {cmd} failed\nreturn code: {returncode}\nerror: {error}".format(
+            cmd=" ".join(args),
+            returncode=process.returncode,
+            error=stderr.decode().strip(),
         )
         raise HTTPInternalServerError(text=error_msg)
 
@@ -100,15 +98,9 @@ class AclManager:
 
         client = globus_sdk.NativeAppAuthClient(cf["client_id"])
         try:
-            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["transfer_token"], client
-            )
-            self.globus_transfer_client = globus_sdk.TransferClient(
-                authorizer=transfer_authorizer
-            )
-            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["auth_token"], client
-            )
+            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["transfer_token"], client)
+            self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["auth_token"], client)
             self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
         except globus_sdk.GlobusAPIError as error:
             logging.error(str(error.code) + error.raw_text)
@@ -124,18 +116,14 @@ class AclManager:
         globus_id_filename = "{}.globus_id".format(shared_directory)
         with open(globus_id_filename, "r", encoding="utf-8") as fp:
             ident = fp.read()
-            return self.globus_auth_client.get_identities(
-                usernames=ident.split("\n")[0]
-            )
+            return self.globus_auth_client.get_identities(usernames=ident.split("\n")[0])
 
     def _get_globus_identity(self, globus_id_filename: str):
         """
         Get the first identity for the username in the .globus_id file
         """
         try:
-            return self._get_globus_identities(globus_id_filename)["identities"][0][
-                "id"
-            ]
+            return self._get_globus_identities(globus_id_filename)["identities"][0]["id"]
         except FileNotFoundError as error:
             response = {
                 "success": False,
@@ -188,9 +176,7 @@ class AclManager:
             }
 
             logging.info(response)
-            logging.info(
-                "Shared %s with %s\n", shared_directory_basename, user_identity_id
-            )
+            logging.info("Shared %s with %s\n", shared_directory_basename, user_identity_id)
 
             logging.info(response)
             return response
@@ -205,22 +191,16 @@ class AclManager:
             }
             logging.error(response)
             if error.code == "Exists":
-                raise HTTPOk(
-                    text=json.dumps(response), content_type="application/json"
-                ) from error
+                raise HTTPOk(text=json.dumps(response), content_type="application/json") from error
 
-        raise HTTPInternalServerError(
-            text=json.dumps(response), content_type="application/json"
-        )
+        raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
     def _remove_acl(self, user_identity_id: str):
         """
         Get all ACLS and attempt to remove the correct ACL for the given user_identity
         """
         try:
-            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)[
-                "DATA"
-            ]
+            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)["DATA"]
             for acl in acls:
                 if user_identity_id == acl["principal"]:
                     if "id" in acl and acl["id"] is not None:

@@ -69,9 +69,7 @@ def test_reasonable_filenames():
             expected_suffix = filename_variant.split(".", heading_dotcount + 1)[-1]
             assert (
                 possible_importers
-                == AutoDetectUtils.get_mappings_by_extension(expected_suffix.lower())[
-                    "mappings"
-                ]
+                == AutoDetectUtils.get_mappings_by_extension(expected_suffix.lower())["mappings"]
             ), filename_variant
             assert fileinfo == {
                 "prefix": filename_variant[: -len(expected_suffix) - 1],
@@ -183,9 +181,7 @@ def test_specific_filenames():
     ]
 
     for filename, importers in test_data:
-        assert (
-            AutoDetectUtils.determine_possible_importers(filename) == importers
-        ), filename
+        assert AutoDetectUtils.determine_possible_importers(filename) == importers, filename
 
 
 def test_sra_mappings():
@@ -194,9 +190,7 @@ def test_sra_mappings():
     :return:
     """
     sra_file = "test.sra"
-    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
-        filename=sra_file
-    )
+    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(filename=sra_file)
     assert possible_importers == [
         {
             "id": "sra_reads",
@@ -213,9 +207,7 @@ def test_zip_mappings():
     :return:
     """
     gz_file = "test.tar.gz"
-    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(
-        filename=gz_file
-    )
+    possible_importers, fileinfo = AutoDetectUtils.determine_possible_importers(filename=gz_file)
     assert possible_importers == [
         {
             "id": "decompress",
@@ -235,9 +227,7 @@ def test_get_mappings():
     Basic test of the get mappings logic. Most of the logic is in determine_possible_importers
     which is thoroughly tested above.
     """
-    assert AutoDetectUtils.get_mappings(
-        ["filename", "file.name.Gz", "some.dots.gff3.gz"]
-    ) == {
+    assert AutoDetectUtils.get_mappings(["filename", "file.name.Gz", "some.dots.gff3.gz"]) == {
         "mappings": [
             None,
             [

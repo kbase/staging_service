@@ -76,9 +76,9 @@ def test_file_type_resolution_init_fail():
 
 
 def file_type_resolution_init_fail(
-        parser: Optional[Callable[[Path], ParseResults]],
-        unexpected_type: Optional[str],
-        expected: Exception,
+    parser: Optional[Callable[[Path], ParseResults]],
+    unexpected_type: Optional[str],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         FileTypeResolution(parser, unexpected_type)
@@ -113,9 +113,7 @@ def test_error_init_w_parse_fail_success():
 
 
 def test_error_init_w_incorrect_column_count_success():
-    e = Error(
-        ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile")
-    )
+    e = Error(ErrorType.INCORRECT_COLUMN_COUNT, message="42", source_1=spcsrc("somefile"))
 
     assert e.error_type == ErrorType.INCORRECT_COLUMN_COUNT
     assert e.message == "42"
@@ -178,16 +176,12 @@ def test_error_init_fail():
     error_init_fail(ErrorType.PARSE_FAIL, None, spcsrc("wooo"), None, ValueError(err))
     error_init_fail(ErrorType.PARSE_FAIL, "msg", None, None, ValueError(err))
     err = "message, source_1 is required for a INCORRECT_COLUMN_COUNT error"
-    error_init_fail(
-        ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err)
-    )
-    error_init_fail(
-        ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err)
-    )
+    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, None, spcsrc("whee"), None, ValueError(err))
+    error_init_fail(ErrorType.INCORRECT_COLUMN_COUNT, "msg", None, None, ValueError(err))
     ms = ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE
     err = (
-            "message, source_1, source_2 is required for a "
-            + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
+        "message, source_1, source_2 is required for a "
+        + "MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE error"
     )
     error_init_fail(ms, None, None, None, ValueError(err))
     error_init_fail(ms, None, spcsrc("foo"), spcsrc("bar"), ValueError(err))
@@ -203,11 +197,11 @@ def test_error_init_fail():
 
 
 def error_init_fail(
-        errortype: Optional[ErrorType],
-        message: Optional[str],
-        source_1: Optional[SpecificationSource],
-        source_2: Optional[SpecificationSource],
-        expected: Exception,
+    errortype: Optional[ErrorType],
+    message: Optional[str],
+    source_1: Optional[SpecificationSource],
+    source_2: Optional[SpecificationSource],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         Error(errortype, message, source_1, source_2)
@@ -223,16 +217,14 @@ def test_parse_result_init_success():
 
 def test_parse_result_init_fail():
     parse_result_init_fail(None, None, ValueError("source is required"))
-    parse_result_init_fail(
-        None, (frozendict({"foo": "bar"}),), ValueError("source is required")
-    )
+    parse_result_init_fail(None, (frozendict({"foo": "bar"}),), ValueError("source is required"))
     parse_result_init_fail(spcsrc("foo"), None, ValueError("result is required"))
 
 
 def parse_result_init_fail(
-        source: Optional[SpecificationSource],
-        result: Optional[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
-        expected: Exception,
+    source: Optional[SpecificationSource],
+    result: Optional[tuple[frozendict[str, PRIMITIVE_TYPE], ...]],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         ParseResult(source, result)
@@ -281,18 +273,16 @@ def test_parse_results_init_fail():
 
 
 def parse_results_init_fail(
-        results: Optional[frozendict[str, ParseResult]],
-        errors: Optional[tuple[Error, ...]],
-        expected: Exception,
+    results: Optional[frozendict[str, ParseResult]],
+    errors: Optional[tuple[Error, ...]],
+    expected: Exception,
 ):
     with raises(Exception) as got:
         ParseResults(results, errors)
     assert_exception_correct(got.value, expected)
 
 
-def _ftr(
-        parser: Callable[[Path], ParseResults] = None, notype: str = None
-) -> FileTypeResolution:
+def _ftr(parser: Callable[[Path], ParseResults] = None, notype: str = None) -> FileTypeResolution:
     return FileTypeResolution(parser, notype)
 
 
@@ -331,9 +321,7 @@ def test_parse_import_specifications_success():
         )
     )
 
-    res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
-    )
+    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger)
 
     assert res == ParseResults(
         frozendict(
@@ -377,9 +365,7 @@ def test_parse_import_specification_resolver_exception():
     # test that other errors aren't included in the result
     parser1.return_value = ParseResults(errors=tuple([Error(ErrorType.OTHER, "foo")]))
 
-    res = parse_import_specifications(
-        (Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger
-    )
+    res = parse_import_specifications((Path("myfile.xlsx"), Path("somefile.csv")), resolver, logger)
 
     assert res == ParseResults(errors=tuple([Error(ErrorType.OTHER, "crapsticks")]))
 

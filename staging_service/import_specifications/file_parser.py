@@ -171,9 +171,7 @@ class FileTypeResolution:
 
     def __post_init__(self):
         if not (bool(self.parser) ^ bool(self.unsupported_type)):  # xnor
-            raise ValueError(
-                "Exactly one of parser or unsupported_type must be supplied"
-            )
+            raise ValueError("Exactly one of parser or unsupported_type must be supplied")
 
 
 def parse_import_specifications(

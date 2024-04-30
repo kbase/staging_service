@@ -72,9 +72,7 @@ def mock_auth_app():
     async def mock_globus_id(*args, **kwargs):
         return ["testuser@globusid.org"]
 
-    globus._get_globus_ids = (
-        mock_globus_id  # TODO this doesn't allow testing of this fn does it
-    )
+    globus._get_globus_ids = mock_globus_id  # TODO this doesn't allow testing of this fn does it
     return application
 
 
@@ -136,22 +134,11 @@ username_first_strat = st.text(max_size=1, min_size=1, alphabet=first_letter_alp
 @given(username_first_strat, username_strat)
 def test_path_cases(username_first, username_rest):
     username = username_first + username_rest
-    assert (
-            username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
-    )
-    assert (
-            username + "/baz"
-            == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
-    )
-    assert (
-            username + "/bar"
-            == utils.Path.validate_path(username, "foo/../../../../bar").user_path
-    )
+    assert username + "/foo/bar" == utils.Path.validate_path(username, "foo/bar").user_path
+    assert username + "/baz" == utils.Path.validate_path(username, "foo/../bar/../baz").user_path
+    assert username + "/bar" == utils.Path.validate_path(username, "foo/../../../../bar").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "./foo").user_path
-    assert (
-            username + "/foo/bar"
-            == utils.Path.validate_path(username, "../foo/bar").user_path
-    )
+    assert username + "/foo/bar" == utils.Path.validate_path(username, "../foo/bar").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "/../foo").user_path
     assert username + "/" == utils.Path.validate_path(username, "/foo/..").user_path
     assert username + "/foo" == utils.Path.validate_path(username, "/foo/.").user_path
@@ -163,10 +150,7 @@ def test_path_cases(username_first, username_rest):
     assert username + "/" == utils.Path.validate_path(username, "").user_path
     assert username + "/" == utils.Path.validate_path(username, "foo/..").user_path
     assert username + "/" == utils.Path.validate_path(username, "/..../").user_path
-    assert (
-            username + "/stuff.ext"
-            == utils.Path.validate_path(username, "/stuff.ext").user_path
-    )
+    assert username + "/stuff.ext" == utils.Path.validate_path(username, "/stuff.ext").user_path
 
 
 @given(username_first_strat, username_strat, st.text())
@@ -227,9 +211,7 @@ async def test_jbi_metadata():
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_jgi.fastq"), txt)
-            fs.make_file(
-                os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata
-            )
+            fs.make_file(os.path.join(username, "test", ".test_jgi.fastq.jgi"), jbi_metadata)
             res1 = await cli.get(
                 os.path.join("jgi-metadata", "test", "test_jgi.fastq"),
                 headers={"Authorization": ""},
@@ -440,9 +422,7 @@ async def test_mv():
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
-            res1 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -459,9 +439,7 @@ async def test_mv():
             assert "successfully moved" in json_text
 
             # relist test directory
-            res3 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res3 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -514,9 +492,7 @@ async def test_delete():
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
 
             # list current test directory
-            res1 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res1 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -532,9 +508,7 @@ async def test_delete():
             assert "successfully deleted" in json_text
 
             # relist test directory
-            res3 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res3 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -561,9 +535,7 @@ async def test_list():
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt
-            )
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
             res1 = await cli.get("list/..", headers={"Authorization": ""})
             assert res1.status == 404
             res2 = await cli.get(
@@ -599,9 +571,7 @@ async def test_list():
             assert sum(file_folder_count) == 2
 
             # testing sub-directory
-            res5 = await cli.get(
-                os.path.join("list", "test"), headers={"Authorization": ""}
-            )
+            res5 = await cli.get(os.path.join("list", "test"), headers={"Authorization": ""})
             assert res5.status == 200
             json_text = await res5.text()
             json = decoder.decode(json_text)
@@ -621,9 +591,7 @@ async def test_list():
             json_text = await res6.text()
             json = decoder.decode(json_text)
 
-            file_names = [
-                file_json["name"] for file_json in json if not file_json["isFolder"]
-            ]
+            file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" not in file_names  # NOSONAR python:S1192
             assert ".globus_id" not in file_names
             assert len(file_names) == 2
@@ -635,9 +603,7 @@ async def test_list():
             assert res7.status == 200
             json_text = await res7.text()
             json = decoder.decode(json_text)
-            file_names = [
-                file_json["name"] for file_json in json if not file_json["isFolder"]
-            ]
+            file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" in file_names  # NOSONAR python:S1192
             assert ".globus_id" in file_names
             assert len(file_names) == 4
@@ -682,21 +648,15 @@ async def test_similar():
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1.fq"), txt)
             fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt
-            )
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2.fq"), txt)
             fs.make_file(
                 os.path.join(username, "test", "test_sub_dir", "test_file_right.fq"),
                 txt,
             )
-            fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "my_files"), txt
-            )
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "my_files"), txt)
 
             # testing similar file name
-            res1 = await cli.get(
-                "similar/test/test_file_1.fq", headers={"Authorization": ""}
-            )
+            res1 = await cli.get("similar/test/test_file_1.fq", headers={"Authorization": ""})
             assert res1.status == 200
             json_text = await res1.text()
             json = decoder.decode(json_text)
@@ -705,9 +665,7 @@ async def test_similar():
             assert json[1].get("name") in ["test_file_2.fq", "test_file_right.fq"]
 
             # testing non-existing file
-            res2 = await cli.get(
-                "similar/test/non-existing", headers={"Authorization": ""}
-            )
+            res2 = await cli.get("similar/test/non-existing", headers={"Authorization": ""})
             assert res2.status == 404
 
             # testing path is a directory
@@ -723,15 +681,11 @@ async def test_existence():
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
             fs.make_dir(os.path.join(username, "test", "test_sub_dir"))
-            fs.make_file(
-                os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt
-            )
+            fs.make_file(os.path.join(username, "test", "test_sub_dir", "test_file_2"), txt)
             fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_file_1"))
             fs.make_dir(os.path.join(username, "test", "test_sub_dir", "test_sub_dir"))
             fs.make_file(
-                os.path.join(
-                    username, "test", "test_sub_dir", "test_sub_dir", "test_file_1"
-                ),
+                os.path.join(username, "test", "test_sub_dir", "test_sub_dir", "test_file_1"),
                 txt,
             )
 
@@ -752,9 +706,7 @@ async def test_existence():
             assert json["isFolder"] is False
 
             # testing existence of folder
-            res3 = await cli.get(
-                "existence/test_sub_dir", headers={"Authorization": ""}
-            )
+            res3 = await cli.get("existence/test_sub_dir", headers={"Authorization": ""})
             assert res3.status == 200
             json_text = await res3.text()
             json = decoder.decode(json_text)
@@ -817,9 +769,7 @@ async def test_upload():
 
             files = {"destPath": "/", "uploads": open(f, "rb")}
 
-            res2 = await cli.post(
-                os.path.join("upload"), headers={"Authorization": ""}, data=files
-            )
+            res2 = await cli.post(os.path.join("upload"), headers={"Authorization": ""}, data=files)
 
             assert res2.status == 200
 
@@ -900,9 +850,7 @@ async def test_directory_decompression(contents):
                 assert not os.path.exists(d2)
                 assert not os.path.exists(f3)
                 assert os.path.exists(compressed)
-                resp = await cli.patch(
-                    "/decompress/" + name, headers={"Authorization": ""}
-                )
+                resp = await cli.patch("/decompress/" + name, headers={"Authorization": ""})
                 assert resp.status == 200
                 text = await resp.text()
                 assert "successfully decompressed" in text
@@ -985,10 +933,7 @@ async def test_importer_mappings():
         # Or we need to reload json file itself
 
         # unzip_mapping = AutoDetectUtils._MAPPINGS["apps"]["decompress/unpack"]
-        assert (
-                mappings[1][0]
-                == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
-        )
+        assert mappings[1][0] == AutoDetectUtils.get_mappings_by_extension("gz")["mappings"][0]
 
     # A dict is passed in
     data = {"file_list": [{}]}
@@ -1015,10 +960,7 @@ async def test_importer_mappings():
             resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
-            assert (
-                    f"must provide file_list field. Your provided qs: {unquote(qsd)}"
-                    in text
-            )
+            assert f"must provide file_list field. Your provided qs: {unquote(qsd)}" in text
 
 
 async def test_bulk_specification_success():
@@ -1073,9 +1015,7 @@ async def test_bulk_specification_success():
                 )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
-            resp = await cli.get(
-                f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   "
-            )
+            resp = await cli.get(f"bulk_specification/?files={tsv}  ,   {csv},  {excel}   ")
             jsn = await resp.json()
             assert jsn == {
                 "types": {
@@ -1091,9 +1031,7 @@ async def test_bulk_specification_success():
                         {"bat_name": "George", "wing_count": 42},
                         {"bat_name": "Fred", "wing_count": 1.5},
                     ],
-                    "tree_sloths": [
-                        {"entity_id": "That which ends all", "preferred_food": "ꔆ"}
-                    ],
+                    "tree_sloths": [{"entity_id": "That which ends all", "preferred_food": "ꔆ"}],
                 },
                 "files": {
                     "genomes": {"file": "testuser/genomes.tsv", "tab": None},
@@ -1123,9 +1061,7 @@ async def test_bulk_specification_fail_no_files():
 async def test_bulk_specification_fail_not_found():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir(
-                "testuser/otherfolder"
-            )  # testuser is hardcoded in the auth mock
+            fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             tsv = "otherfolder/genomes.tsv"
             with open(base / tsv, "w", encoding="utf-8") as f:
@@ -1140,9 +1076,7 @@ async def test_bulk_specification_fail_not_found():
             resp = await cli.get(f"bulk_specification/?files={tsv},somefile.csv")
             jsn = await resp.json()
             assert jsn == {
-                "errors": [
-                    {"type": "cannot_find_file", "file": "testuser/somefile.csv"}
-                ]
+                "errors": [{"type": "cannot_find_file", "file": "testuser/somefile.csv"}]
             }
             assert resp.status == 404
 
@@ -1154,9 +1088,7 @@ async def test_bulk_specification_fail_parse_fail():
     """
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir(
-                "testuser/otherfolder"
-            )  # testuser is hardcoded in the auth mock
+            fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             tsv = "otherfolder/genomes.tsv"
             # this one is fine
@@ -1216,8 +1148,8 @@ async def test_bulk_specification_fail_parse_fail():
                     {
                         "type": "cannot_parse_file",
                         "message": 'Invalid header; got "Dater type: breakfastcereals; '
-                                   + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
-                                   + 'Columns: <column count>; Version: <version>"',
+                        + 'Columns: 3; Version: 1", expected "Data type: <data_type>; '
+                        + 'Columns: <column count>; Version: <version>"',
                         "file": "testuser/otherfolder/thing.csv",
                         "tab": None,
                     },
@@ -1398,9 +1330,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
                 )
                 df.to_excel(exw, sheet_name="sloths", header=False, index=False)
 
-            resp = await cli.get(
-                f"bulk_specification/?files={tsv},{csv1},{csv2},{excel}"
-            )
+            resp = await cli.get(f"bulk_specification/?files={tsv},{csv1},{csv2},{excel}")
             jsn = await resp.json()
             err = "Data type breakfastcereals appears in two importer specification sources"
             assert jsn == {
@@ -1613,9 +1543,7 @@ async def test_write_bulk_specification_success_excel():
                     "reads": "testuser/import_specification.xlsx",
                 },
             }
-            wb = openpyxl.load_workbook(
-                Path(fu.base_dir) / "testuser/import_specification.xlsx"
-            )
+            wb = openpyxl.load_workbook(Path(fu.base_dir) / "testuser/import_specification.xlsx")
             assert wb.sheetnames == ["genome", "reads"]
             check_excel_contents(
                 wb,
@@ -1665,10 +1593,7 @@ async def test_write_bulk_specification_fail_large_input():
         resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
         txt = await resp.text()
         # this seems to be a built in (somewhat inaccurate) server feature
-        assert (
-                txt
-                == "Maximum request body size 1048576 exceeded, actual body size 1048576"
-        )
+        assert txt == "Maximum request body size 1048576 exceeded, actual body size 1048576"
         assert resp.status == 413
 
 
