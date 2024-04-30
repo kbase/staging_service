@@ -1,5 +1,4 @@
-.github/workflows/lint.ymlname: Ruff Linter
-
+name: Ruff Linter
 
 on: [pull_request]
 
