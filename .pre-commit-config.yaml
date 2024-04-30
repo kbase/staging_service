@@ -7,7 +7,8 @@ repos:
 
       - id: ruff-format
         args:
-          - '--exclude=import_specifications/clients/baseclient.py'
+          - '--config=pyproject.toml'
+          - '--check'
       - id: ruff
         args:
-          - '--exclude=import_specifications/clients/baseclient.py'
+          - '--config=pyproject.toml'
