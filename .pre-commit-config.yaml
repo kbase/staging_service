@@ -1,0 +1,13 @@
+repos:
+
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.1
+    hooks:
+
+      - id: ruff-format
+        args:
+          - '--exclude=import_specifications/clients/baseclient.py'
+      - id: ruff
+        args:
+          - '--exclude=import_specifications/clients/baseclient.py'
