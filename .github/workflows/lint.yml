@@ -1,4 +1,4 @@
-name: Pre-commit Hooks
+.github/workflows/lint.ymlname: Ruff Linter
 
 
 on: [pull_request]
@@ -20,7 +20,7 @@ jobs:
       run: pip install ruff
 
     - name: Run ruff format checker
-      run: ruff format --check
+      run: ruff format --check --config pyproject.toml
 
     - name: Run ruff format checker
-      run: ruff check
+      run: ruff check --config pyproject.toml
