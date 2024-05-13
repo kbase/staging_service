@@ -12,9 +12,9 @@ repos:
 
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.1
+    rev: v0.4.4
     hooks:
-      # These will fail the linting github action if the files are not formatted correctly
+      # These will fail the linting GitHub action if the files are not formatted correctly
       - id: ruff-format
         args:
           - '--config=pyproject.toml'
