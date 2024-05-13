@@ -1,40 +1,23 @@
-[tool.black]
-# don't format the installed clients or the SDK-generated files.
-extend-exclude = '''
-import_specifications/clients/authclient.py
-'''
-line-length = 100
-
-
-
-
-[tool.ruff]
-lint.select = [
-    # core
-    "F", # Pyflakes
-    "E", # pycodestyle errors
-    "W", # pycodestyle warnings
-#    "C90", # mccabe + #TODO disable complexity checks
-#    "I", # isort #TODO enable sort of imports
-#    "N", # pep8-naming #Todo enable proper naming
-#    "D", # pydocstyle - disabled for now
-#    "UP", # pyupgrade # TODO Enable Type Annotations
+[tool.ruff.lint]
+# Selected linting rules
+select = [
+    "F",  # Pyflakes
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    # "C90", # mccabe (complexity checks disabled)
+    # "I",   # isort (sort of imports disabled)
+    # "N",   # pep8-naming (proper naming disabled)
+    # "D",   # pydocstyle (now moved to lint.pydocstyle)
+    # "UP",  # pyupgrade (Type Annotations disabled)
 ]
-
-# E203: whitespace before ‘,’, ‘;’, or ‘:’
-# E501: line length
-# W503: line break after binary operator
-lint.ignore = [
-    "E203",
-    "E501",
-    "S101",
+ignore = [
+    "E203",  # whitespace before ‘,’, ‘;’, or ‘:’
+    "E501",  # line length
+    "S101",  # use of assert detected
 ]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-lint.fixable = ["ALL"]
-lint.unfixable = []
-
-# Exclude a variety of commonly ignored directories.
+fixable = ["ALL"]
+unfixable = []
+per-file-ignores = {}
 exclude = [
     "__pypackages__",
     "_build",
@@ -65,14 +48,22 @@ exclude = [
     "venv",
     "import_specifications/clients/authclient.py",
     "import_specifications/clients/baseclient.py",
+
 ]
-lint.per-file-ignores = { }
-
-# Same as Black.
+[tool.ruff]
 line-length = 100
-
-# Assume Python 3.12.
 target-version = "py312"
 
-[tool.ruff.pydocstyle]
+[tool.black]
+# Don't format the installed clients or the SDK-generated files.
+extend-exclude = '''
+import_specifications/clients/authclient.py
+'''
+line-length = 100
+
+
+
+[tool.ruff.lint.pydocstyle]
 convention = "google"
+
+
