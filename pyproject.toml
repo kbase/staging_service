@@ -54,16 +54,5 @@ exclude = [
 line-length = 100
 target-version = "py312"
 
-[tool.black]
-# Don't format the installed clients or the SDK-generated files.
-extend-exclude = '''
-import_specifications/clients/authclient.py
-'''
-line-length = 100
-
-
-
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-
