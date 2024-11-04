@@ -8,7 +8,7 @@ frozendict==2.3.8
 globus-sdk==1.6.1
 hypothesis==6.81.1
 openpyxl==3.1.2
-pandas==2.0.3
+pandas==2.2.3
 pytest-aiohttp==1.0.4
 pytest-asyncio==0.21.0
 pytest-cov==4.1.0
