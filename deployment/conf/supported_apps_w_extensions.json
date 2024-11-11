@@ -121,7 +121,8 @@
       "csv",
       "tsv",
       "xls",
-      "xlsx"
+      "xlsx",
+      "json"
     ],
     "media": [
       "tsv",
@@ -1121,6 +1122,11 @@
         {
           "id": "escher_map",
           "title": "EscherMap",
+          "app_weight": 1
+        },
+        {
+          "id": "import_specification",
+          "title": "Import Specification",
           "app_weight": 1
         }
       ]

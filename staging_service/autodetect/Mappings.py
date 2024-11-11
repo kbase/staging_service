@@ -7,6 +7,9 @@ CSV = "CSV"
 EXCEL = "EXCEL"
 ZIP = "CompressedFileFormatArchive"
 
+# Data Transfer Service Manifest format (which is a specific JSON format)
+DTS_MANIFEST = "JSON"
+
 # BIOINFORMATICS FORMATS
 FASTA = "FASTA"
 FASTQ = "FASTQ"
@@ -99,7 +102,8 @@ file_format_to_extension_mapping = {
     #     "stockholm",
     # ],
     TSV: ["tsv"],  # See Note 1 below
-    CSV: ["csv"],  # See Note 1 below
+    CSV: ["csv"],  # See Note 1 below,
+    DTS_MANIFEST: ["json"],
     JSON: ["json"],
     EXCEL: ["xls", "xlsx"],  # See Note 1 below
     ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],
