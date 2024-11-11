@@ -3,6 +3,7 @@ Contains parser functions for use with the file parser framework.
 """
 
 import csv
+import json
 import math
 import re
 from pathlib import Path
@@ -316,3 +317,55 @@ def parse_excel(path: Path) -> ParseResults:
         return ParseResults(frozendict(results))
     else:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+
+def parse_dts_manifest(path: Path) -> ParseResults:
+    """
+    Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
+    The manifest should have roughly this format, with expected keys included:
+    {
+        "resources": [{
+            "id": str,
+            "name": str,
+            "path": str,
+            "format": str,
+            "instructions": {
+                "data_type": str,
+                "parameters": {
+                    "<param1>": value,
+                    "<param2>": value
+                }
+            }
+        }]
+    }
+    The parameters under the "instructions"."parameters" dictionary are arbitrary keys with
+    arbitrary values and will be returned as-is. They are expected to be PRIMITIVE_TYPEs and
+    will fail otherwise.
+    """
+    spcsrc = SpecificationSource(path)
+    errors = []
+    # dummy for now
+    results = {}
+    try:
+        with open(path, "r") as manifest:
+            manifest_json = json.load(manifest)
+        if not isinstance(manifest_json, dict):
+            errors.append(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Manifest is not a dictionary",
+                    spcsrc
+                )
+            )
+
+    except FileNotFoundError:
+        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    except _ParseException as e:
+        return _error(e.args[0])
+    if errors:
+        return ParseResults(errors=tuple(errors))
+    elif results:
+        return ParseResults(frozendict(results))
+    else:
+        return _error(Error(ErrorType.PARSE_FAIL, "No import specification data in file", spcsrc))
