@@ -3,10 +3,12 @@ Contains parser functions for use with the file parser framework.
 """
 
 import csv
+import json
 import math
 import re
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
+import logging
 
 import magic
 import pandas
@@ -58,6 +60,15 @@ _EXCEL_MISSING_VALUES = [
     "null",
 ]
 
+_DTS_RESOURCE_KEY = "resources"
+_DTS_INSTRUCTIONS_KEY = "instructions"
+_DTS_REQUIRED_KEYS = {"id", "name", "path", "format", _DTS_INSTRUCTIONS_KEY}
+_DTS_INSTRUCTIONS_DATATYPE_KEY = "data_type"
+_DTS_INSTRUCTIONS_PARAMETERS_KEY = "parameters"
+_DTS_INSTRUCTIONS_REQUIRED_KEYS = {
+    _DTS_INSTRUCTIONS_DATATYPE_KEY,
+    _DTS_INSTRUCTIONS_PARAMETERS_KEY
+}
 
 class _ParseException(Exception):
     pass
@@ -316,3 +327,127 @@ def parse_excel(path: Path) -> ParseResults:
         return ParseResults(frozendict(results))
     else:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+
+def parse_dts_manifest(path: Path) -> ParseResults:
+    """
+    Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
+    The manifest should have roughly this format, with expected keys included:
+    {
+        "resources": [{
+            "id": str,
+            "name": str,
+            "path": str,
+            "format": str,
+            "instructions": {
+                "data_type": str,
+                "parameters": {
+                    "<param1>": value,
+                    "<param2>": value
+                }
+            }
+        }]
+    }
+    The parameters under the "instructions"."parameters" dictionary are arbitrary keys with
+    arbitrary values and will be returned as-is. They are expected to be PRIMITIVE_TYPEs and
+    will fail otherwise.
+    """
+    spcsrc = SpecificationSource(path)
+    errors = []
+    try:
+        with open(path, "r") as manifest:
+            manifest_json = json.load(manifest)
+        if not isinstance(manifest_json, dict):
+            errors.append(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Manifest is not a dictionary",
+                    spcsrc
+                )
+            )
+        if _DTS_RESOURCE_KEY not in manifest_json or not isinstance(manifest_json[_DTS_RESOURCE_KEY], list):
+            errors.append(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Manifest is missing a list of file resources",
+                    spcsrc
+                )
+            )
+        results, parse_errors = _process_dts_manifest(manifest_json[_DTS_RESOURCE_KEY], spcsrc)
+        if parse_errors:
+            errors += parse_errors
+
+    except FileNotFoundError:
+        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    except _ParseException as e:
+        return _error(e.args[0])
+    if errors:
+        return ParseResults(errors=tuple(errors))
+    elif results:
+        return ParseResults(frozendict(results))
+    else:
+        return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+
+def _process_dts_manifest(
+        manifest: list[dict[str, Any]], spcsrc: SpecificationSource
+) -> Tuple[dict[str, ParseResult], list[Error]]:
+    results = {}
+    errors = []
+    for resource in manifest:
+        try:
+            datatype, result = _parse_single_manifest_resource(resource, spcsrc)
+            if datatype not in results:
+                results[datatype] = []
+            results[datatype].append(result)
+        except _ParseException as e:
+            errors.append(e.args[0])
+    # Package results as a dict of {datatype: ParseResult}
+    parsed_result = {source: ParseResult(spcsrc, tuple(parsed)) for source, parsed in results.items()}
+    return parsed_result, errors
+
+def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: SpecificationSource) -> Tuple[str, dict[str, str]]:
+    """Here we check the resource for required keys, etc.
+    TODO: Parse with JSON schema or pydantic classes
+    TODO: Make more meaningful error strings, links to lines, etc.
+    """
+    missing_keys = [key for key in _DTS_REQUIRED_KEYS if key not in resource]
+    if missing_keys:
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"resource missing key(s) {','.join(missing_keys)}",
+                spcsrc
+            )
+        )
+    instructions = resource[_DTS_INSTRUCTIONS_KEY]
+    if not isinstance(instructions, dict):
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                "resource instructions must be a dictionary",
+                spcsrc
+            )
+        )
+    missing_instructions_keys = [
+        key for key in _DTS_INSTRUCTIONS_REQUIRED_KEYS if key not in instructions
+    ]
+    if missing_instructions_keys:
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"resource instructions missing key(s) {','.join(missing_keys)}",
+                spcsrc
+            )
+        )
+    if not isinstance(instructions[_DTS_INSTRUCTIONS_PARAMETERS_KEY], dict):
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                "resource instruction parameters must be a dictionary",
+                spcsrc
+            )
+        )
+    datatype = instructions[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+    parameters = frozendict(instructions[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
+    return datatype, parameters

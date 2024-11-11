@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 from collections.abc import Callable, Generator
@@ -14,6 +15,7 @@ from staging_service.import_specifications.individual_parsers import (
     ParseResults,
     SpecificationSource,
     parse_csv,
+    parse_dts_manifest,
     parse_excel,
     parse_tsv,
 )
@@ -765,3 +767,59 @@ def test_excel_parse_fail_unequal_rows():
             ),
         ],
     )
+
+def test_dts_manifest_parse_success():
+    f = _get_test_file("manifest_small.json")
+    res = parse_dts_manifest(f)
+    assert res.results
+    assert res.errors is None
+    assert list(res.results.keys()) == ["gff_metagenome"]
+    assert res.results["gff_metagenome"]
+    assert res.results["gff_metagenome"].source.file == f
+    assert len(res.results["gff_metagenome"].result) == 3
+    for parsed in res.results["gff_metagenome"].result:
+        assert parsed == {
+            "param1": "value1",
+            "param2": "value2"
+        }
+
+@fixture(scope="module")
+def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict|list], Path]:
+    def manifest_writer(input_json: dict|list) -> Path:
+        file_path = temp_dir / str(uuid.uuid4())
+        with open(file_path, "w", encoding="utf-8") as outfile:
+            json.dump(outfile, input_json)
+        return file_path
+    return manifest_writer
+
+def _dts_manifest_parse_fail(input_json: dict|list, errors: tuple[Error]=None):
+    f = write_dts_manifest(input_json)
+    res = parse_dts_manifest(f)
+    assert res.results is None
+    assert res.errors == errors
+
+def test_dts_manifest_parse_missing_resource(write_dts_manifest):
+    _dts_manifest_parse_fail(
+        {"not_a_manifest": "ok"},
+        tuple([
+            Error(
+                
+            )
+        ])
+    )
+    f = write_dts_manifest({"not_a_manifest": "ok"})
+    res = parse_dts_manifest(f)
+    assert res.results is None
+
+def test_dts_manifest_parse_missing_keys():
+    # note that this includes one valid entry, which should not be returned
+    f = _get_test_file("manifest_errors.json")
+    res = parse_dts_manifest(f)
+    assert res.results is None
+    assert res.errors
+
+def test_dts_manifest_parse_missing_instructions_keys():
+    pass
+
+def test_dts_manifest_parse_malformed_instructions():
+    pass
