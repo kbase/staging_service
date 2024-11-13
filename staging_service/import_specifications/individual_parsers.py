@@ -8,7 +8,6 @@ import math
 import re
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
-import logging
 
 import magic
 import pandas
@@ -364,7 +363,7 @@ def parse_dts_manifest(path: Path) -> ParseResults:
                     spcsrc
                 )
             )
-        if _DTS_RESOURCE_KEY not in manifest_json or not isinstance(manifest_json[_DTS_RESOURCE_KEY], list):
+        elif _DTS_RESOURCE_KEY not in manifest_json or not isinstance(manifest_json[_DTS_RESOURCE_KEY], list):
             errors.append(
                 Error(
                     ErrorType.PARSE_FAIL,
@@ -377,6 +376,8 @@ def parse_dts_manifest(path: Path) -> ParseResults:
             if parse_errors:
                 errors += parse_errors
 
+    except json.JSONDecodeError:
+        return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
