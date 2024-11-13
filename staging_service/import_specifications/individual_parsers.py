@@ -61,13 +61,13 @@ _EXCEL_MISSING_VALUES = [
 
 _DTS_RESOURCE_KEY = "resources"
 _DTS_INSTRUCTIONS_KEY = "instructions"
-_DTS_REQUIRED_KEYS = {"id", "name", "path", "format", _DTS_INSTRUCTIONS_KEY}
+_DTS_REQUIRED_KEYS = ["id", "name", "path", "format", _DTS_INSTRUCTIONS_KEY]
 _DTS_INSTRUCTIONS_DATATYPE_KEY = "data_type"
 _DTS_INSTRUCTIONS_PARAMETERS_KEY = "parameters"
-_DTS_INSTRUCTIONS_REQUIRED_KEYS = {
+_DTS_INSTRUCTIONS_REQUIRED_KEYS = [
     _DTS_INSTRUCTIONS_DATATYPE_KEY,
     _DTS_INSTRUCTIONS_PARAMETERS_KEY
-}
+]
 
 class _ParseException(Exception):
     pass
@@ -382,14 +382,12 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
-    except _ParseException as e:
-        return _error(e.args[0])
     if errors:
         return ParseResults(errors=tuple(errors))
     elif results:
         return ParseResults(frozendict(results))
     else:
-        return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+        return _error(Error(ErrorType.PARSE_FAIL, "No import specification data in file", spcsrc))
 
 def _process_dts_manifest(
         manifest: list[dict[str, Any]], spcsrc: SpecificationSource
@@ -418,7 +416,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
-                f"resource missing key(s) {','.join(missing_keys)}",
+                f"Resource missing key(s) {','.join(missing_keys)}",
                 spcsrc
             )
         )
@@ -427,7 +425,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
-                "resource instructions must be a dictionary",
+                "Resource instructions must be a dictionary",
                 spcsrc
             )
         )
@@ -438,7 +436,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
-                f"resource instructions missing key(s) {','.join(missing_keys)}",
+                f"Resource instructions missing key(s) {','.join(missing_instructions_keys)}",
                 spcsrc
             )
         )
@@ -446,7 +444,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
-                "resource instruction parameters must be a dictionary",
+                "Resource instruction parameters must be a dictionary",
                 spcsrc
             )
         )

@@ -6,7 +6,7 @@ from pathlib import Path
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict import frozendict
-from pytest import fixture
+from pytest import fixture, mark
 
 from staging_service.import_specifications.individual_parsers import (
     Error,
@@ -22,7 +22,6 @@ from staging_service.import_specifications.individual_parsers import (
 from tests.test_app import FileUtil
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
-
 
 @fixture(scope="module", name="temp_dir")
 def temp_dir_fixture() -> Generator[Path, None, None]:
@@ -829,7 +828,7 @@ def test_dts_manifest_parse_missing_keys():
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                "resource missing key(s) instructions",
+                "Resource missing key(s) instructions",
                 SpecificationSource(manifest_path)
             )
         ]
@@ -884,4 +883,94 @@ def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None]):
                 SpecificationSource(test_file),
             )
         ],
+    )
+
+malformed_dict = [
+    [], 1, "nope", None
+]
+@mark.parametrize("bad_instruction", malformed_dict)
+def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict | list], Path], bad_instruction):
+    manifest_file = write_dts_manifest({
+        "resources": [{
+            "id": "some_id",
+            "path": "some_file_path",
+            "name": "some_object",
+            "format": "a_format",
+            "instructions": bad_instruction
+        }]
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "Resource instructions must be a dictionary",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+@mark.parametrize("bad_parameters", malformed_dict)
+def test_dts_manifest_malformed_parameters(write_dts_manifest: Callable[[dict | list], Path], bad_parameters):
+    manifest_file = write_dts_manifest({
+        "resources": [{
+            "id": "some_id",
+            "path": "some_file_path",
+            "name": "some_object",
+            "format": "a_format",
+            "instructions": {
+                "data_type": "some_type",
+                "parameters": bad_parameters
+            }
+        }]
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "Resource instruction parameters must be a dictionary",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+missing_key_cases = [
+    ["data_type"],
+    ["parameters"],
+    ["data_type", "parameters"]
+]
+@mark.parametrize("missing_keys", missing_key_cases)
+def test_dts_manifest_missing_instruction_keys(write_dts_manifest: Callable[[dict | list], Path], missing_keys):
+    instructions = {
+        "data_type": "some_type",
+        "parameters": {
+            "param1": "value1"
+        }
+    }
+    for key in missing_keys:
+        del instructions[key]
+    manifest_file = write_dts_manifest({
+        "resources": [{
+            "id": "some_id",
+            "path": "some_file_path",
+            "name": "some_object",
+            "format": "a_format",
+            "instructions": instructions
+        }]
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            f"Resource instructions missing key(s) {','.join(missing_keys)}",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+def test_dts_manifest_empty(write_dts_manifest: Callable[[dict | list], Path]):
+    manifest_file = write_dts_manifest({"resources": []})
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "No import specification data in file",
+            SpecificationSource(manifest_file)
+        )]
     )
