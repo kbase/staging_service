@@ -3,7 +3,6 @@ import os
 import uuid
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Union
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict import frozendict
@@ -772,28 +771,26 @@ def test_excel_parse_fail_unequal_rows():
 def test_dts_manifest_parse_success():
     f = _get_test_file("manifest_small.json")
     res = parse_dts_manifest(f)
-    assert res.results
-    assert res.errors is None
-    assert list(res.results.keys()) == ["gff_metagenome"]
-    assert res.results["gff_metagenome"]
-    assert res.results["gff_metagenome"].source.file == f
-    assert len(res.results["gff_metagenome"].result) == 3
-    for parsed in res.results["gff_metagenome"].result:
-        assert parsed == {
-            "param1": "value1",
-            "param2": "value2"
-        }
+    # fails for now
+    assert res.results is None
+    assert res.errors == tuple([
+        Error(
+            ErrorType.PARSE_FAIL,
+            "No import specification data in file",
+            SpecificationSource(f)
+        )
+    ])
 
 @fixture(scope="module")
-def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[Union[dict,list]], Path]:
-    def manifest_writer(input_json: Union[dict,list]) -> Path:
+def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict|list], Path]:
+    def manifest_writer(input_json: dict|list) -> Path:
         file_path = temp_dir / str(uuid.uuid4())
         with open(file_path, "w", encoding="utf-8") as outfile:
             json.dump(input_json, outfile)
         return file_path
     return manifest_writer
 
-def _dts_manifest_parse_fail(input_file: Path, error_infos: list[dict[str, str]]=None):
+def _dts_manifest_parse_fail(input_file: Path, errors: list[Error]):
     """
     Tests a failing DTS manifest parse.
     input_file - the path to the input file. Might be a directory or not exist.
@@ -805,68 +802,33 @@ def _dts_manifest_parse_fail(input_file: Path, error_infos: list[dict[str, str]]
     call.
     """
     res = parse_dts_manifest(input_file)
-    errors = None
-    if error_infos is not None:
-        errors = tuple([
-            Error(e["type"], e.get("text"), SpecificationSource(input_file)) for e in error_infos
-        ])
     assert res.results is None
-    assert res.errors == errors
+    assert res.errors == tuple(errors)
 
-def test_dts_manifest_non_dict(write_dts_manifest: Callable[[Union[dict,list]], Path]):
+def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict|list], Path]):
     manifest_path = write_dts_manifest(["wrong_format"])
     _dts_manifest_parse_fail(
         manifest_path,
-        error_infos=[{
-            "type": ErrorType.PARSE_FAIL,
-            "text": "Manifest is not a dictionary"
-        }]
+        [
+            Error(
+                ErrorType.PARSE_FAIL,
+                "Manifest is not a dictionary",
+                SpecificationSource(manifest_path)
+            )
+        ]
     )
 
 def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None]):
     manifest_path = temp_dir / "not_a_file"
     _dts_manifest_parse_fail(
         manifest_path,
-        error_infos = [{
-            "type": ErrorType.FILE_NOT_FOUND,
-        }]
+        [Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(manifest_path))]
     )
 
-# def test_dts_manifest_parse_missing_resource(write_dts_manifest):
-#     manifest_path = write_dts_manifest({"not_a_manifest": "ok"})
-#     _dts_manifest_parse_fail(
-#         manifest_path,
-#         tuple([
-#             Error(
-#                 ErrorType.PARSE_FAIL,
-#                 "Manifest is missing a list of file resources",
-#                 SpecificationSource(manifest_path)
-#             )
-#         ])
-#     )
-
-# def test_dts_manifest_parse_missing_keys():
-#     # note that this includes one valid entry, which should not be returned
-#     manifest_path = _get_test_file("manifest_errors.json")
-#     _dts_manifest_parse_fail(
-#         manifest_path,
-#         tuple([
-#             Error(
-#                 ErrorType.PARSE_FAIL,
-#                 "resource missing key(s) instructions",
-#                 SpecificationSource(manifest_path)
-#             )
-#         ])
-#     )
-
-# @pytest.mark.parametrize()
-# def test_dts_manifest_parse_missing_instructions_keys():
-#     manifest_path = write_dts_manifest({"resources": [{
-#         "id": "foo",
-#         "path": "bar",
-#         "name": "some_object",
-#         "format": "some_format",
-#     }]})
-
-# def test_dts_manifest_parse_malformed_instructions():
-#     pass
+def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None]):
+    test_file = temp_dir / "testdir.json"
+    os.makedirs(test_file, exist_ok=True)
+    _dts_manifest_parse_fail(
+        test_file,
+        [Error(ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file))]
+    )

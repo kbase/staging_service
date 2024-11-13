@@ -361,8 +361,6 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
-    except _ParseException as e:
-        return _error(e.args[0])
     if errors:
         return ParseResults(errors=tuple(errors))
     elif results:
