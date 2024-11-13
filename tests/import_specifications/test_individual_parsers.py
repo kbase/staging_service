@@ -1,5 +1,6 @@
 import json
 import os
+import pytest
 import uuid
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -20,6 +21,7 @@ from staging_service.import_specifications.individual_parsers import (
     parse_tsv,
 )
 from tests.test_app import FileUtil
+from typing import Union
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
 
@@ -784,42 +786,54 @@ def test_dts_manifest_parse_success():
         }
 
 @fixture(scope="module")
-def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict|list], Path]:
-    def manifest_writer(input_json: dict|list) -> Path:
+def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[Union[dict,list]], Path]:
+    def manifest_writer(input_json: Union[dict,list]) -> Path:
         file_path = temp_dir / str(uuid.uuid4())
         with open(file_path, "w", encoding="utf-8") as outfile:
-            json.dump(outfile, input_json)
+            json.dump(input_json, outfile)
         return file_path
     return manifest_writer
 
-def _dts_manifest_parse_fail(input_json: dict|list, errors: tuple[Error]=None):
-    f = write_dts_manifest(input_json)
-    res = parse_dts_manifest(f)
+def _dts_manifest_parse_fail(input_file: Path, errors: tuple[Error]=None):
+    res = parse_dts_manifest(input_file)
     assert res.results is None
     assert res.errors == errors
 
 def test_dts_manifest_parse_missing_resource(write_dts_manifest):
+    manifest_path = write_dts_manifest({"not_a_manifest": "ok"})
     _dts_manifest_parse_fail(
-        {"not_a_manifest": "ok"},
+        manifest_path,
         tuple([
             Error(
-                
+                ErrorType.PARSE_FAIL,
+                "Manifest is missing a list of file resources",
+                SpecificationSource(manifest_path)
             )
         ])
     )
-    f = write_dts_manifest({"not_a_manifest": "ok"})
-    res = parse_dts_manifest(f)
-    assert res.results is None
 
 def test_dts_manifest_parse_missing_keys():
     # note that this includes one valid entry, which should not be returned
-    f = _get_test_file("manifest_errors.json")
-    res = parse_dts_manifest(f)
-    assert res.results is None
-    assert res.errors
+    manifest_path = _get_test_file("manifest_errors.json")
+    _dts_manifest_parse_fail(
+        manifest_path,
+        tuple([
+            Error(
+                ErrorType.PARSE_FAIL,
+                "resource missing key(s) instructions",
+                SpecificationSource(manifest_path)
+            )
+        ])
+    )
 
+@pytest.mark.parametrize()
 def test_dts_manifest_parse_missing_instructions_keys():
-    pass
+    manifest_path = write_dts_manifest({"resources": [{
+        "id": "foo",
+        "path": "bar",
+        "name": "some_object",
+        "format": "some_format",
+    }]})
 
 def test_dts_manifest_parse_malformed_instructions():
     pass

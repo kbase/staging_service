@@ -372,9 +372,10 @@ def parse_dts_manifest(path: Path) -> ParseResults:
                     spcsrc
                 )
             )
-        results, parse_errors = _process_dts_manifest(manifest_json[_DTS_RESOURCE_KEY], spcsrc)
-        if parse_errors:
-            errors += parse_errors
+        if not errors:
+            results, parse_errors = _process_dts_manifest(manifest_json[_DTS_RESOURCE_KEY], spcsrc)
+            if parse_errors:
+                errors += parse_errors
 
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
