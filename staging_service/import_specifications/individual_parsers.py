@@ -357,6 +357,8 @@ def parse_dts_manifest(path: Path) -> ParseResults:
                 )
             )
 
+    except json.JSONDecodeError:
+        return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:

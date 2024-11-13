@@ -805,6 +805,21 @@ def _dts_manifest_parse_fail(input_file: Path, errors: list[Error]):
     assert res.results is None
     assert res.errors == tuple(errors)
 
+def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None]):
+    test_file = temp_dir / str(uuid.uuid4())
+    with open(test_file, "w", encoding="utf-8") as outfile:
+        outfile.write("totally not json")
+    _dts_manifest_parse_fail(
+        test_file,
+        [
+            Error(
+                ErrorType.PARSE_FAIL,
+                "File must be in JSON format",
+                SpecificationSource(test_file)
+            )
+        ]
+    )
+
 def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict|list], Path]):
     manifest_path = write_dts_manifest(["wrong_format"])
     _dts_manifest_parse_fail(
