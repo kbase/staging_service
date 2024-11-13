@@ -768,27 +768,31 @@ def test_excel_parse_fail_unequal_rows():
         ],
     )
 
+
 def test_dts_manifest_parse_success():
     f = _get_test_file("manifest_small.json")
     res = parse_dts_manifest(f)
     # fails for now
     assert res.results is None
-    assert res.errors == tuple([
-        Error(
-            ErrorType.PARSE_FAIL,
-            "No import specification data in file",
-            SpecificationSource(f)
-        )
-    ])
+    assert res.errors == tuple(
+        [
+            Error(
+                ErrorType.PARSE_FAIL, "No import specification data in file", SpecificationSource(f)
+            )
+        ]
+    )
+
 
 @fixture(scope="module")
-def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict|list], Path]:
-    def manifest_writer(input_json: dict|list) -> Path:
+def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict | list], Path]:
+    def manifest_writer(input_json: dict | list) -> Path:
         file_path = temp_dir / str(uuid.uuid4())
         with open(file_path, "w", encoding="utf-8") as outfile:
             json.dump(input_json, outfile)
         return file_path
+
     return manifest_writer
+
 
 def _dts_manifest_parse_fail(input_file: Path, errors: list[Error]):
     """
@@ -801,6 +805,7 @@ def _dts_manifest_parse_fail(input_file: Path, errors: list[Error]):
     assert res.results is None
     assert res.errors == tuple(errors)
 
+
 def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None]):
     test_file = temp_dir / str(uuid.uuid4())
     with open(test_file, "w", encoding="utf-8") as outfile:
@@ -809,14 +814,13 @@ def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None]):
         test_file,
         [
             Error(
-                ErrorType.PARSE_FAIL,
-                "File must be in JSON format",
-                SpecificationSource(test_file)
+                ErrorType.PARSE_FAIL, "File must be in JSON format", SpecificationSource(test_file)
             )
-        ]
+        ],
     )
 
-def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict|list], Path]):
+
+def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict | list], Path]):
     manifest_path = write_dts_manifest(["wrong_format"])
     _dts_manifest_parse_fail(
         manifest_path,
@@ -824,22 +828,30 @@ def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict|list], Path]):
             Error(
                 ErrorType.PARSE_FAIL,
                 "Manifest is not a dictionary",
-                SpecificationSource(manifest_path)
+                SpecificationSource(manifest_path),
             )
-        ]
+        ],
     )
+
 
 def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None]):
     manifest_path = temp_dir / "not_a_file"
     _dts_manifest_parse_fail(
         manifest_path,
-        [Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(manifest_path))]
+        [Error(ErrorType.FILE_NOT_FOUND, source_1=SpecificationSource(manifest_path))],
     )
+
 
 def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None]):
     test_file = temp_dir / "testdir.json"
     os.makedirs(test_file, exist_ok=True)
     _dts_manifest_parse_fail(
         test_file,
-        [Error(ErrorType.PARSE_FAIL, "The given path is a directory", SpecificationSource(test_file))]
+        [
+            Error(
+                ErrorType.PARSE_FAIL,
+                "The given path is a directory",
+                SpecificationSource(test_file),
+            )
+        ],
     )

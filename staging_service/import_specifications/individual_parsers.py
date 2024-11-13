@@ -318,6 +318,7 @@ def parse_excel(path: Path) -> ParseResults:
     else:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
 
+
 def parse_dts_manifest(path: Path) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
@@ -349,13 +350,7 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
-            errors.append(
-                Error(
-                    ErrorType.PARSE_FAIL,
-                    "Manifest is not a dictionary",
-                    spcsrc
-                )
-            )
+            errors.append(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
 
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
