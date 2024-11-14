@@ -12,7 +12,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV, DTS_MANIFEST
+from .autodetect.Mappings import CSV, EXCEL, TSV, JSON
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -48,7 +48,7 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
-    DTS_MANIFEST: parse_dts_manifest,
+    JSON: parse_dts_manifest,
 }
 
 _IMPSPEC_FILE_TO_WRITER = {

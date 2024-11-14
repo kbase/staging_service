@@ -23,6 +23,15 @@ Functionality: Running this script will
 * Note: We should serve the generated content from memory
 * Note: This doesn't handle if we want to have different output types based on file extensions
   feeding into the same app
+
+Adding new file types and app ids:
+* file types and app ids should be added to staging_service.autodetect.Mappings
+* file types should be all upper-case and represent the file suffix.
+* app ids should be in snake_case, and represent either an object import type, or some
+  internal application to be run on selection (i.e. decompress or import specification).
+* app ids that map to actual object import maps should match the app ids in the narrative
+  interface configuration here:
+  https://github.com/kbase/narrative/blob/main/kbase-extension/static/kbase/config/staging_upload.json
 """
 
 from collections import defaultdict
@@ -120,7 +129,7 @@ file_format_to_app_mapping[EXCEL] = [
     fba_model_id,
     import_specification,
 ]
-file_format_to_app_mapping[JSON] = [escher_map_id]
+file_format_to_app_mapping[JSON] = [escher_map_id, import_specification]
 file_format_to_app_mapping[SBML] = [fba_model_id]
 
 app_id_to_extensions = defaultdict(list)
