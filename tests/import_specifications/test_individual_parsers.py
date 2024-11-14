@@ -791,7 +791,7 @@ def _dts_manifest_parse_fail(input_file: Path, errors: list[Error]):
     assert res.errors == tuple(errors)
 
 
-def test_dts_manifest_parse_success():
+def test_dts_manifest_parse_single_data_type_success():
     f = _get_test_file("manifest_small.json")
     res = parse_dts_manifest(f)
     assert res.results
@@ -806,6 +806,38 @@ def test_dts_manifest_parse_success():
             "param2": "value2"
         }
 
+def test_dts_manifest_parse_multi_data_types_success():
+    f = _get_test_file("manifest_multiple.json")
+    res = parse_dts_manifest(f)
+    assert res.results
+    assert res.errors is None
+    assert len(res.results.keys()) == 2
+    expected = {
+        "gff_metagenome": (
+            frozendict({
+                "mg_param1": "value1",
+                "mg_param2": "value2"
+            }),
+            frozendict({
+                "mg_param1": "value3",
+                "mg_param2": "value4"
+            })
+        ),
+        "gff_genome": (
+            frozendict({
+                "gen_param1": "value1",
+                "gen_param2": "value2",
+            }),
+            frozendict({
+                "gen_param1": "value3",
+                "gen_param2": "value4",
+            })
+        )
+    }
+    for key in expected.keys():
+        assert key in res.results
+        assert res.results[key].source.file == f
+        assert res.results[key].result == expected[key]
 
 def test_dts_manifest_parse_missing_resource(write_dts_manifest):
     manifest_path = write_dts_manifest({"not_a_manifest": "ok"})
