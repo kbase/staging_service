@@ -1089,6 +1089,8 @@ For example,
 - for files for which there is no predicted app, the return is a null value
 - this endpoint is used to power the dropdowns for the staging service window in the Narrative
 
+Note: to update these mappings see instructions [here](#updating-importer-mapping-types)
+
 **URL** : `ci.kbase.us/services/staging_service/importer_mappings`
 
 **local URL** : `localhost:3000/importer_mappings`
