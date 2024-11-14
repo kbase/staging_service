@@ -31,13 +31,6 @@
         "titles": null,
         "url": "",
         "version": ""
-      },
-      "instructions": {
-        "data_type": "gff_metagenome",
-        "parameters": {
-          "param1": "value1",
-          "param2": "value2"
-        }
       }
     },
     {
@@ -72,5 +65,17 @@
         "version": ""
       }
     }
-  ]
+  ],
+  "instructions": {
+    "protocol": "KBase narrative import",
+    "objects": [
+      {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value1",
+          "param2": "value2"
+        }
+      }
+    ]
+  }
 }

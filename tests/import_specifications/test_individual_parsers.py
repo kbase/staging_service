@@ -18,6 +18,7 @@ from staging_service.import_specifications.individual_parsers import (
     parse_dts_manifest,
     parse_excel,
     parse_tsv,
+    _DTS_INSTRUCTIONS_PROTOCOL
 )
 from tests.test_app import FileUtil
 
@@ -848,24 +849,14 @@ def test_dts_manifest_parse_missing_resource(write_dts_manifest):
                 ErrorType.PARSE_FAIL,
                 "Manifest is missing a list of file resources",
                 SpecificationSource(manifest_path)
-            )
-        ]
-    )
-
-def test_dts_manifest_parse_missing_keys():
-    # note that this includes one valid entry, which should not be returned
-    manifest_path = _get_test_file("manifest_errors.json")
-    _dts_manifest_parse_fail(
-        manifest_path,
-        [
+            ),
             Error(
                 ErrorType.PARSE_FAIL,
-                "Resource missing key(s) instructions",
+                "Manifest is missing a dictionary of import instructions",
                 SpecificationSource(manifest_path)
             )
         ]
     )
-
 
 def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None]):
     test_file = temp_dir / str(uuid.uuid4())
@@ -923,19 +914,14 @@ malformed_dict = [
 @mark.parametrize("bad_instruction", malformed_dict)
 def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict | list], Path], bad_instruction: list|int|str|None):
     manifest_file = write_dts_manifest({
-        "resources": [{
-            "id": "some_id",
-            "path": "some_file_path",
-            "name": "some_object",
-            "format": "a_format",
-            "instructions": bad_instruction
-        }]
+        "resources": [],
+        "instructions": bad_instruction
     })
     _dts_manifest_parse_fail(
         manifest_file,
         [Error(
             ErrorType.PARSE_FAIL,
-            "Resource instructions must be a dictionary",
+            "Manifest is missing a dictionary of import instructions",
             SpecificationSource(manifest_file)
         )]
     )
@@ -943,16 +929,16 @@ def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict 
 @mark.parametrize("bad_parameters", malformed_dict)
 def test_dts_manifest_malformed_parameters(write_dts_manifest: Callable[[dict | list], Path], bad_parameters: list|int|str|None):
     manifest_file = write_dts_manifest({
-        "resources": [{
-            "id": "some_id",
-            "path": "some_file_path",
-            "name": "some_object",
-            "format": "a_format",
-            "instructions": {
-                "data_type": "some_type",
-                "parameters": bad_parameters
-            }
-        }]
+        "resources": [],
+        "instructions": {
+            "protocol": _DTS_INSTRUCTIONS_PROTOCOL,
+            "objects": [
+                {
+                    "data_type": "some_type",
+                    "parameters": bad_parameters
+                }
+            ]
+        }
     })
     _dts_manifest_parse_fail(
         manifest_file,
@@ -970,22 +956,20 @@ missing_key_cases = [
 ]
 @mark.parametrize("missing_keys", missing_key_cases)
 def test_dts_manifest_missing_instruction_keys(write_dts_manifest: Callable[[dict | list], Path], missing_keys: list[str]):
-    instructions = {
+    resource_obj = {
         "data_type": "some_type",
         "parameters": {
-            "param1": "value1"
+            "p1": "v1"
         }
     }
     for key in missing_keys:
-        del instructions[key]
+        del resource_obj[key]
     manifest_file = write_dts_manifest({
-        "resources": [{
-            "id": "some_id",
-            "path": "some_file_path",
-            "name": "some_object",
-            "format": "a_format",
-            "instructions": instructions
-        }]
+        "resources": [],
+        "instructions": {
+            "protocol": _DTS_INSTRUCTIONS_PROTOCOL,
+            "objects": [resource_obj]
+        }
     })
     _dts_manifest_parse_fail(
         manifest_file,
@@ -997,7 +981,7 @@ def test_dts_manifest_missing_instruction_keys(write_dts_manifest: Callable[[dic
     )
 
 def test_dts_manifest_empty(write_dts_manifest: Callable[[dict | list], Path]):
-    manifest_file = write_dts_manifest({"resources": []})
+    manifest_file = write_dts_manifest({"resources": [], "instructions": {"protocol": _DTS_INSTRUCTIONS_PROTOCOL, "objects": []}})
     _dts_manifest_parse_fail(
         manifest_file,
         [Error(
@@ -1010,22 +994,87 @@ def test_dts_manifest_empty(write_dts_manifest: Callable[[dict | list], Path]):
 @mark.parametrize("non_str", [{"a": "b"}, ["a", "b"], 1, None])
 def test_dts_manifest_fail_data_type_not_str(write_dts_manifest: Callable[[dict | list], Path], non_str: dict|list|int|None):
     manifest_file = write_dts_manifest({
-        "resources": [{
-            "id": "foo",
-            "name": "bar",
-            "path": "baz",
-            "format": "some_format",
-            "instructions": {
+        "resources": [],
+        "instructions": {
+            "protocol": _DTS_INSTRUCTIONS_PROTOCOL,
+            "objects": [{
                 "data_type": non_str,
                 "parameters": {}
-            }
-        }]
+            }]
+        }
     })
     _dts_manifest_parse_fail(
         manifest_file,
         [Error(
             ErrorType.PARSE_FAIL,
             "Data type must be a string",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+def test_dts_manifest_missing_instructions_protocol(write_dts_manifest: Callable[[dict | list], Path]):
+    manifest_file = write_dts_manifest({
+        "resources": [],
+        "instructions": {
+            "objects": [{}]
+        }
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "Instructions must have a string representing the protocol",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+def test_dts_manifest_wrong_protocol(write_dts_manifest: Callable[[dict | list], Path]):
+    manifest_file = write_dts_manifest({
+        "resources": [],
+        "instructions": {
+            "protocol": "some wrong protocol",
+            "objects": [{}]
+        }
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            f"The instructions protocol must be '{_DTS_INSTRUCTIONS_PROTOCOL}'",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+def test_dts_manifest_missing_objects(write_dts_manifest: Callable[[dict | list], Path]):
+    manifest_file = write_dts_manifest({
+        "resources": [],
+        "instructions": {
+            "protocol": _DTS_INSTRUCTIONS_PROTOCOL
+        }
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "The instructions are missing a list of objects",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+@mark.parametrize("not_dict", malformed_dict)
+def test_dts_manifest_resource_not_dict(write_dts_manifest: Callable[[dict | list], Path], not_dict):
+    manifest_file = write_dts_manifest({
+        "resources": [],
+        "instructions": {
+            "protocol": _DTS_INSTRUCTIONS_PROTOCOL,
+            "objects": [not_dict]
+        }
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "Resource instructions must be a dictionary",
             SpecificationSource(manifest_file)
         )]
     )

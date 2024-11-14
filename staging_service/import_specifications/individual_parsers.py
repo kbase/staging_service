@@ -68,6 +68,9 @@ _DTS_INSTRUCTIONS_REQUIRED_KEYS = [
     _DTS_INSTRUCTIONS_DATATYPE_KEY,
     _DTS_INSTRUCTIONS_PARAMETERS_KEY
 ]
+_DTS_INSTRUCTIONS_PROTOCOL_KEY = "protocol"
+_DTS_INSTRUCTIONS_PROTOCOL = "KBase narrative import"
+_DTS_INSTRUCTIONS_OBJECTS_KEY = "objects"
 
 class _ParseException(Exception):
     pass
@@ -332,21 +335,29 @@ def parse_dts_manifest(path: Path) -> ParseResults:
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have roughly this format, with expected keys included:
     {
+        "name": "manifest",
         "resources": [{
             "id": str,
             "name": str,
             "path": str,
             "format": str,
-            "instructions": {
-                "data_type": str,
-                "parameters": {
-                    "<param1>": value,
-                    "<param2>": value
-                }
-            }
-        }]
+            ..etc
+        }],
+        "instructions": {
+            "protocol": "KBase narrative import",
+            "objects": [
+                {
+                    "data_type": str,
+                    "parameters": {
+                        "<param1>": value,
+                        "<param2>": value
+                    }
+                },
+                ...etc
+            ]
+        }
     }
-    The parameters under the "instructions"."parameters" dictionary are arbitrary keys with
+    The parameters under the "parameters" field are arbitrary keys with
     arbitrary values and will be returned as-is. They are expected to be PRIMITIVE_TYPEs and
     will fail otherwise.
     """
@@ -363,16 +374,25 @@ def parse_dts_manifest(path: Path) -> ParseResults:
                     spcsrc
                 )
             )
-        elif _DTS_RESOURCE_KEY not in manifest_json or not isinstance(manifest_json[_DTS_RESOURCE_KEY], list):
-            errors.append(
-                Error(
-                    ErrorType.PARSE_FAIL,
-                    "Manifest is missing a list of file resources",
-                    spcsrc
+        else:
+            if _DTS_RESOURCE_KEY not in manifest_json or not isinstance(manifest_json[_DTS_RESOURCE_KEY], list):
+                errors.append(
+                    Error(
+                        ErrorType.PARSE_FAIL,
+                        "Manifest is missing a list of file resources",
+                        spcsrc
+                    )
                 )
-            )
+            if _DTS_INSTRUCTIONS_KEY not in manifest_json or not isinstance(manifest_json[_DTS_INSTRUCTIONS_KEY], dict):
+                errors.append(
+                    Error(
+                        ErrorType.PARSE_FAIL,
+                        "Manifest is missing a dictionary of import instructions",
+                        spcsrc
+                    )
+                )
         if not errors:
-            results, parse_errors = _process_dts_manifest(manifest_json[_DTS_RESOURCE_KEY], spcsrc)
+            results, parse_errors = _process_dts_manifest(manifest_json, spcsrc)
             if parse_errors:
                 errors += parse_errors
 
@@ -382,6 +402,8 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    except _ParseException as parse_err:
+        return _error(parse_err.args[0])
     if errors:
         return ParseResults(errors=tuple(errors))
     elif results:
@@ -390,13 +412,38 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "No import specification data in file", spcsrc))
 
 def _process_dts_manifest(
-        manifest: list[dict[str, Any]], spcsrc: SpecificationSource
+        manifest: dict[str, Any], spcsrc: SpecificationSource
 ) -> Tuple[dict[str, ParseResult], list[Error]]:
     results = {}
     errors = []
-    for resource in manifest:
+    instructions = manifest[_DTS_INSTRUCTIONS_KEY]
+    if _DTS_INSTRUCTIONS_PROTOCOL_KEY not in instructions or not isinstance(instructions[_DTS_INSTRUCTIONS_PROTOCOL_KEY], str):
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                "Instructions must have a string representing the protocol",
+                spcsrc
+            )
+        )
+    if instructions[_DTS_INSTRUCTIONS_PROTOCOL_KEY] != _DTS_INSTRUCTIONS_PROTOCOL:
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"The instructions protocol must be '{_DTS_INSTRUCTIONS_PROTOCOL}'",
+                spcsrc
+            )
+        )
+    if _DTS_INSTRUCTIONS_OBJECTS_KEY not in instructions or not isinstance(instructions[_DTS_INSTRUCTIONS_OBJECTS_KEY], list):
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                "The instructions are missing a list of objects",
+                spcsrc
+            )
+        )
+    for resource_obj in instructions[_DTS_INSTRUCTIONS_OBJECTS_KEY]:
         try:
-            datatype, result = _parse_single_manifest_resource(resource, spcsrc)
+            datatype, result = _parse_single_manifest_object(resource_obj, spcsrc)
             if datatype not in results:
                 results[datatype] = []
             results[datatype].append(result)
@@ -406,22 +453,22 @@ def _process_dts_manifest(
     parsed_result = {source: ParseResult(spcsrc, tuple(parsed)) for source, parsed in results.items()}
     return parsed_result, errors
 
-def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: SpecificationSource) -> Tuple[str, dict[str, str]]:
+def _parse_single_manifest_object(resource_obj: dict[str, Any], spcsrc: SpecificationSource) -> Tuple[str, dict[str, str]]:
     """Here we check the resource for required keys, etc.
     TODO: Parse with JSON schema or pydantic classes
     TODO: Make more meaningful error strings, links to lines, etc.
     """
-    missing_keys = [key for key in _DTS_REQUIRED_KEYS if key not in resource]
-    if missing_keys:
-        raise _ParseException(
-            Error(
-                ErrorType.PARSE_FAIL,
-                f"Resource missing key(s) {','.join(missing_keys)}",
-                spcsrc
-            )
-        )
-    instructions = resource[_DTS_INSTRUCTIONS_KEY]
-    if not isinstance(instructions, dict):
+    # missing_keys = [key for key in _DTS_REQUIRED_KEYS if key not in resource_obj]
+    # if missing_keys:
+    #     raise _ParseException(
+    #         Error(
+    #             ErrorType.PARSE_FAIL,
+    #             f"Resource missing key(s) {','.join(missing_keys)}",
+    #             spcsrc
+    #         )
+    #     )
+    # instructions = resource_obj[_DTS_INSTRUCTIONS_KEY]
+    if not isinstance(resource_obj, dict):
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
@@ -430,7 +477,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
             )
         )
     missing_instructions_keys = [
-        key for key in _DTS_INSTRUCTIONS_REQUIRED_KEYS if key not in instructions
+        key for key in _DTS_INSTRUCTIONS_REQUIRED_KEYS if key not in resource_obj
     ]
     if missing_instructions_keys:
         raise _ParseException(
@@ -440,7 +487,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
                 spcsrc
             )
         )
-    if not isinstance(instructions[_DTS_INSTRUCTIONS_PARAMETERS_KEY], dict):
+    if not isinstance(resource_obj[_DTS_INSTRUCTIONS_PARAMETERS_KEY], dict):
         raise _ParseException(
             Error(
                 ErrorType.PARSE_FAIL,
@@ -448,7 +495,7 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
                 spcsrc
             )
         )
-    datatype = instructions[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+    datatype = resource_obj[_DTS_INSTRUCTIONS_DATATYPE_KEY]
     if not isinstance(datatype, str):
         raise _ParseException(
             Error(
@@ -457,5 +504,5 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
                 spcsrc
             )
         )
-    parameters = frozendict(instructions[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
+    parameters = frozendict(resource_obj[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
     return datatype, parameters
