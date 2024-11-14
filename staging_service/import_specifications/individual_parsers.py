@@ -449,5 +449,13 @@ def _parse_single_manifest_resource(resource: dict[str, Any], spcsrc: Specificat
             )
         )
     datatype = instructions[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+    if not isinstance(datatype, str):
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                "Data type must be a string",
+                spcsrc
+            )
+        )
     parameters = frozendict(instructions[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
     return datatype, parameters

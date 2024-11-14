@@ -889,7 +889,7 @@ malformed_dict = [
     [], 1, "nope", None
 ]
 @mark.parametrize("bad_instruction", malformed_dict)
-def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict | list], Path], bad_instruction):
+def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict | list], Path], bad_instruction: list|int|str|None):
     manifest_file = write_dts_manifest({
         "resources": [{
             "id": "some_id",
@@ -909,7 +909,7 @@ def test_dts_manifest_malformed_instructions(write_dts_manifest: Callable[[dict 
     )
 
 @mark.parametrize("bad_parameters", malformed_dict)
-def test_dts_manifest_malformed_parameters(write_dts_manifest: Callable[[dict | list], Path], bad_parameters):
+def test_dts_manifest_malformed_parameters(write_dts_manifest: Callable[[dict | list], Path], bad_parameters: list|int|str|None):
     manifest_file = write_dts_manifest({
         "resources": [{
             "id": "some_id",
@@ -937,7 +937,7 @@ missing_key_cases = [
     ["data_type", "parameters"]
 ]
 @mark.parametrize("missing_keys", missing_key_cases)
-def test_dts_manifest_missing_instruction_keys(write_dts_manifest: Callable[[dict | list], Path], missing_keys):
+def test_dts_manifest_missing_instruction_keys(write_dts_manifest: Callable[[dict | list], Path], missing_keys: list[str]):
     instructions = {
         "data_type": "some_type",
         "parameters": {
@@ -971,6 +971,29 @@ def test_dts_manifest_empty(write_dts_manifest: Callable[[dict | list], Path]):
         [Error(
             ErrorType.PARSE_FAIL,
             "No import specification data in file",
+            SpecificationSource(manifest_file)
+        )]
+    )
+
+@mark.parametrize("non_str", [{"a": "b"}, ["a", "b"], 1, None])
+def test_dts_manifest_fail_data_type_not_str(write_dts_manifest: Callable[[dict | list], Path], non_str: dict|list|int|None):
+    manifest_file = write_dts_manifest({
+        "resources": [{
+            "id": "foo",
+            "name": "bar",
+            "path": "baz",
+            "format": "some_format",
+            "instructions": {
+                "data_type": non_str,
+                "parameters": {}
+            }
+        }]
+    })
+    _dts_manifest_parse_fail(
+        manifest_file,
+        [Error(
+            ErrorType.PARSE_FAIL,
+            "Data type must be a string",
             SpecificationSource(manifest_file)
         )]
     )
