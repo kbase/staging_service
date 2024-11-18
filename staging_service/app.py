@@ -116,6 +116,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     type, in the `types` key.
 
     :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+
+    TODO: since JSON files are rather generic and we might want to use a different JSON bulk-spec
+    format later, add a separate query parameter to request that the selected file is treated as a
+    Data Transfer Service manifest.
     """
     username = await authorize_request(request)
     files = parse_qs(request.query_string).get("files", [])

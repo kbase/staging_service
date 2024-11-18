@@ -324,23 +324,25 @@ def parse_dts_manifest(path: Path) -> ParseResults:
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have roughly this format, with expected keys included:
     {
-        "resources": [{
-            "id": str,
-            "name": str,
-            "path": str,
-            "format": str,
-            "instructions": {
+        "resources": [{ file manifest info isn't currently relevant }],
+        "instructions": {
+            "protocol": "KBase narrative import",
+            "objects": [{
                 "data_type": str,
                 "parameters": {
                     "<param1>": value,
-                    "<param2>": value
-                }
-            }
-        }]
+                    "<param2>": value,
+                }, ...
+            }]
+        }
     }
-    The parameters under the "instructions"."parameters" dictionary are arbitrary keys with
-    arbitrary values and will be returned as-is. They are expected to be PRIMITIVE_TYPEs and
-    will fail otherwise.
+
+    This will get parsed and returned in line with the other parsers as a valid
+    ParseResults object, i.e. each result will be keyed on the data type string,
+    and its value will be a Tuple of frozendicts of the parameters. Also, in keeping
+    with the xsv parsers, each parameter value is expected to be a PRIMITIVE_TYPE.
+
+    TODO: include further details here, and in separate documentation - ADR?
     """
     spcsrc = SpecificationSource(path)
     errors = []
