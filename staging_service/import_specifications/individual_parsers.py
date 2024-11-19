@@ -322,7 +322,7 @@ def parse_excel(path: Path) -> ParseResults:
 def parse_dts_manifest(path: Path) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
-    The manifest should have roughly this format, with expected keys included:
+    The manifest should have this format, with expected keys included:
     {
         "resources": [{ file manifest info isn't currently relevant }],
         "instructions": {
