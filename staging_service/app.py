@@ -599,6 +599,7 @@ def inject_config_dependencies(config):
     META_DIR = config["staging_service"]["META_DIR"]
     CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
     FILE_EXTENSION_MAPPINGS = config["staging_service"]["FILE_EXTENSION_MAPPINGS"]
+    DTS_MANIFEST_SCHEMA_PATH = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
 
     if DATA_DIR.startswith("."):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
@@ -610,10 +611,15 @@ def inject_config_dependencies(config):
         FILE_EXTENSION_MAPPINGS = os.path.normpath(
             os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
         )
+    if DTS_MANIFEST_SCHEMA_PATH.startswith("."):
+        DTS_MANIFEST_SCHEMA_PATH = os.path.normpath(
+            os.path.join(os.getcwd(), DTS_MANIFEST_SCHEMA_PATH)
+        )
 
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
+    Path._DTS_MANIFEST_SCHEMA_PATH = DTS_MANIFEST_SCHEMA_PATH
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -623,6 +629,9 @@ def inject_config_dependencies(config):
 
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
+
+    if Path._DTS_MANIFEST_SCHEMA_PATH is None:
+        raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")

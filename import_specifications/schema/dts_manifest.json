@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "resources": {"type": "array"},
+        "instructions": {
+            "type": "object",
+            "properties": {
+                "protocol": {"type": "string"},
+                "objects": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data_type": {"type": "string"},
+                            "parameters": {"type": "object"}
+                        },
+                        "required": ["data_type", "parameters"]
+                    }
+                }
+            },
+            "required": ["protocol", "objects"]
+        }
+    },
+    "required": ["resources", "instructions"]
+}
