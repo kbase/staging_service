@@ -41,6 +41,7 @@ routes = web.RouteTableDef()
 VERSION = "1.3.6"
 
 _DATATYPE_MAPPINGS = None
+_DTS_MANIFEST_SCHEMA = None
 
 _APP_JSON = "application/json"
 
@@ -48,7 +49,7 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
-    JSON: parse_dts_manifest,
+    JSON: lambda path: parse_dts_manifest(path, _DTS_MANIFEST_SCHEMA),
 }
 
 _IMPSPEC_FILE_TO_WRITER = {
@@ -632,6 +633,8 @@ def inject_config_dependencies(config):
 
     if Path._DTS_MANIFEST_SCHEMA_PATH is None:
         raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
+    global _DTS_MANIFEST_SCHEMA
+    _DTS_MANIFEST_SCHEMA = DTS_MANIFEST_SCHEMA_PATH
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")

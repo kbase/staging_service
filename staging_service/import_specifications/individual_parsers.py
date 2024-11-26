@@ -319,7 +319,7 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
 
 
-def parse_dts_manifest(path: Path) -> ParseResults:
+def parse_dts_manifest(path: Path, dts_manifest_schema: Path) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have this format, with expected keys included:
