@@ -186,6 +186,8 @@ def parse_import_specifications(
     file_type_resolver - a callable that when given a file path, returns the type of the file or
         a parser for the file.
     log_error - callable for logging an exception.
+    dts_paths - JSON file paths that are specifically for the DTS importer and should not be
+        resolved any other way
     """
     if not paths:
         return ParseResults(errors=tuple([Error(ErrorType.NO_FILES_PROVIDED)]))

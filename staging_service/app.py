@@ -30,7 +30,7 @@ from .import_specifications.individual_parsers import (
     parse_csv,
     parse_excel,
     parse_tsv,
-    parse_dts_manifest,
+    parse_dts_manifest
 )
 from .JGIMetadata import read_metadata_for
 from .metadata import add_upa, dir_info, similar, some_metadata
@@ -47,8 +47,7 @@ _APP_JSON = "application/json"
 _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
-    EXCEL: parse_excel,
-    JSON: parse_dts_manifest,
+    EXCEL: parse_excel
 }
 
 _IMPSPEC_FILE_TO_WRITER = {
@@ -107,6 +106,15 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
+def _extract_file_paths(params: dict[str, list|None], key: str, username: str) -> dict[PathPy, PathPy]:
+    files = params.get(key, [])
+    files = files[0].split(",") if files else []
+    files = [f.strip() for f in files if f.strip()]
+    paths = {}
+    for f in files:
+        p = Path.validate_path(username, f)
+        paths[PathPy(p.full_path)] = PathPy(p.user_path)
+    return paths
 
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
@@ -122,17 +130,17 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Data Transfer Service manifest.
     """
     username = await authorize_request(request)
-    files = parse_qs(request.query_string).get("files", [])
-    files = files[0].split(",") if files else []
-    files = [f.strip() for f in files if f.strip()]
-    paths = {}
-    for f in files:
-        p = Path.validate_path(username, f)
-        paths[PathPy(p.full_path)] = PathPy(p.user_path)
+    params = parse_qs(request.query_string)
+    paths = _extract_file_paths(params, "files", username)
+    as_dts = params.get("dts") == "1"
+
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
+    file_type_resolver = _file_type_resolver
+    if as_dts:
+        file_type_resolver = lambda: FileTypeResolution(parser=parse_dts_manifest)  # noqa: E731
     res = parse_import_specifications(
         tuple(list(paths)),
-        _file_type_resolver,
+        file_type_resolver,
         lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
     )
     if res.results:
