@@ -12,7 +12,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV, JSON
+from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -30,7 +30,7 @@ from .import_specifications.individual_parsers import (
     parse_csv,
     parse_excel,
     parse_tsv,
-    parse_dts_manifest
+    parse_dts_manifest,
 )
 from .JGIMetadata import read_metadata_for
 from .metadata import add_upa, dir_info, similar, some_metadata
@@ -106,16 +106,6 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
-def _extract_file_paths(params: dict[str, list|None], key: str, username: str) -> dict[PathPy, PathPy]:
-    files = params.get(key, [])
-    files = files[0].split(",") if files else []
-    files = [f.strip() for f in files if f.strip()]
-    paths = {}
-    for f in files:
-        p = Path.validate_path(username, f)
-        paths[PathPy(p.full_path)] = PathPy(p.user_path)
-    return paths
-
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
     """
@@ -124,14 +114,16 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     type, in the `types` key.
 
     :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-
-    TODO: since JSON files are rather generic and we might want to use a different JSON bulk-spec
-    format later, add a separate query parameter to request that the selected file is treated as a
-    Data Transfer Service manifest.
     """
     username = await authorize_request(request)
     params = parse_qs(request.query_string)
-    paths = _extract_file_paths(params, "files", username)
+    files = params.get("files", [])
+    files = files[0].split(",") if files else []
+    files = [f.strip() for f in files if f.strip()]
+    paths = {}
+    for f in files:
+        p = Path.validate_path(username, f)
+        paths[PathPy(p.full_path)] = PathPy(p.user_path)
     as_dts = params.get("dts") == "1"
 
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
