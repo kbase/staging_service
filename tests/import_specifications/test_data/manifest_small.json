@@ -1,0 +1,122 @@
+{
+  "name": "manifest",
+  "resources": [
+    {
+      "id": "JDP:555518eb0d8785178e712d88",
+      "name": "61564.assembled",
+      "path": "img/submissions/61564/61564.assembled.gff",
+      "format": "gff",
+      "media_type": "text/plain",
+      "bytes": 455161,
+      "hash": "",
+      "credit": {
+        "comment": "",
+        "content_url": "",
+        "contributors": null,
+        "credit_metadata_source": "",
+        "dates": null,
+        "descriptions": null,
+        "funding": null,
+        "identifier": "JDP:555518eb0d8785178e712d88",
+        "license": {
+          "id": "",
+          "url": ""
+        },
+        "publisher": {
+          "organization_id": "",
+          "organization_name": ""
+        },
+        "related_identifiers": null,
+        "resource_type": "dataset",
+        "titles": null,
+        "url": "",
+        "version": ""
+      },
+      "instructions": {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value1",
+          "param2": "value2"
+        }
+      }
+    },
+    {
+      "id": "JDP:555518eb0d8785178e712d84",
+      "name": "61564.assembled",
+      "path": "img/submissions/61564/61564.assembled.fna",
+      "format": "fasta",
+      "media_type": "text/plain",
+      "bytes": 6354414,
+      "hash": "",
+      "credit": {
+        "comment": "",
+        "content_url": "",
+        "contributors": null,
+        "credit_metadata_source": "",
+        "dates": null,
+        "descriptions": null,
+        "funding": null,
+        "identifier": "JDP:555518eb0d8785178e712d84",
+        "license": {
+          "id": "",
+          "url": ""
+        },
+        "publisher": {
+          "organization_id": "",
+          "organization_name": ""
+        },
+        "related_identifiers": null,
+        "resource_type": "dataset",
+        "titles": null,
+        "url": "",
+        "version": ""
+      },
+      "instructions": {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value1",
+          "param2": "value2"
+        }
+      }
+    },
+    {
+      "id": "JDP:555518ec0d8785178e712d9f",
+      "name": "61567.assembled",
+      "path": "img/submissions/61567/61567.assembled.gff",
+      "format": "gff",
+      "media_type": "text/plain",
+      "bytes": 545583,
+      "hash": "",
+      "credit": {
+        "comment": "",
+        "content_url": "",
+        "contributors": null,
+        "credit_metadata_source": "",
+        "dates": null,
+        "descriptions": null,
+        "funding": null,
+        "identifier": "JDP:555518ec0d8785178e712d9f",
+        "license": {
+          "id": "",
+          "url": ""
+        },
+        "publisher": {
+          "organization_id": "",
+          "organization_name": ""
+        },
+        "related_identifiers": null,
+        "resource_type": "dataset",
+        "titles": null,
+        "url": "",
+        "version": ""
+      },
+      "instructions": {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value1",
+          "param2": "value2"
+        }
+      }
+    }
+  ]
+}

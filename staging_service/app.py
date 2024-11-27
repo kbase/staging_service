@@ -12,7 +12,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV
+from .autodetect.Mappings import CSV, EXCEL, TSV, JSON
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -26,7 +26,12 @@ from .import_specifications.file_writers import (
     write_excel,
     write_tsv,
 )
-from .import_specifications.individual_parsers import parse_csv, parse_excel, parse_tsv
+from .import_specifications.individual_parsers import (
+    parse_csv,
+    parse_excel,
+    parse_tsv,
+    parse_dts_manifest,
+)
 from .JGIMetadata import read_metadata_for
 from .metadata import add_upa, dir_info, similar, some_metadata
 from .utils import AclManager, Path, run_command
@@ -43,6 +48,7 @@ _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
     EXCEL: parse_excel,
+    JSON: parse_dts_manifest,
 }
 
 _IMPSPEC_FILE_TO_WRITER = {
@@ -110,6 +116,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     type, in the `types` key.
 
     :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+
+    TODO: since JSON files are rather generic and we might want to use a different JSON bulk-spec
+    format later, add a separate query parameter to request that the selected file is treated as a
+    Data Transfer Service manifest.
     """
     username = await authorize_request(request)
     files = parse_qs(request.query_string).get("files", [])

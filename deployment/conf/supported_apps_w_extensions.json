@@ -121,7 +121,8 @@
       "csv",
       "tsv",
       "xls",
-      "xlsx"
+      "xlsx",
+      "json"
     ],
     "media": [
       "tsv",
@@ -1101,6 +1102,23 @@
         }
       ]
     },
+    "json": {
+      "file_ext_type": [
+        "JSON"
+      ],
+      "mappings": [
+        {
+          "id": "import_specification",
+          "title": "Import Specification",
+          "app_weight": 1
+        },
+        {
+          "id": "escher_map",
+          "title": "EscherMap",
+          "app_weight": 1
+        }
+      ]
+    },
     "smbl": {
       "file_ext_type": [
         "SBML"
@@ -1109,18 +1127,6 @@
         {
           "id": "fba_model",
           "title": "FBA Model",
-          "app_weight": 1
-        }
-      ]
-    },
-    "json": {
-      "file_ext_type": [
-        "JSON"
-      ],
-      "mappings": [
-        {
-          "id": "escher_map",
-          "title": "EscherMap",
           "app_weight": 1
         }
       ]
