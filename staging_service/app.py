@@ -127,12 +127,13 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
-    as_dts = params.get("dts") == "1"
+    as_dts = params.get("dts", ["0"])[0] == "1"
+
 
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
     if as_dts:
-        file_type_resolver = lambda: FileTypeResolution(parser=parse_dts_manifest)  # noqa: E731
+        file_type_resolver = lambda x: FileTypeResolution(parser=parse_dts_manifest)  # noqa: E731
     res = parse_import_specifications(
         tuple(list(paths)),
         file_type_resolver,
