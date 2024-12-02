@@ -12,7 +12,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV, JSON
+from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -48,8 +48,7 @@ _APP_JSON = "application/json"
 _IMPSPEC_FILE_TO_PARSER = {
     CSV: parse_csv,
     TSV: parse_tsv,
-    EXCEL: parse_excel,
-    JSON: lambda path: parse_dts_manifest(path, _DTS_MANIFEST_SCHEMA),
+    EXCEL: parse_excel
 }
 
 _IMPSPEC_FILE_TO_WRITER = {
@@ -108,6 +107,8 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
+def _dts_file_resolver(_: PathPy) -> FileTypeResolution:
+    return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_SCHEMA))
 
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
@@ -116,24 +117,30 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Returns the contents of those files parsed into a list of dictionaries, mapped from the data
     type, in the `types` key.
 
-    :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-
-    TODO: since JSON files are rather generic and we might want to use a different JSON bulk-spec
-    format later, add a separate query parameter to request that the selected file is treated as a
-    Data Transfer Service manifest.
+    :param request: contains the URL parameters for the request. Expected to have the following:
+        * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+        * dts (optional) - if present, and has the value "1", this will treat all of the given
+          files as DTS manifest files, and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
-    files = parse_qs(request.query_string).get("files", [])
+    params = parse_qs(request.query_string)
+    files = params.get("files", [])
     files = files[0].split(",") if files else []
     files = [f.strip() for f in files if f.strip()]
     paths = {}
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
+    as_dts = params.get("dts", ["0"])[0] == "1"
+
+
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
+    file_type_resolver = _file_type_resolver
+    if as_dts:
+        file_type_resolver = _dts_file_resolver
     res = parse_import_specifications(
         tuple(list(paths)),
-        _file_type_resolver,
+        file_type_resolver,
         lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
     )
     if res.results:
