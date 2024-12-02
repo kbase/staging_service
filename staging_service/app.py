@@ -113,7 +113,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Returns the contents of those files parsed into a list of dictionaries, mapped from the data
     type, in the `types` key.
 
-    :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+    :param request: contains the URL parameters for the request. Expected to have the following:
+        * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+        * dts (optional) - if present, and has the value "1", this will treat all of the given
+          files as DTS manifest files, and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
     params = parse_qs(request.query_string)

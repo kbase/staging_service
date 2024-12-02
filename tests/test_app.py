@@ -1,13 +1,13 @@
 import asyncio
 import configparser
 import hashlib
+import json
 import os
 import platform
 import shutil
 import string
 import time
 from io import BytesIO
-from json import JSONDecoder
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlencode
@@ -29,7 +29,7 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
     bootstrap()
 
-decoder = JSONDecoder()
+decoder = json.JSONDecoder()
 
 config = configparser.ConfigParser()
 config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
@@ -1048,6 +1048,37 @@ async def test_bulk_specification_success():
             }
             assert resp.status == 200
 
+async def test_bulk_specification_dts_success():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            manifest = "genome_manifest.json"
+            manifest_dict = {
+                "resources": [],
+                "instructions": {
+                    "protocol": "KBase narrative import",
+                    ""
+                }
+            }
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_dict, f)
+                f.writelines(
+                    [
+                        "Data type: genomes; Columns: 3; Version: 1\n",
+                        "spec1\tspec2\t   spec3   \n",
+                        "Spec 1\t Spec 2\t Spec 3\n",
+                        "val1 \t   ꔆ   \t    7\n",
+                        "val3\tval4\t1\n",
+                    ]
+                )
+
+
+async def test_bulk_specification_dts_fail_json_not_dts():
+    pass
+
+async def test_bulk_specification_dts_fail_wrong_format():
+    pass
 
 async def test_bulk_specification_fail_no_files():
     async with AppClient(config) as cli:
