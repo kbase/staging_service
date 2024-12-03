@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path as PathPy
 from urllib.parse import parse_qs, unquote
 
@@ -107,8 +108,18 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
-def _dts_file_resolver(_: PathPy) -> FileTypeResolution:
-    return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_SCHEMA))
+def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
+    """Makes a DTS file resolver.
+
+    This looks a little goofy, but it ensures that the DTS manifest schema file
+    only gets loaded once per API call, no matter how many DTS manifest files are
+    expected to be parsed. It also prevents having it stick around in memory.
+    """
+    with open(_DTS_MANIFEST_SCHEMA) as schema_file:
+        dts_schema = json.load(schema_file)
+    def dts_file_resolver(_: PathPy):
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
+    return dts_file_resolver
 
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
@@ -133,11 +144,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
     as_dts = params.get("dts", ["0"])[0] == "1"
 
-
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
     if as_dts:
-        file_type_resolver = _dts_file_resolver
+        file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
         file_type_resolver,

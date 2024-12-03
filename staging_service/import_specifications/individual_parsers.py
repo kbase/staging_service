@@ -4,6 +4,7 @@ Contains parser functions for use with the file parser framework.
 
 import csv
 import json
+import jsonschema
 import math
 import re
 from pathlib import Path
@@ -319,7 +320,7 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
 
 
-def parse_dts_manifest(path: Path, dts_manifest_schema: Path) -> ParseResults:
+def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have this format, with expected keys included:
@@ -352,8 +353,16 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: Path) -> ParseResults:
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
-            errors.append(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
-
+            return _error(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
+        validator = jsonschema.Draft202012Validator(dts_manifest_schema)
+        for err in validator.iter_errors(manifest_json):
+            err_str = err.message
+            err_path = err.absolute_path
+            if err_path:
+                if isinstance(err_path[-1], int):
+                    err_path[-1] = f"item {err_path[-1]}"
+                err_str += f" at {'/'.join(err_path)}"
+            errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:
