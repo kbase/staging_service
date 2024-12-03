@@ -1110,7 +1110,7 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_2_dict, f)
             resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
             jsn = await resp.json()
-            # fails for now
+            # fails for now. will update when schema/parser is properly finished.
             assert jsn == {
                 "errors": [
                     {
@@ -1173,7 +1173,6 @@ async def test_bulk_specification_dts_fail_json_without_dts():
                 json.dump(manifest_1_dict, f)
             resp = await cli.get(f"bulk_specification/?files={manifest_1}&dts=0")
             jsn = await resp.json()
-            # fails for now
             assert jsn == {
                 "errors": [
                     {
@@ -1188,7 +1187,27 @@ async def test_bulk_specification_dts_fail_json_without_dts():
 
 
 async def test_bulk_specification_dts_fail_wrong_format():
-    pass
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            manifest = "test_manifest.json"
+            manifest_data = [ "wrong", "format" ]
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={manifest}&dts=1")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"testuser/{manifest}",
+                        "message": "Manifest is not a dictionary",
+                        "tab": None
+                    }
+                ]
+            }
+            assert resp.status == 400
 
 
 async def test_bulk_specification_fail_no_files():
