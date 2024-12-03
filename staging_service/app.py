@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import json
 import logging
 import os
@@ -44,11 +45,7 @@ _DATATYPE_MAPPINGS = None
 
 _APP_JSON = "application/json"
 
-_IMPSPEC_FILE_TO_PARSER = {
-    CSV: parse_csv,
-    TSV: parse_tsv,
-    EXCEL: parse_excel
-}
+_IMPSPEC_FILE_TO_PARSER = {CSV: parse_csv, TSV: parse_tsv, EXCEL: parse_excel}
 
 _IMPSPEC_FILE_TO_WRITER = {
     CSV: write_csv,
@@ -106,6 +103,16 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
+
+def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
+    """Makes a DTS file resolver."""
+
+    def dts_file_resolver(_: PathPy):
+        return FileTypeResolution(parser=parse_dts_manifest)
+
+    return dts_file_resolver
+
+
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
     """
@@ -129,11 +136,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
     as_dts = params.get("dts", ["0"])[0] == "1"
 
-
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
     if as_dts:
-        file_type_resolver = lambda x: FileTypeResolution(parser=parse_dts_manifest)  # noqa: E731
+        file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
         file_type_resolver,
