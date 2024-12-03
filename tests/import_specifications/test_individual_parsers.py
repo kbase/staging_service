@@ -8,7 +8,6 @@ from typing import Any
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict import frozendict
-from staging_service.app import inject_config_dependencies
 from staging_service.import_specifications.individual_parsers import (
     Error,
     ErrorType,
