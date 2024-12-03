@@ -1048,6 +1048,7 @@ async def test_bulk_specification_success():
             }
             assert resp.status == 200
 
+
 async def test_bulk_specification_dts_success():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
@@ -1065,7 +1066,7 @@ async def test_bulk_specification_dts_success():
                                 "fasta_file": "fasta_1",
                                 "gff_file": "gff_1",
                                 "genome_name": "mg_1",
-                            }
+                            },
                         },
                         {
                             "data_type": "gff_metagenome",
@@ -1073,10 +1074,10 @@ async def test_bulk_specification_dts_success():
                                 "fasta_file": "fasta_2",
                                 "gff_file": "gff_2",
                                 "genome_name": "mg_2",
-                            }
-                        }
-                    ]
-                }
+                            },
+                        },
+                    ],
+                },
             }
             manifest_2 = "test_manifest_2.json"
             manifest_2_dict = {
@@ -1090,7 +1091,7 @@ async def test_bulk_specification_dts_success():
                                 "fasta_file": "g_fasta_1",
                                 "gff_file": "g_gff_1",
                                 "genome_name": "genome_1",
-                            }
+                            },
                         },
                         {
                             "data_type": "gff_genome",
@@ -1098,10 +1099,10 @@ async def test_bulk_specification_dts_success():
                                 "fasta_file": "g_fasta_2",
                                 "gff_file": "g_gff_2",
                                 "genome_name": "genome_2",
-                            }
-                        }
-                    ]
-                }
+                            },
+                        },
+                    ],
+                },
             }
             with open(base / manifest_1, "w", encoding="utf-8") as f:
                 json.dump(manifest_1_dict, f)
@@ -1109,21 +1110,21 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_2_dict, f)
             resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
             jsn = await resp.json()
-            # fails for now
+            # fails for now. will update when schema/parser is properly finished.
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
                         "file": f"testuser/{manifest_1}",
                         "message": "No import specification data in file",
-                        "tab": None
+                        "tab": None,
                     },
                     {
                         "type": "cannot_parse_file",
                         "file": f"testuser/{manifest_2}",
                         "message": "No import specification data in file",
-                        "tab": None
-                    }
+                        "tab": None,
+                    },
                 ]
             }
             # soon will be this:
@@ -1145,6 +1146,7 @@ async def test_bulk_specification_dts_success():
             # }
             assert resp.status == 400
 
+
 async def test_bulk_specification_dts_fail_json_without_dts():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
@@ -1162,30 +1164,51 @@ async def test_bulk_specification_dts_fail_json_without_dts():
                                 "fasta_file": "fasta_1",
                                 "gff_file": "gff_1",
                                 "genome_name": "mg_1",
-                            }
+                            },
                         }
-                    ]
-                }
+                    ],
+                },
             }
             with open(base / manifest_1, "w", encoding="utf-8") as f:
                 json.dump(manifest_1_dict, f)
             resp = await cli.get(f"bulk_specification/?files={manifest_1}&dts=0")
             jsn = await resp.json()
-            # fails for now
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
                         "file": f"testuser/{manifest_1}",
                         "message": "json is not a supported file type for import specifications",
-                        "tab": None
+                        "tab": None,
                     }
                 ]
             }
             assert resp.status == 400
 
+
 async def test_bulk_specification_dts_fail_wrong_format():
-    pass
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser"
+            manifest = "test_manifest.json"
+            manifest_data = ["wrong", "format"]
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={manifest}&dts=1")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"testuser/{manifest}",
+                        "message": "Manifest is not a dictionary",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
+
 
 async def test_bulk_specification_fail_no_files():
     async with AppClient(config) as cli:

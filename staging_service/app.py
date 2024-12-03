@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import json
 import logging
 import os
@@ -46,11 +47,7 @@ _DTS_MANIFEST_SCHEMA = None
 
 _APP_JSON = "application/json"
 
-_IMPSPEC_FILE_TO_PARSER = {
-    CSV: parse_csv,
-    TSV: parse_tsv,
-    EXCEL: parse_excel
-}
+_IMPSPEC_FILE_TO_PARSER = {CSV: parse_csv, TSV: parse_tsv, EXCEL: parse_excel}
 
 _IMPSPEC_FILE_TO_WRITER = {
     CSV: write_csv,
