@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
+import jsonschema.exceptions
 import magic
 import pandas
 from frozendict import frozendict
@@ -350,6 +351,7 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
     # dummy for now
     results = {}
     try:
+        jsonschema.Draft202012Validator.check_schema(dts_manifest_schema)
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
@@ -363,6 +365,8 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
                     err_path[-1] = f"item {err_path[-1]}"
                 err_str += f" at {'/'.join(err_path)}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
+    except jsonschema.exceptions.SchemaError as err:
+        return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:
