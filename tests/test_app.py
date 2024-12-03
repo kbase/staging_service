@@ -1192,7 +1192,7 @@ async def test_bulk_specification_dts_fail_wrong_format():
             fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
             manifest = "test_manifest.json"
-            manifest_data = [ "wrong", "format" ]
+            manifest_data = ["wrong", "format"]
             with open(base / manifest, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f)
             resp = await cli.get(f"bulk_specification/?files={manifest}&dts=1")
@@ -1203,7 +1203,7 @@ async def test_bulk_specification_dts_fail_wrong_format():
                         "type": "cannot_parse_file",
                         "file": f"testuser/{manifest}",
                         "message": "Manifest is not a dictionary",
-                        "tab": None
+                        "tab": None,
                     }
                 ]
             }
