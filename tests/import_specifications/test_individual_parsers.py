@@ -25,6 +25,7 @@ from tests.test_utils import bootstrap_config
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
 
+
 @pytest.fixture(scope="module", name="temp_dir")
 def temp_dir_fixture() -> Generator[Path, None, None]:
     with FileUtil() as fu:
@@ -34,12 +35,14 @@ def temp_dir_fixture() -> Generator[Path, None, None]:
 
     # FileUtil will auto delete after exiting
 
+
 @pytest.fixture(scope="module")
 def dts_schema() -> Generator[dict[str, Any], None, None]:
     config = bootstrap_config()
     with open(config["staging_service"]["DTS_MANIFEST_SCHEMA"]) as dts_schema_file:
         schema = json.load(dts_schema_file)
         yield schema
+
 
 ##########################################
 # xSV tests
@@ -784,7 +787,9 @@ def test_dts_manifest_parse_success(dts_schema: dict[str, Any]):
     assert res.errors == tuple(
         [
             Error(
-                ErrorType.PARSE_FAIL, "'instructions' is a required property", SpecificationSource(f)
+                ErrorType.PARSE_FAIL,
+                "'instructions' is a required property",
+                SpecificationSource(f),
             )
         ]
     )
@@ -799,6 +804,7 @@ def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict 
         return file_path
 
     return manifest_writer
+
 
 def _dts_manifest_parse_fail(input_file: Path, schema: dict, errors: list[Error]):
     """
@@ -827,7 +833,9 @@ def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None], dts_schema
     )
 
 
-def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
+def test_dts_manifest_non_dict(
+    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+):
     manifest_path = write_dts_manifest(["wrong_format"])
     _dts_manifest_parse_fail(
         manifest_path,
@@ -851,7 +859,9 @@ def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None], dts_schem
     )
 
 
-def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None], dts_schema: dict[str, Any]):
+def test_dts_manifest_file_is_directory(
+    temp_dir: Generator[Path, None, None], dts_schema: dict[str, Any]
+):
     test_file = temp_dir / "testdir.json"
     os.makedirs(test_file, exist_ok=True)
     _dts_manifest_parse_fail(
@@ -871,12 +881,16 @@ def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None], d
 def test_dts_manifest_bad_schema(bad_schema):
     f = _get_test_file("manifest_small.json")
     _dts_manifest_parse_fail(
-        f, bad_schema, [Error(ErrorType.OTHER, "Manifest schema is invalid", SpecificationSource(f))]
+        f,
+        bad_schema,
+        [Error(ErrorType.OTHER, "Manifest schema is invalid", SpecificationSource(f))],
     )
 
 
-def test_dts_manifest_no_top_level_keys(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
-    manifest_path = write_dts_manifest({ "missing": "stuff" })
+def test_dts_manifest_no_top_level_keys(
+    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+):
+    manifest_path = write_dts_manifest({"missing": "stuff"})
     _dts_manifest_parse_fail(
         manifest_path,
         dts_schema,
@@ -884,32 +898,29 @@ def test_dts_manifest_no_top_level_keys(write_dts_manifest: Callable[[dict | lis
             Error(
                 ErrorType.PARSE_FAIL,
                 "'resources' is a required property",
-                SpecificationSource(manifest_path)
+                SpecificationSource(manifest_path),
             ),
             Error(
                 ErrorType.PARSE_FAIL,
                 "'instructions' is a required property",
-                SpecificationSource(manifest_path)
+                SpecificationSource(manifest_path),
             ),
         ],
     )
 
-def test_dts_manifest_fail_with_path(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
-    manifest_path = write_dts_manifest({
-        "resources": [],
-        "instructions": {
-            "protocol": "KBase narrative import",
-            "objects": [
-                {
-                    "data_type": "foo",
-                    "parameters": {}
-                },
-                {
-                    "parameters": {}
-                }
-            ]
+
+def test_dts_manifest_fail_with_path(
+    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+):
+    manifest_path = write_dts_manifest(
+        {
+            "resources": [],
+            "instructions": {
+                "protocol": "KBase narrative import",
+                "objects": [{"data_type": "foo", "parameters": {}}, {"parameters": {}}],
+            },
         }
-    })
+    )
     _dts_manifest_parse_fail(
         manifest_path,
         dts_schema,
@@ -917,7 +928,7 @@ def test_dts_manifest_fail_with_path(write_dts_manifest: Callable[[dict | list],
             Error(
                 ErrorType.PARSE_FAIL,
                 "'data_type' is a required property at instructions/objects/item 1",
-                SpecificationSource(manifest_path)
+                SpecificationSource(manifest_path),
             )
-        ]
+        ],
     )

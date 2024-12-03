@@ -105,6 +105,7 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
             ext = path.name
         return FileTypeResolution(unsupported_type=ext)
 
+
 def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
     """Makes a DTS file resolver.
 
@@ -114,9 +115,12 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
     """
     with open(_DTS_MANIFEST_SCHEMA) as schema_file:
         dts_schema = json.load(schema_file)
+
     def dts_file_resolver(_: PathPy):
         return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
+
     return dts_file_resolver
+
 
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
