@@ -4,6 +4,7 @@ import pytest
 import uuid
 from collections.abc import Callable, Generator
 from pathlib import Path
+from typing import Any
 
 # TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
 from frozendict import frozendict
@@ -34,7 +35,7 @@ def temp_dir_fixture() -> Generator[Path, None, None]:
     # FileUtil will auto delete after exiting
 
 @pytest.fixture(scope="module")
-def dts_schema() -> Generator[dict, None, None]:
+def dts_schema() -> Generator[dict[str, Any], None, None]:
     config = bootstrap_config()
     with open(config["staging_service"]["DTS_MANIFEST_SCHEMA"]) as dts_schema_file:
         schema = json.load(dts_schema_file)
@@ -775,7 +776,7 @@ def test_excel_parse_fail_unequal_rows():
     )
 
 
-def test_dts_manifest_parse_success(dts_schema):
+def test_dts_manifest_parse_success(dts_schema: dict[str, Any]):
     f = _get_test_file("manifest_small.json")
     res = parse_dts_manifest(f, dts_schema)
     # fails for now
@@ -811,7 +812,7 @@ def _dts_manifest_parse_fail(input_file: Path, schema: dict, errors: list[Error]
     assert res.errors == tuple(errors)
 
 
-def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None], dts_schema: Generator[Path, None, None]):
+def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None], dts_schema: dict[str, Any]):
     test_file = temp_dir / str(uuid.uuid4())
     with open(test_file, "w", encoding="utf-8") as outfile:
         outfile.write("totally not json")
@@ -826,8 +827,8 @@ def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None], dts_schema
     )
 
 
-def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict | list], Path], dts_schema: Generator[Path, None, None]):
-    manifest_path = write_dts_manifest(["wrong_format", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
+    manifest_path = write_dts_manifest(["wrong_format"])
     _dts_manifest_parse_fail(
         manifest_path,
         dts_schema,
@@ -841,7 +842,7 @@ def test_dts_manifest_non_dict(write_dts_manifest: Callable[[dict | list], Path]
     )
 
 
-def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None], dts_schema: Generator[Path, None, None]):
+def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None], dts_schema: dict[str, Any]):
     manifest_path = temp_dir / "not_a_file"
     _dts_manifest_parse_fail(
         manifest_path,
@@ -850,7 +851,7 @@ def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None], dts_schem
     )
 
 
-def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None], dts_schema: Generator[Path, None, None]):
+def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None], dts_schema: dict[str, Any]):
     test_file = temp_dir / "testdir.json"
     os.makedirs(test_file, exist_ok=True)
     _dts_manifest_parse_fail(
@@ -865,9 +866,58 @@ def test_dts_manifest_file_is_directory(temp_dir: Generator[Path, None, None], d
         ],
     )
 
+
 @pytest.mark.parametrize("bad_schema", [None, 1, [], {"foo"}])
 def test_dts_manifest_bad_schema(bad_schema):
     f = _get_test_file("manifest_small.json")
     _dts_manifest_parse_fail(
         f, bad_schema, [Error(ErrorType.OTHER, "Manifest schema is invalid", SpecificationSource(f))]
+    )
+
+
+def test_dts_manifest_no_top_level_keys(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
+    manifest_path = write_dts_manifest({ "missing": "stuff" })
+    _dts_manifest_parse_fail(
+        manifest_path,
+        dts_schema,
+        [
+            Error(
+                ErrorType.PARSE_FAIL,
+                "'resources' is a required property",
+                SpecificationSource(manifest_path)
+            ),
+            Error(
+                ErrorType.PARSE_FAIL,
+                "'instructions' is a required property",
+                SpecificationSource(manifest_path)
+            ),
+        ],
+    )
+
+def test_dts_manifest_fail_with_path(write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]):
+    manifest_path = write_dts_manifest({
+        "resources": [],
+        "instructions": {
+            "protocol": "KBase narrative import",
+            "objects": [
+                {
+                    "data_type": "foo",
+                    "parameters": {}
+                },
+                {
+                    "parameters": {}
+                }
+            ]
+        }
+    })
+    _dts_manifest_parse_fail(
+        manifest_path,
+        dts_schema,
+        [
+            Error(
+                ErrorType.PARSE_FAIL,
+                "'data_type' is a required property at instructions/objects/item 1",
+                SpecificationSource(manifest_path)
+            )
+        ]
     )
