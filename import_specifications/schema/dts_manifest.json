@@ -13,7 +13,20 @@
                         "type": "object",
                         "properties": {
                             "data_type": {"type": "string"},
-                            "parameters": {"type": "object"}
+                            "parameters": {
+                                "type": "object",
+                                "patternProperties": {
+                                    ".*": {
+                                        "oneOf": [
+                                            {"type": "string"},
+                                            {"type": "number"},
+                                            {"type": "boolean"},
+                                            {"type": "null"}
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
                         },
                         "required": ["data_type", "parameters"]
                     }

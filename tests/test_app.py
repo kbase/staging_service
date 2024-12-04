@@ -1111,40 +1111,48 @@ async def test_bulk_specification_dts_success():
             resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
             jsn = await resp.json()
             # fails for now. will update when schema/parser is properly finished.
-            assert jsn == {
-                "errors": [
-                    {
-                        "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_1}",
-                        "message": "No import specification data in file",
-                        "tab": None,
-                    },
-                    {
-                        "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_2}",
-                        "message": "No import specification data in file",
-                        "tab": None,
-                    },
-                ]
-            }
-            # soon will be this:
-            # assert json == {
-            #     "types": {
-            #         "gff_genome": [
-            #             {"fasta_file": "g_fasta_1", "gff_file": "g_gff_1", "genome_name": "genome_1"},
-            #             {"fasta_file": "g_fasta_2", "gff_file": "g_gff_2", "genome_name": "genome_2"}
-            #         ],
-            #         "gff_metagenome": [
-            #             {"fasta_file": "fasta_1", "gff_file": "gff_1", "genome_name": "mg_1"},
-            #             {"fasta_file": "fasta_2", "gff_file": "gff_2", "genome_name": "mg_2"}
-            #         ]
-            #     },
-            #     "files": {
-            #         "gff_metagenome": {"file": f"testuser/{manifest_1}", "tab": None},
-            #         "gff_genome": {"file": f"testuser/{manifest_2}", "tab": None}
-            #     }
+            # assert jsn == {
+            #     "errors": [
+            #         {
+            #             "type": "cannot_parse_file",
+            #             "file": f"testuser/{manifest_1}",
+            #             "message": "No import specification data in file",
+            #             "tab": None,
+            #         },
+            #         {
+            #             "type": "cannot_parse_file",
+            #             "file": f"testuser/{manifest_2}",
+            #             "message": "No import specification data in file",
+            #             "tab": None,
+            #         },
+            #     ]
             # }
-            assert resp.status == 400
+            # soon will be this:
+            assert jsn == {
+                "types": {
+                    "gff_genome": [
+                        {
+                            "fasta_file": "g_fasta_1",
+                            "gff_file": "g_gff_1",
+                            "genome_name": "genome_1",
+                        },
+                        {
+                            "fasta_file": "g_fasta_2",
+                            "gff_file": "g_gff_2",
+                            "genome_name": "genome_2",
+                        },
+                    ],
+                    "gff_metagenome": [
+                        {"fasta_file": "fasta_1", "gff_file": "gff_1", "genome_name": "mg_1"},
+                        {"fasta_file": "fasta_2", "gff_file": "gff_2", "genome_name": "mg_2"},
+                    ],
+                },
+                "files": {
+                    "gff_metagenome": {"file": f"testuser/{manifest_1}", "tab": None},
+                    "gff_genome": {"file": f"testuser/{manifest_2}", "tab": None},
+                },
+            }
+            assert resp.status == 200
 
 
 async def test_bulk_specification_dts_fail_json_without_dts():

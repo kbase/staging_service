@@ -61,6 +61,14 @@ _EXCEL_MISSING_VALUES = [
     "null",
 ]
 
+_DTS_INSTRUCTIONS_KEY = "instructions"
+_DTS_INSTRUCTIONS_DATATYPE_KEY = "data_type"
+_DTS_INSTRUCTIONS_PARAMETERS_KEY = "parameters"
+_DTS_INSTRUCTIONS_REQUIRED_KEYS = [_DTS_INSTRUCTIONS_DATATYPE_KEY, _DTS_INSTRUCTIONS_PARAMETERS_KEY]
+_DTS_INSTRUCTIONS_PROTOCOL_KEY = "protocol"
+_DTS_INSTRUCTIONS_PROTOCOL = "KBase narrative import"
+_DTS_INSTRUCTIONS_OBJECTS_KEY = "objects"
+
 
 class _ParseException(Exception):
     pass
@@ -361,10 +369,18 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
             err_str = err.message
             err_path = err.absolute_path
             if err_path:
-                if isinstance(err_path[-1], int):
-                    err_path[-1] = f"item {err_path[-1]}"
-                err_str += f" at {'/'.join(err_path)}"
+                # paths can look like, say, ["instructions", "objects", 0, "data_type"]
+                # convert that '0' to "item 0" to be slightly more readable to users.
+                # kind of a mouthful below, but does that conversion in place
+                err_path = [f"item {elem}" if isinstance(elem, int) else elem for elem in err_path]
+                prep = "for"
+                if len(err_path) > 1:
+                    prep = "at"
+                err_str += f" {prep} {'/'.join(err_path)}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
+        if not errors:
+            results = _process_dts_manifest(manifest_json, spcsrc)
+
     except jsonschema.exceptions.SchemaError:
         return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
     except json.JSONDecodeError:
@@ -373,9 +389,44 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    except _ParseException as err:
+        return _error(err.args[0])
     if errors:
         return ParseResults(errors=tuple(errors))
     elif results:
         return ParseResults(frozendict(results))
     else:
         return _error(Error(ErrorType.PARSE_FAIL, "No import specification data in file", spcsrc))
+
+
+def _process_dts_manifest(
+    manifest: dict[str, Any], spcsrc: SpecificationSource
+) -> Tuple[dict[str, ParseResult]]:
+    """Parse the DTS manifest file and return the results and a list of errors if applicable.
+
+    Results are returned as a dictionary where keys are data types, and values are ParseResults for that data type.
+    This assumes that the manifest has the correct structure, i.e. is validated via jsonschema.
+    Will raise KeyErrors otherwise.
+    """
+    results = {}
+    instructions = manifest[_DTS_INSTRUCTIONS_KEY]
+    # Make sure the protocol value matches.
+    if instructions[_DTS_INSTRUCTIONS_PROTOCOL_KEY] != _DTS_INSTRUCTIONS_PROTOCOL:
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"The instructions protocol must be '{_DTS_INSTRUCTIONS_PROTOCOL}'",
+                spcsrc,
+            )
+        )
+    for resource_obj in instructions[_DTS_INSTRUCTIONS_OBJECTS_KEY]:
+        datatype = resource_obj[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+        parameters = frozendict(resource_obj[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
+        if datatype not in results:
+            results[datatype] = []
+        results[datatype].append(parameters)
+    # Package results as a dict of {datatype: ParseResult}
+    parsed_result = {
+        source: ParseResult(spcsrc, tuple(parsed)) for source, parsed in results.items()
+    }
+    return parsed_result
