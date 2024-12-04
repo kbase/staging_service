@@ -365,7 +365,7 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
                     err_path[-1] = f"item {err_path[-1]}"
                 err_str += f" at {'/'.join(err_path)}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
-    except jsonschema.exceptions.SchemaError as err:
+    except jsonschema.exceptions.SchemaError:
         return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
