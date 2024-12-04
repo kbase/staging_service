@@ -1110,24 +1110,6 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_2_dict, f)
             resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
             jsn = await resp.json()
-            # fails for now. will update when schema/parser is properly finished.
-            # assert jsn == {
-            #     "errors": [
-            #         {
-            #             "type": "cannot_parse_file",
-            #             "file": f"testuser/{manifest_1}",
-            #             "message": "No import specification data in file",
-            #             "tab": None,
-            #         },
-            #         {
-            #             "type": "cannot_parse_file",
-            #             "file": f"testuser/{manifest_2}",
-            #             "message": "No import specification data in file",
-            #             "tab": None,
-            #         },
-            #     ]
-            # }
-            # soon will be this:
             assert jsn == {
                 "types": {
                     "gff_genome": [
