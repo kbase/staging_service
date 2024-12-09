@@ -1216,6 +1216,32 @@ async def test_bulk_specification_dts_fail_wrong_format():
             assert resp.status == 400
 
 
+async def test_bulk_specification_dts_fail_wrong_extension():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest = "test_manifest.foo"
+            manifest_data = {"resources": [], "instructions": {}}
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest}",
+                        "message": "foo is not a supported file type for import specifications",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
+
+
 async def test_bulk_specification_fail_no_files():
     async with AppClient(config) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:

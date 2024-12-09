@@ -106,10 +106,13 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
 
 def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
     """Makes a DTS file resolver."""
-
-    def dts_file_resolver(_: PathPy):
+    def dts_file_resolver(path: PathPy):
+        # must be a ".json" file
+        file_parts = str(path).split(".")
+        ext = file_parts[-1]
+        if len(file_parts) < 2 or ext.lower() != "json":
+            return FileTypeResolution(unsupported_type=ext)
         return FileTypeResolution(parser=parse_dts_manifest)
-
     return dts_file_resolver
 
 
