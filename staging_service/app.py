@@ -53,6 +53,7 @@ _IMPSPEC_FILE_TO_WRITER = {
     EXCEL: write_excel,
 }
 
+# The constant in autodetect.Mappings isn't guaranteed to be the string we want.
 JSON_EXTENSION = "json"
 NO_EXTENSION = "missing extension"
 
