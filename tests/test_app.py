@@ -1110,7 +1110,9 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_1_dict, f)
             with open(base / manifest_2, "w", encoding="utf-8") as f:
                 json.dump(manifest_2_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts")
+            resp = await cli.get(
+                f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts"
+            )
             jsn = await resp.json()
             # fails for now. will update when schema/parser is properly finished.
             assert jsn == {
