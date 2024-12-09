@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import platform
+import pytest
 import shutil
 import string
 import time
@@ -1218,14 +1219,22 @@ async def test_bulk_specification_dts_fail_wrong_format():
             assert resp.status == 400
 
 
-async def test_bulk_specification_dts_fail_wrong_extension():
+@pytest.mark.parametrize(
+    "manifest,expected",
+    [
+        ("test_manifest.foo", "foo"),
+        ("json", app.NO_EXTENSION),
+        (".json", app.NO_EXTENSION),
+        ("some_manifest", app.NO_EXTENSION),
+    ],
+)
+async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
     async with AppClient(config) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"testuser/{sub_dir}"
             fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser" / sub_dir
-            manifest = "test_manifest.foo"
             manifest_data = {"resources": [], "instructions": {}}
             with open(base / manifest, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f)
@@ -1236,7 +1245,7 @@ async def test_bulk_specification_dts_fail_wrong_extension():
                     {
                         "type": "cannot_parse_file",
                         "file": f"{dts_dir}/{manifest}",
-                        "message": "foo is not a supported file type for import specifications",
+                        "message": f"{expected} is not a supported file type for import specifications",
                         "tab": None,
                     }
                 ]

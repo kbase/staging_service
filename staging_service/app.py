@@ -13,7 +13,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV
+from .autodetect.Mappings import CSV, EXCEL, JSON, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -53,6 +53,7 @@ _IMPSPEC_FILE_TO_WRITER = {
     EXCEL: write_excel,
 }
 
+NO_EXTENSION = "missing extension"
 
 @routes.get("/importer_filetypes/")
 async def importer_filetypes(_: web.Request) -> web.json_response:
@@ -109,10 +110,9 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
 
     def dts_file_resolver(path: PathPy):
         # must be a ".json" file
-        file_parts = str(path).split(".")
-        ext = file_parts[-1]
-        if len(file_parts) < 2 or ext.lower() != "json":
-            return FileTypeResolution(unsupported_type=ext)
+        suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
+        if suffix.lower() != JSON.lower():
+            return FileTypeResolution(unsupported_type=suffix)
         return FileTypeResolution(parser=parse_dts_manifest)
 
     return dts_file_resolver
