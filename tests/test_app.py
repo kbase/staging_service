@@ -1052,8 +1052,10 @@ async def test_bulk_specification_success():
 async def test_bulk_specification_dts_success():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest_1 = "test_manifest_1.json"
             manifest_1_dict = {
                 "resources": [],
@@ -1108,20 +1110,20 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_1_dict, f)
             with open(base / manifest_2, "w", encoding="utf-8") as f:
                 json.dump(manifest_2_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts")
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts")
             jsn = await resp.json()
             # fails for now. will update when schema/parser is properly finished.
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_1}",
+                        "file": f"{dts_dir}/{manifest_1}",
                         "message": "No import specification data in file",
                         "tab": None,
                     },
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_2}",
+                        "file": f"{dts_dir}/{manifest_2}",
                         "message": "No import specification data in file",
                         "tab": None,
                     },
@@ -1150,8 +1152,10 @@ async def test_bulk_specification_dts_success():
 async def test_bulk_specification_dts_fail_json_without_dts():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest_1 = "test_manifest_1.json"
             manifest_1_dict = {
                 "resources": [],
@@ -1171,13 +1175,13 @@ async def test_bulk_specification_dts_fail_json_without_dts():
             }
             with open(base / manifest_1, "w", encoding="utf-8") as f:
                 json.dump(manifest_1_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}")
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_1}",
+                        "file": f"{dts_dir}/{manifest_1}",
                         "message": "json is not a supported file type for import specifications",
                         "tab": None,
                     }
@@ -1189,19 +1193,21 @@ async def test_bulk_specification_dts_fail_json_without_dts():
 async def test_bulk_specification_dts_fail_wrong_format():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest = "test_manifest.json"
             manifest_data = ["wrong", "format"]
             with open(base / manifest, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest}&dts")
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest}",
+                        "file": f"{dts_dir}/{manifest}",
                         "message": "Manifest is not a dictionary",
                         "tab": None,
                     }
