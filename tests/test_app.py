@@ -1108,7 +1108,7 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_1_dict, f)
             with open(base / manifest_2, "w", encoding="utf-8") as f:
                 json.dump(manifest_2_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
+            resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts")
             jsn = await resp.json()
             # fails for now. will update when schema/parser is properly finished.
             assert jsn == {
@@ -1171,7 +1171,7 @@ async def test_bulk_specification_dts_fail_json_without_dts():
             }
             with open(base / manifest_1, "w", encoding="utf-8") as f:
                 json.dump(manifest_1_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}&dts=0")
+            resp = await cli.get(f"bulk_specification/?files={manifest_1}")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
@@ -1195,7 +1195,7 @@ async def test_bulk_specification_dts_fail_wrong_format():
             manifest_data = ["wrong", "format"]
             with open(base / manifest, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest}&dts=1")
+            resp = await cli.get(f"bulk_specification/?files={manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [

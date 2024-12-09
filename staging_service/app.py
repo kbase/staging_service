@@ -122,23 +122,21 @@ async def bulk_specification(request: web.Request) -> web.json_response:
 
     :param request: contains the URL parameters for the request. Expected to have the following:
         * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-        * dts (optional) - if present, and has the value "1", this will treat all of the given
-          files as DTS manifest files, and attempt to parse them accordingly.
+        * dts (optional) - if present this will treat all of the given files as DTS manifest files,
+          and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
-    params = parse_qs(request.query_string)
-    files = params.get("files", [])
+    files = parse_qs(request.query_string).get("files", [])
     files = files[0].split(",") if files else []
     files = [f.strip() for f in files if f.strip()]
     paths = {}
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
-    as_dts = params.get("dts", ["0"])[0] == "1"
 
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
-    if as_dts:
+    if "dts" in request.query:
         file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
