@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import json
 import logging
 import os
@@ -12,7 +13,7 @@ from aiohttp import web
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
-from .autodetect.Mappings import CSV, EXCEL, TSV, JSON
+from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
 from .import_specifications.file_parser import (
@@ -44,18 +45,17 @@ _DATATYPE_MAPPINGS = None
 
 _APP_JSON = "application/json"
 
-_IMPSPEC_FILE_TO_PARSER = {
-    CSV: parse_csv,
-    TSV: parse_tsv,
-    EXCEL: parse_excel,
-    JSON: parse_dts_manifest,
-}
+_IMPSPEC_FILE_TO_PARSER = {CSV: parse_csv, TSV: parse_tsv, EXCEL: parse_excel}
 
 _IMPSPEC_FILE_TO_WRITER = {
     CSV: write_csv,
     TSV: write_tsv,
     EXCEL: write_excel,
 }
+
+# The constant in autodetect.Mappings isn't guaranteed to be the string we want.
+JSON_EXTENSION = "json"
+NO_EXTENSION = "missing extension"
 
 
 @routes.get("/importer_filetypes/")
@@ -108,6 +108,19 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
         return FileTypeResolution(unsupported_type=ext)
 
 
+def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
+    """Makes a DTS file resolver."""
+
+    def dts_file_resolver(path: PathPy) -> FileTypeResolution:
+        # must be a ".json" file
+        suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
+        if suffix.lower() != JSON_EXTENSION:
+            return FileTypeResolution(unsupported_type=suffix)
+        return FileTypeResolution(parser=parse_dts_manifest)
+
+    return dts_file_resolver
+
+
 @routes.get("/bulk_specification/{query:.*}")
 async def bulk_specification(request: web.Request) -> web.json_response:
     """
@@ -115,11 +128,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Returns the contents of those files parsed into a list of dictionaries, mapped from the data
     type, in the `types` key.
 
-    :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-
-    TODO: since JSON files are rather generic and we might want to use a different JSON bulk-spec
-    format later, add a separate query parameter to request that the selected file is treated as a
-    Data Transfer Service manifest.
+    :param request: contains the URL parameters for the request. Expected to have the following:
+        * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+        * dts (optional) - if present this will treat all of the given files as DTS manifest files,
+          and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
     files = parse_qs(request.query_string).get("files", [])
@@ -129,10 +141,14 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
+
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
+    file_type_resolver = _file_type_resolver
+    if "dts" in request.query:
+        file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
-        _file_type_resolver,
+        file_type_resolver,
         lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
     )
     if res.results:

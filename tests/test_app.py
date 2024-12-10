@@ -1,13 +1,14 @@
 import asyncio
 import configparser
 import hashlib
+import json
 import os
 import platform
+import pytest
 import shutil
 import string
 import time
 from io import BytesIO
-from json import JSONDecoder
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlencode
@@ -29,7 +30,7 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
     bootstrap()
 
-decoder = JSONDecoder()
+decoder = json.JSONDecoder()
 
 config = configparser.ConfigParser()
 config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
@@ -1047,6 +1048,209 @@ async def test_bulk_specification_success():
                 },
             }
             assert resp.status == 200
+
+
+async def test_bulk_specification_dts_success():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest_1 = "test_manifest_1.json"
+            manifest_1_dict = {
+                "resources": [],
+                "instructions": {
+                    "protocol": "KBase narrative import",
+                    "objects": [
+                        {
+                            "data_type": "gff_metagenome",
+                            "parameters": {
+                                "fasta_file": "fasta_1",
+                                "gff_file": "gff_1",
+                                "genome_name": "mg_1",
+                            },
+                        },
+                        {
+                            "data_type": "gff_metagenome",
+                            "parameters": {
+                                "fasta_file": "fasta_2",
+                                "gff_file": "gff_2",
+                                "genome_name": "mg_2",
+                            },
+                        },
+                    ],
+                },
+            }
+            manifest_2 = "test_manifest_2.json"
+            manifest_2_dict = {
+                "resources": [],
+                "instructions": {
+                    "protocol": "KBase narrative import",
+                    "objects": [
+                        {
+                            "data_type": "gff_genome",
+                            "parameters": {
+                                "fasta_file": "g_fasta_1",
+                                "gff_file": "g_gff_1",
+                                "genome_name": "genome_1",
+                            },
+                        },
+                        {
+                            "data_type": "gff_genome",
+                            "parameters": {
+                                "fasta_file": "g_fasta_2",
+                                "gff_file": "g_gff_2",
+                                "genome_name": "genome_2",
+                            },
+                        },
+                    ],
+                },
+            }
+            with open(base / manifest_1, "w", encoding="utf-8") as f:
+                json.dump(manifest_1_dict, f)
+            with open(base / manifest_2, "w", encoding="utf-8") as f:
+                json.dump(manifest_2_dict, f)
+            resp = await cli.get(
+                f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts"
+            )
+            jsn = await resp.json()
+            # fails for now. will update when schema/parser is properly finished.
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest_1}",
+                        "message": "No import specification data in file",
+                        "tab": None,
+                    },
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest_2}",
+                        "message": "No import specification data in file",
+                        "tab": None,
+                    },
+                ]
+            }
+            # soon will be this:
+            # assert json == {
+            #     "types": {
+            #         "gff_genome": [
+            #             {"fasta_file": "g_fasta_1", "gff_file": "g_gff_1", "genome_name": "genome_1"},
+            #             {"fasta_file": "g_fasta_2", "gff_file": "g_gff_2", "genome_name": "genome_2"}
+            #         ],
+            #         "gff_metagenome": [
+            #             {"fasta_file": "fasta_1", "gff_file": "gff_1", "genome_name": "mg_1"},
+            #             {"fasta_file": "fasta_2", "gff_file": "gff_2", "genome_name": "mg_2"}
+            #         ]
+            #     },
+            #     "files": {
+            #         "gff_metagenome": {"file": f"testuser/{manifest_1}", "tab": None},
+            #         "gff_genome": {"file": f"testuser/{manifest_2}", "tab": None}
+            #     }
+            # }
+            assert resp.status == 400
+
+
+async def test_bulk_specification_dts_fail_json_without_dts():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest_1 = "test_manifest_1.json"
+            manifest_1_dict = {
+                "resources": [],
+                "instructions": {
+                    "protocol": "KBase narrative import",
+                    "objects": [
+                        {
+                            "data_type": "gff_metagenome",
+                            "parameters": {
+                                "fasta_file": "fasta_1",
+                                "gff_file": "gff_1",
+                                "genome_name": "mg_1",
+                            },
+                        }
+                    ],
+                },
+            }
+            with open(base / manifest_1, "w", encoding="utf-8") as f:
+                json.dump(manifest_1_dict, f)
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest_1}",
+                        "message": "json is not a supported file type for import specifications",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
+
+
+async def test_bulk_specification_dts_fail_wrong_format():
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest = "test_manifest.json"
+            manifest_data = ["wrong", "format"]
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest}",
+                        "message": "Manifest is not a dictionary",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
+
+
+@pytest.mark.parametrize(
+    "manifest,expected",
+    [
+        ("test_manifest.foo", "foo"),
+        ("json", app.NO_EXTENSION),
+        (".json", app.NO_EXTENSION),
+        ("some_manifest", app.NO_EXTENSION),
+    ],
+)
+async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest_data = {"resources": [], "instructions": {}}
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest}",
+                        "message": f"{expected} is not a supported file type for import specifications",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
 
 
 async def test_bulk_specification_fail_no_files():
