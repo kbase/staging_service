@@ -124,7 +124,7 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
         suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
         if suffix.lower() != JSON_EXTENSION:
             return FileTypeResolution(unsupported_type=suffix)
-        return FileTypeResolution(parser=parse_dts_manifest)
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
 
     return dts_file_resolver
 
