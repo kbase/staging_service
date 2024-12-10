@@ -54,6 +54,10 @@ _IMPSPEC_FILE_TO_WRITER = {
     EXCEL: write_excel,
 }
 
+# The constant in autodetect.Mappings isn't guaranteed to be the string we want.
+JSON_EXTENSION = "json"
+NO_EXTENSION = "missing extension"
+
 
 @routes.get("/importer_filetypes/")
 async def importer_filetypes(_: web.Request) -> web.json_response:
@@ -115,8 +119,12 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
     with open(_DTS_MANIFEST_SCHEMA) as schema_file:
         dts_schema = json.load(schema_file)
 
-    def dts_file_resolver(_: PathPy):
-        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
+    def dts_file_resolver(path: PathPy) -> FileTypeResolution:
+        # must be a ".json" file
+        suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
+        if suffix.lower() != JSON_EXTENSION:
+            return FileTypeResolution(unsupported_type=suffix)
+        return FileTypeResolution(parser=parse_dts_manifest)
 
     return dts_file_resolver
 
@@ -130,23 +138,21 @@ async def bulk_specification(request: web.Request) -> web.json_response:
 
     :param request: contains the URL parameters for the request. Expected to have the following:
         * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-        * dts (optional) - if present, and has the value "1", this will treat all of the given
-          files as DTS manifest files, and attempt to parse them accordingly.
+        * dts (optional) - if present this will treat all of the given files as DTS manifest files,
+          and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
-    params = parse_qs(request.query_string)
-    files = params.get("files", [])
+    files = parse_qs(request.query_string).get("files", [])
     files = files[0].split(",") if files else []
     files = [f.strip() for f in files if f.strip()]
     paths = {}
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
-    as_dts = params.get("dts", ["0"])[0] == "1"
 
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
-    if as_dts:
+    if "dts" in request.query:
         file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
