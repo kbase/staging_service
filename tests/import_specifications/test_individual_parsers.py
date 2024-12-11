@@ -926,7 +926,7 @@ def test_dts_manifest_fail_with_path(
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                "'data_type' is a required property at instructions/objects/item 1",
+                "'data_type' is a required property at ['instructions', 'objects', 1]",
                 SpecificationSource(manifest_path),
             )
         ],

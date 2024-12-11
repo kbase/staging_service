@@ -6,7 +6,10 @@
         "instructions": {
             "type": "object",
             "properties": {
-                "protocol": {"type": "string"},
+                "protocol": {
+                    "type": "string",
+                    "const": "KBase narrative import"
+                },
                 "objects": {
                     "type": "array",
                     "items": {
@@ -15,17 +18,14 @@
                             "data_type": {"type": "string"},
                             "parameters": {
                                 "type": "object",
-                                "patternProperties": {
-                                    ".*": {
-                                        "oneOf": [
-                                            {"type": "string"},
-                                            {"type": "number"},
-                                            {"type": "boolean"},
-                                            {"type": "null"}
-                                        ]
-                                    }
-                                },
-                                "additionalProperties": false
+                                "additionalProperties": {
+                                    "oneOf": [
+                                        {"type": "string"},
+                                        {"type": "number"},
+                                        {"type": "boolean"},
+                                        {"type": "null"}
+                                    ]
+                                }
                             }
                         },
                         "required": ["data_type", "parameters"]

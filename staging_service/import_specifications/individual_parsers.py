@@ -359,22 +359,9 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
         validator = jsonschema.Draft202012Validator(dts_manifest_schema)
         for err in validator.iter_errors(manifest_json):
             err_str = err.message
-            err_path = err.absolute_path
+            err_path = list(err.absolute_path)
             if err_path:
-                # paths can look like, say, ["instructions", "objects", 0, "data_type"]
-                # convert that '0' to "item 0" to be slightly more readable to users.
-                # kind of a mouthful below, but does that conversion in place
-                # The error above gets translated into:
-                # "<err.message> at instructions/objects/item 0/data_type"
-                #
-                # Another example would be if the path is just ["instructions"] and it's missing
-                # a property, the error might be:
-                # "missing property 'foo' for 'instructions'"
-                err_path = [f"item {elem}" if isinstance(elem, int) else elem for elem in err_path]
-                prep = "for"
-                if len(err_path) > 1:
-                    prep = "at"
-                err_str += f" {prep} {'/'.join(err_path)}"
+                err_str += f" at {err_path}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
     except jsonschema.exceptions.SchemaError:
         return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
