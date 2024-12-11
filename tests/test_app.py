@@ -1253,6 +1253,17 @@ async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expect
             assert resp.status == 400
 
 
+def test_bulk_specification_dts_fail_bad_schema():
+    # TODO: This is tested manually, as there's no good way to inject bad configs
+    # to individual tests right now.
+    # TODO: automated tests for:
+    # * missing schema config
+    # * missing schema file
+    # * malformed schema file (i.e. not json)
+    # * bad schema (good JSON, invalid as json schema)
+    pass
+
+
 async def test_bulk_specification_fail_no_files():
     async with AppClient(config) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
