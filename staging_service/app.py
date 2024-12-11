@@ -116,6 +116,7 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
 
     This injects the DTS schema into the FileTypeResolution's parser call.
     """
+
     def dts_file_resolver(path: PathPy) -> FileTypeResolution:
         # must be a ".json" file
         suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
