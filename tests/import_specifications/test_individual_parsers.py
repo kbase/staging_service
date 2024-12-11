@@ -879,11 +879,8 @@ def test_dts_manifest_file_is_directory(
 @pytest.mark.parametrize("bad_schema", [None, 1, [], {"foo"}])
 def test_dts_manifest_bad_schema(bad_schema):
     f = _get_test_file("manifest_small.json")
-    _dts_manifest_parse_fail(
-        f,
-        bad_schema,
-        [Error(ErrorType.OTHER, "Manifest schema is invalid", SpecificationSource(f))],
-    )
+    with pytest.raises(Exception):
+        parse_dts_manifest(f, bad_schema)
 
 
 def test_dts_manifest_no_top_level_keys(

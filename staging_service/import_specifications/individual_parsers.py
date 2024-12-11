@@ -344,6 +344,9 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
     and its value will be a Tuple of frozendicts of the parameters. Also, in keeping
     with the xsv parsers, each parameter value is expected to be a PRIMITIVE_TYPE.
 
+    Note that the dts_manifest_schema is expected to be valid, and may throw an
+    unexpected exception otherwise.
+
     TODO: include further details here, and in separate documentation - ADR?
     """
     spcsrc = SpecificationSource(path)
@@ -351,7 +354,6 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
     # dummy for now
     results = {}
     try:
-        jsonschema.Draft202012Validator.check_schema(dts_manifest_schema)
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
@@ -363,8 +365,6 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
             if err_path:
                 err_str += f" at {err_path}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
-    except jsonschema.exceptions.SchemaError:
-        return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:

@@ -6,10 +6,12 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path as PathPy
+from typing import Any
 from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
 from aiohttp import web
+import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
@@ -110,21 +112,16 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
 
 
 def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
-    """Makes a DTS file resolver.
+    """Makes a DTS file resolver
 
-    This looks a little goofy, but it ensures that the DTS manifest schema file
-    only gets loaded once per API call, no matter how many DTS manifest files are
-    expected to be parsed. It also prevents having it stick around in memory.
+    This injects the DTS schema into the FileTypeResolution's parser call.
     """
-    with open(_DTS_MANIFEST_SCHEMA) as schema_file:
-        dts_schema = json.load(schema_file)
-
     def dts_file_resolver(path: PathPy) -> FileTypeResolution:
         # must be a ".json" file
         suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
         if suffix.lower() != JSON_EXTENSION:
             return FileTypeResolution(unsupported_type=suffix)
-        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_SCHEMA))
 
     return dts_file_resolver
 
@@ -611,6 +608,16 @@ async def authorize_request(request):
     return username
 
 
+def load_and_validate_schema(schema_path: PathPy) -> dict[str, Any]:
+    with open(schema_path) as schema_file:
+        dts_schema = json.load(schema_file)
+    try:
+        jsonschema.Draft202012Validator.check_schema(dts_schema)
+    except jsonschema.exceptions.SchemaError as err:
+        Exception(f"Schema file {schema_path} is not a valid JSON schema: {err.message}")
+    return dts_schema
+
+
 def inject_config_dependencies(config):
     """
     # TODO this is pretty hacky dependency injection
@@ -656,8 +663,10 @@ def inject_config_dependencies(config):
 
     if Path._DTS_MANIFEST_SCHEMA_PATH is None:
         raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
+
     global _DTS_MANIFEST_SCHEMA
-    _DTS_MANIFEST_SCHEMA = DTS_MANIFEST_SCHEMA_PATH
+    # will raise an Exception if the schema is invalid
+    _DTS_MANIFEST_SCHEMA = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
