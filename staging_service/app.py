@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
 from aiohttp import web
+import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
@@ -42,7 +43,7 @@ routes = web.RouteTableDef()
 VERSION = "1.3.6"
 
 _DATATYPE_MAPPINGS = None
-_DTS_MANIFEST_SCHEMA = None
+_DTS_MANIFEST_VALIDATOR: jsonschema.Draft202012Validator | None = None
 
 _APP_JSON = "application/json"
 
@@ -53,6 +54,10 @@ _IMPSPEC_FILE_TO_WRITER = {
     TSV: write_tsv,
     EXCEL: write_excel,
 }
+
+# The constant in autodetect.Mappings isn't guaranteed to be the string we want.
+JSON_EXTENSION = "json"
+NO_EXTENSION = "missing extension"
 
 
 @routes.get("/importer_filetypes/")
@@ -106,17 +111,17 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
 
 
 def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
-    """Makes a DTS file resolver.
+    """Makes a DTS file resolver
 
-    This looks a little goofy, but it ensures that the DTS manifest schema file
-    only gets loaded once per API call, no matter how many DTS manifest files are
-    expected to be parsed. It also prevents having it stick around in memory.
+    This injects the DTS schema into the FileTypeResolution's parser call.
     """
-    with open(_DTS_MANIFEST_SCHEMA) as schema_file:
-        dts_schema = json.load(schema_file)
 
-    def dts_file_resolver(_: PathPy):
-        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, dts_schema))
+    def dts_file_resolver(path: PathPy) -> FileTypeResolution:
+        # must be a ".json" file
+        suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
+        if suffix.lower() != JSON_EXTENSION:
+            return FileTypeResolution(unsupported_type=suffix)
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_VALIDATOR))
 
     return dts_file_resolver
 
@@ -130,23 +135,21 @@ async def bulk_specification(request: web.Request) -> web.json_response:
 
     :param request: contains the URL parameters for the request. Expected to have the following:
         * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
-        * dts (optional) - if present, and has the value "1", this will treat all of the given
-          files as DTS manifest files, and attempt to parse them accordingly.
+        * dts (optional) - if present this will treat all of the given files as DTS manifest files,
+          and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
-    params = parse_qs(request.query_string)
-    files = params.get("files", [])
+    files = parse_qs(request.query_string).get("files", [])
     files = files[0].split(",") if files else []
     files = [f.strip() for f in files if f.strip()]
     paths = {}
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
-    as_dts = params.get("dts", ["0"])[0] == "1"
 
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
     file_type_resolver = _file_type_resolver
-    if as_dts:
+    if "dts" in request.query:
         file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
@@ -605,6 +608,18 @@ async def authorize_request(request):
     return username
 
 
+def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Validator:
+    with open(schema_path) as schema_file:
+        dts_schema = json.load(schema_file)
+    try:
+        jsonschema.Draft202012Validator.check_schema(dts_schema)
+    except jsonschema.exceptions.SchemaError as err:
+        raise Exception(
+            f"Schema file {schema_path} is not a valid JSON schema: {err.message}"
+        ) from err
+    return jsonschema.Draft202012Validator(dts_schema)
+
+
 def inject_config_dependencies(config):
     """
     # TODO this is pretty hacky dependency injection
@@ -637,7 +652,7 @@ def inject_config_dependencies(config):
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
-    Path._DTS_MANIFEST_SCHEMA_PATH = DTS_MANIFEST_SCHEMA_PATH
+    _DTS_MANIFEST_SCHEMA_PATH = DTS_MANIFEST_SCHEMA_PATH
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -648,10 +663,12 @@ def inject_config_dependencies(config):
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
 
-    if Path._DTS_MANIFEST_SCHEMA_PATH is None:
+    if _DTS_MANIFEST_SCHEMA_PATH is None:
         raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
-    global _DTS_MANIFEST_SCHEMA
-    _DTS_MANIFEST_SCHEMA = DTS_MANIFEST_SCHEMA_PATH
+
+    global _DTS_MANIFEST_VALIDATOR
+    # will raise an Exception if the schema is invalid
+    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")

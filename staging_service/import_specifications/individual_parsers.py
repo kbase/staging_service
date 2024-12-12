@@ -4,13 +4,12 @@ Contains parser functions for use with the file parser framework.
 
 import csv
 import json
-import jsonschema
 import math
 import re
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
-import jsonschema.exceptions
+from jsonschema import Draft202012Validator
 import magic
 import pandas
 from frozendict import frozendict
@@ -329,7 +328,7 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
 
 
-def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
+def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have this format, with expected keys included:
@@ -352,31 +351,22 @@ def parse_dts_manifest(path: Path, dts_manifest_schema: dict) -> ParseResults:
     and its value will be a Tuple of frozendicts of the parameters. Also, in keeping
     with the xsv parsers, each parameter value is expected to be a PRIMITIVE_TYPE.
 
-    TODO: include further details here, and in separate documentation - ADR?
+    TODO: include further details in separate documentation
     """
     spcsrc = SpecificationSource(path)
     errors = []
     # dummy for now
     results = {}
     try:
-        jsonschema.Draft202012Validator.check_schema(dts_manifest_schema)
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
             return _error(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
-        validator = jsonschema.Draft202012Validator(dts_manifest_schema)
         for err in validator.iter_errors(manifest_json):
             err_str = err.message
-            err_path = err.absolute_path
+            err_path = list(err.absolute_path)
             if err_path:
-                # paths can look like, say, ["instructions", "objects", 0, "data_type"]
-                # convert that '0' to "item 0" to be slightly more readable to users.
-                # kind of a mouthful below, but does that conversion in place
-                err_path = [f"item {elem}" if isinstance(elem, int) else elem for elem in err_path]
-                prep = "for"
-                if len(err_path) > 1:
-                    prep = "at"
-                err_str += f" {prep} {'/'.join(err_path)}"
+                err_str += f" at {err_path}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
         if not errors:
             results = _process_dts_manifest(manifest_json, spcsrc)

@@ -4,6 +4,9 @@ import hashlib
 import json
 import os
 import platform
+import uuid
+import jsonschema
+import pytest
 import shutil
 import string
 import time
@@ -1052,8 +1055,10 @@ async def test_bulk_specification_success():
 async def test_bulk_specification_dts_success():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest_1 = "test_manifest_1.json"
             manifest_1_dict = {
                 "resources": [],
@@ -1108,7 +1113,9 @@ async def test_bulk_specification_dts_success():
                 json.dump(manifest_1_dict, f)
             with open(base / manifest_2, "w", encoding="utf-8") as f:
                 json.dump(manifest_2_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}  ,   {manifest_2}&dts=1")
+            resp = await cli.get(
+                f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts"
+            )
             jsn = await resp.json()
             assert jsn == {
                 "types": {
@@ -1140,8 +1147,10 @@ async def test_bulk_specification_dts_success():
 async def test_bulk_specification_dts_fail_json_without_dts():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest_1 = "test_manifest_1.json"
             manifest_1_dict = {
                 "resources": [],
@@ -1161,13 +1170,13 @@ async def test_bulk_specification_dts_fail_json_without_dts():
             }
             with open(base / manifest_1, "w", encoding="utf-8") as f:
                 json.dump(manifest_1_dict, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest_1}&dts=0")
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest_1}",
+                        "file": f"{dts_dir}/{manifest_1}",
                         "message": "json is not a supported file type for import specifications",
                         "tab": None,
                     }
@@ -1179,25 +1188,107 @@ async def test_bulk_specification_dts_fail_json_without_dts():
 async def test_bulk_specification_dts_fail_wrong_format():
     async with AppClient(config) as cli:
         with FileUtil() as fu:
-            fu.make_dir("testuser/dts_folder")  # testuser is hardcoded in the auth mock
-            base = Path(fu.base_dir) / "testuser"
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
             manifest = "test_manifest.json"
             manifest_data = ["wrong", "format"]
             with open(base / manifest, "w", encoding="utf-8") as f:
                 json.dump(manifest_data, f)
-            resp = await cli.get(f"bulk_specification/?files={manifest}&dts=1")
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
                 "errors": [
                     {
                         "type": "cannot_parse_file",
-                        "file": f"testuser/{manifest}",
+                        "file": f"{dts_dir}/{manifest}",
                         "message": "Manifest is not a dictionary",
                         "tab": None,
                     }
                 ]
             }
             assert resp.status == 400
+
+
+@pytest.mark.parametrize(
+    "manifest,expected",
+    [
+        ("test_manifest.foo", "foo"),
+        ("json", app.NO_EXTENSION),
+        (".json", app.NO_EXTENSION),
+        ("some_manifest", app.NO_EXTENSION),
+    ],
+)
+async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
+    async with AppClient(config) as cli:
+        with FileUtil() as fu:
+            sub_dir = "dts_folder"
+            dts_dir = f"testuser/{sub_dir}"
+            fu.make_dir(dts_dir)  # testuser is hardcoded in the auth mock
+            base = Path(fu.base_dir) / "testuser" / sub_dir
+            manifest_data = {"resources": [], "instructions": {}}
+            with open(base / manifest, "w", encoding="utf-8") as f:
+                json.dump(manifest_data, f)
+            resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
+            jsn = await resp.json()
+            assert jsn == {
+                "errors": [
+                    {
+                        "type": "cannot_parse_file",
+                        "file": f"{dts_dir}/{manifest}",
+                        "message": f"{expected} is not a supported file type for import specifications",
+                        "tab": None,
+                    }
+                ]
+            }
+            assert resp.status == 400
+
+
+def test_bulk_specification_dts_fail_bad_schema():
+    # TODO: This is tested manually, as there's no good way to inject bad configs
+    # to individual tests right now.
+    # TODO: automated tests for:
+    # * missing schema config
+    # * missing schema file
+    # * malformed schema file (i.e. not json)
+    # * bad schema (good JSON, invalid as json schema)
+    pass
+
+
+def test_load_and_validate_schema_good():
+    # TODO: update this after updating how config is handled
+    schema_file = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
+    validator = app.load_and_validate_schema(schema_file)
+    assert isinstance(validator, jsonschema.Draft202012Validator)
+
+
+def test_load_and_validate_schema_missing_file():
+    not_real_file = Path("not_real")
+    while not_real_file.exists():
+        not_real_file = Path(str(uuid.uuid4()))
+    with pytest.raises(FileNotFoundError, match="No such file or directory"):
+        app.load_and_validate_schema(not_real_file)
+
+
+def test_load_and_validate_schema_malformed_file(tmp_path: Path):
+    # TODO: migrate FileUtil and import_specifications.test_individual_parsers.temp_path_fixture
+    # into conftest.py, and resolve everywhere else that FileUtil gets used.
+    # Until then, the built-in tmp_path is appropriate for these tests
+    wrong_schema = "not valid json"
+    schema_file = tmp_path / f"{uuid.uuid4()}.json"
+    schema_file.write_text(wrong_schema, encoding="utf-8")
+    with pytest.raises(json.JSONDecodeError, match="Expecting value: line 1 column 1"):
+        app.load_and_validate_schema(schema_file)
+
+
+def test_load_and_validate_schema_bad(tmp_path: Path):
+    invalid = {"properties": {"some_prop": {"type": "not_real"}}}
+    schema_file = tmp_path / f"{uuid.uuid4()}.json"
+    schema_file.write_text(json.dumps(invalid), encoding="utf-8")
+    exp_err = f"Schema file {schema_file} is not a valid JSON schema: 'not_real' is not valid"
+    with pytest.raises(Exception, match=exp_err):
+        app.load_and_validate_schema(schema_file)
 
 
 async def test_bulk_specification_fail_no_files():
