@@ -17,7 +17,6 @@ from staging_service.import_specifications.individual_parsers import (
     parse_dts_manifest,
     parse_excel,
     parse_tsv,
-    _DTS_INSTRUCTIONS_PROTOCOL,
 )
 from tests.test_app import FileUtil
 from tests.test_utils import bootstrap_config
@@ -25,6 +24,7 @@ from jsonschema import Draft202012Validator
 
 
 _TEST_DATA_DIR = (Path(__file__).parent / "test_data").resolve()
+_DTS_INSTRUCTIONS_PROTOCOL = "KBase narrative import"
 
 
 @pytest.fixture(scope="module", name="temp_dir")
