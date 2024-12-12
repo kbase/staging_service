@@ -780,22 +780,6 @@ def test_excel_parse_fail_unequal_rows():
     )
 
 
-def test_dts_manifest_parse_success(dts_validator: Draft202012Validator):
-    f = _get_test_file("manifest_small.json")
-    res = parse_dts_manifest(f, dts_validator)
-    # fails for now
-    assert res.results is None
-    assert res.errors == tuple(
-        [
-            Error(
-                ErrorType.PARSE_FAIL,
-                "'instructions' is a required property",
-                SpecificationSource(f),
-            )
-        ]
-    )
-
-
 @pytest.fixture(scope="module")
 def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict | list], Path]:
     def manifest_writer(input_json: dict | list) -> Path:
@@ -807,9 +791,9 @@ def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict 
     return manifest_writer
 
 
-def test_dts_manifest_parse_success(dts_schema: dict[str, Any]):
+def test_dts_manifest_parse_success(dts_validator: Draft202012Validator):
     f = _get_test_file("manifest_small.json")
-    res = parse_dts_manifest(f, dts_schema)
+    res = parse_dts_manifest(f, dts_validator)
     assert res.results
     assert res.errors is None
     assert list(res.results.keys()) == ["gff_metagenome"]
@@ -820,9 +804,9 @@ def test_dts_manifest_parse_success(dts_schema: dict[str, Any]):
         assert parsed == {"param1": "value1", "param2": "value2"}
 
 
-def test_dts_manifest_parse_multi_data_types_success(dts_schema: dict[str, Any]):
+def test_dts_manifest_parse_multi_data_types_success(dts_validator: Draft202012Validator):
     f = _get_test_file("manifest_multiple.json")
-    res = parse_dts_manifest(f, dts_schema)
+    res = parse_dts_manifest(f, dts_validator)
     assert res.results
     assert res.errors is None
     assert len(res.results.keys()) == 2
@@ -852,7 +836,6 @@ def test_dts_manifest_parse_multi_data_types_success(dts_schema: dict[str, Any])
         assert res.results[key].result == expected[key]
 
 
-def _dts_manifest_parse_fail(input_file: Path, schema: dict, errors: list[Error]):
 def _dts_manifest_parse_fail(
     input_file: Path, validator: Draft202012Validator, errors: list[Error]
 ):
@@ -959,7 +942,7 @@ def test_dts_manifest_fail_with_path(
         {
             "resources": [],
             "instructions": {
-                "protocol": "KBase narrative import",
+                "protocol": _DTS_INSTRUCTIONS_PROTOCOL,
                 "objects": [{"data_type": "foo", "parameters": {}}, {"parameters": {}}],
             },
         }
@@ -983,7 +966,7 @@ malformed_dict = [[], 1, "nope", None]
 @pytest.mark.parametrize("bad_instruction", malformed_dict)
 def test_dts_manifest_malformed_instructions(
     write_dts_manifest: Callable[[dict | list], Path],
-    dts_schema: dict[str, Any],
+    dts_validator: Draft202012Validator,
     bad_instruction: list | int | str | None,
 ):
     manifest_file = write_dts_manifest({"resources": [], "instructions": bad_instruction})
@@ -992,11 +975,11 @@ def test_dts_manifest_malformed_instructions(
         err_val = f"'{err_val}'"
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                f"{err_val} is not of type 'object' for instructions",
+                f"{err_val} is not of type 'object' at ['instructions']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1006,7 +989,7 @@ def test_dts_manifest_malformed_instructions(
 @pytest.mark.parametrize("bad_parameters", malformed_dict)
 def test_dts_manifest_malformed_parameters(
     write_dts_manifest: Callable[[dict | list], Path],
-    dts_schema: dict[str, Any],
+    dts_validator: Draft202012Validator,
     bad_parameters: list | int | str | None,
 ):
     manifest_file = write_dts_manifest(
@@ -1023,11 +1006,11 @@ def test_dts_manifest_malformed_parameters(
         err_val = f"'{err_val}'"
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                f"{err_val} is not of type 'object' at instructions/objects/item 0/parameters",
+                f"{err_val} is not of type 'object' at ['instructions', 'objects', 0, 'parameters']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1040,7 +1023,7 @@ missing_key_cases = [["data_type"], ["parameters"], ["data_type", "parameters"]]
 @pytest.mark.parametrize("missing_keys", missing_key_cases)
 def test_dts_manifest_missing_instruction_keys(
     write_dts_manifest: Callable[[dict | list], Path],
-    dts_schema: dict[str, Any],
+    dts_validator: Draft202012Validator,
     missing_keys: list[str],
 ):
     resource_obj = {"data_type": "some_type", "parameters": {"p1": "v1"}}
@@ -1057,22 +1040,22 @@ def test_dts_manifest_missing_instruction_keys(
         error_list.append(
             Error(
                 ErrorType.PARSE_FAIL,
-                f"'{key}' is a required property at instructions/objects/item 0",
+                f"'{key}' is a required property at ['instructions', 'objects', 0]",
                 SpecificationSource(manifest_file),
             )
         )
-    _dts_manifest_parse_fail(manifest_file, dts_schema, error_list)
+    _dts_manifest_parse_fail(manifest_file, dts_validator, error_list)
 
 
 def test_dts_manifest_empty(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator
 ):
     manifest_file = write_dts_manifest(
         {"resources": [], "instructions": {"protocol": _DTS_INSTRUCTIONS_PROTOCOL, "objects": []}}
     )
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
@@ -1086,7 +1069,7 @@ def test_dts_manifest_empty(
 @pytest.mark.parametrize("non_str", [{"a": "b"}, ["a", "b"], 1, None])
 def test_dts_manifest_fail_data_type_not_str(
     write_dts_manifest: Callable[[dict | list], Path],
-    dts_schema: dict[str, Any],
+    dts_validator: Draft202012Validator,
     non_str: dict | list | int | None,
 ):
     manifest_file = write_dts_manifest(
@@ -1100,11 +1083,11 @@ def test_dts_manifest_fail_data_type_not_str(
     )
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                f"{non_str} is not of type 'string' at instructions/objects/item 0/data_type",
+                f"{non_str} is not of type 'string' at ['instructions', 'objects', 0, 'data_type']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1112,16 +1095,16 @@ def test_dts_manifest_fail_data_type_not_str(
 
 
 def test_dts_manifest_missing_instructions_protocol(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator
 ):
     manifest_file = write_dts_manifest({"resources": [], "instructions": {"objects": []}})
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                "'protocol' is a required property for instructions",
+                "'protocol' is a required property at ['instructions']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1129,18 +1112,18 @@ def test_dts_manifest_missing_instructions_protocol(
 
 
 def test_dts_manifest_wrong_protocol(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator
 ):
     manifest_file = write_dts_manifest(
         {"resources": [], "instructions": {"protocol": "some wrong protocol", "objects": []}}
     )
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                f"The instructions protocol must be '{_DTS_INSTRUCTIONS_PROTOCOL}'",
+                f"'{_DTS_INSTRUCTIONS_PROTOCOL}' was expected at ['instructions', 'protocol']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1148,18 +1131,18 @@ def test_dts_manifest_wrong_protocol(
 
 
 def test_dts_manifest_missing_objects(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator
 ):
     manifest_file = write_dts_manifest(
         {"resources": [], "instructions": {"protocol": _DTS_INSTRUCTIONS_PROTOCOL}}
     )
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                "'objects' is a required property for instructions",
+                "'objects' is a required property at ['instructions']",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1168,7 +1151,7 @@ def test_dts_manifest_missing_objects(
 
 @pytest.mark.parametrize("not_dict", malformed_dict)
 def test_dts_manifest_resource_not_dict(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any], not_dict
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator, not_dict
 ):
     manifest_file = write_dts_manifest(
         {
@@ -1181,11 +1164,11 @@ def test_dts_manifest_resource_not_dict(
         err_val = f"'{err_val}'"
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                f"{err_val} is not of type 'object' at instructions/objects/item 0",
+                f"{err_val} is not of type 'object' at ['instructions', 'objects', 0]",
                 SpecificationSource(manifest_file),
             )
         ],
@@ -1193,7 +1176,7 @@ def test_dts_manifest_resource_not_dict(
 
 
 def test_dts_manifest_parameter_not_primitive(
-    write_dts_manifest: Callable[[dict | list], Path], dts_schema: dict[str, Any]
+    write_dts_manifest: Callable[[dict | list], Path], dts_validator: Draft202012Validator
 ):
     manifest_file = write_dts_manifest(
         {
@@ -1206,11 +1189,11 @@ def test_dts_manifest_parameter_not_primitive(
     )
     _dts_manifest_parse_fail(
         manifest_file,
-        dts_schema,
+        dts_validator,
         [
             Error(
                 ErrorType.PARSE_FAIL,
-                "['not', 'allowed'] is not valid under any of the given schemas at instructions/objects/item 0/parameters/foo",
+                "['not', 'allowed'] is not valid under any of the given schemas at ['instructions', 'objects', 0, 'parameters', 'foo']",
                 SpecificationSource(manifest_file),
             )
         ],

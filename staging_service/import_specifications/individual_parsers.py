@@ -371,8 +371,6 @@ def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResu
         if not errors:
             results = _process_dts_manifest(manifest_json, spcsrc)
 
-    except jsonschema.exceptions.SchemaError:
-        return _error(Error(ErrorType.OTHER, "Manifest schema is invalid", spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:

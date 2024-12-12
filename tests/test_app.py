@@ -1137,8 +1137,8 @@ async def test_bulk_specification_dts_success():
                     ],
                 },
                 "files": {
-                    "gff_metagenome": {"file": f"testuser/{manifest_1}", "tab": None},
-                    "gff_genome": {"file": f"testuser/{manifest_2}", "tab": None},
+                    "gff_metagenome": {"file": f"testuser/{sub_dir}/{manifest_1}", "tab": None},
+                    "gff_genome": {"file": f"testuser/{sub_dir}/{manifest_2}", "tab": None},
                 },
             }
             assert resp.status == 200
