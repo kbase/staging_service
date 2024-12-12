@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 import platform
+import uuid
+import jsonschema
 import pytest
 import shutil
 import string
@@ -1262,6 +1264,45 @@ def test_bulk_specification_dts_fail_bad_schema():
     # * malformed schema file (i.e. not json)
     # * bad schema (good JSON, invalid as json schema)
     pass
+
+
+def test_load_and_validate_schema_good():
+    # TODO: update this after updating how config is handled
+    schema_file = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
+    validator = app.load_and_validate_schema(schema_file)
+    assert isinstance(validator, jsonschema.Draft202012Validator)
+
+
+def test_load_and_validate_schema_missing_file():
+    not_real_file = Path("not_real")
+    while not_real_file.exists():
+        not_real_file = Path(str(uuid.uuid4()))
+    with pytest.raises(FileNotFoundError, match="No such file or directory"):
+        app.load_and_validate_schema(not_real_file)
+
+
+def test_load_and_validate_schema_malformed_file(tmp_path: Path):
+    # TODO: migrate FileUtil and import_specifications.test_individual_parsers.temp_path_fixture
+    # into conftest.py, and resolve everywhere else that FileUtil gets used.
+    # Until then, the built-in tmp_path is appropriate for these tests
+    wrong_schema = "not valid json"
+    schema_file = tmp_path / f"{uuid.uuid4()}.json"
+    schema_file.write_text(wrong_schema, encoding="utf-8")
+    with pytest.raises(json.JSONDecodeError, match="Expecting value: line 1 column 1"):
+        app.load_and_validate_schema(schema_file)
+
+
+def test_load_and_validate_schema_bad(tmp_path: Path):
+    invalid = {
+        "properties": {
+            "some_prop": { "type": "not_real"}
+        }
+    }
+    schema_file = tmp_path / f"{uuid.uuid4()}.json"
+    schema_file.write_text(json.dumps(invalid), encoding="utf-8")
+    exp_err = f"Schema file {schema_file} is not a valid JSON schema: 'not_real' is not valid"
+    with pytest.raises(Exception, match=exp_err):
+        app.load_and_validate_schema(schema_file)
 
 
 async def test_bulk_specification_fail_no_files():

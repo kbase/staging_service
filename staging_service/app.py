@@ -6,7 +6,6 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path as PathPy
-from typing import Any
 from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
@@ -44,7 +43,7 @@ routes = web.RouteTableDef()
 VERSION = "1.3.6"
 
 _DATATYPE_MAPPINGS = None
-_DTS_MANIFEST_SCHEMA = None
+_DTS_MANIFEST_VALIDATOR: jsonschema.Draft202012Validator | None = None
 
 _APP_JSON = "application/json"
 
@@ -122,7 +121,7 @@ def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
         suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
         if suffix.lower() != JSON_EXTENSION:
             return FileTypeResolution(unsupported_type=suffix)
-        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_SCHEMA))
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_VALIDATOR))
 
     return dts_file_resolver
 
@@ -609,14 +608,14 @@ async def authorize_request(request):
     return username
 
 
-def load_and_validate_schema(schema_path: PathPy) -> dict[str, Any]:
+def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Validator:
     with open(schema_path) as schema_file:
         dts_schema = json.load(schema_file)
     try:
         jsonschema.Draft202012Validator.check_schema(dts_schema)
     except jsonschema.exceptions.SchemaError as err:
-        raise Exception(f"Schema file {schema_path} is not a valid JSON schema: {err.message}")
-    return dts_schema
+        raise Exception(f"Schema file {schema_path} is not a valid JSON schema: {err.message}") from err
+    return jsonschema.Draft202012Validator(dts_schema)
 
 
 def inject_config_dependencies(config):
@@ -651,7 +650,7 @@ def inject_config_dependencies(config):
     Path._DATA_DIR = DATA_DIR
     Path._META_DIR = META_DIR
     Path._CONCIERGE_PATH = CONCIERGE_PATH
-    Path._DTS_MANIFEST_SCHEMA_PATH = DTS_MANIFEST_SCHEMA_PATH
+    _DTS_MANIFEST_SCHEMA_PATH = DTS_MANIFEST_SCHEMA_PATH
 
     if Path._DATA_DIR is None:
         raise Exception("Please provide DATA_DIR in the config file ")
@@ -662,12 +661,12 @@ def inject_config_dependencies(config):
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
 
-    if Path._DTS_MANIFEST_SCHEMA_PATH is None:
+    if _DTS_MANIFEST_SCHEMA_PATH is None:
         raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
 
-    global _DTS_MANIFEST_SCHEMA
+    global _DTS_MANIFEST_VALIDATOR
     # will raise an Exception if the schema is invalid
-    _DTS_MANIFEST_SCHEMA = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
+    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
