@@ -614,7 +614,9 @@ def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Valid
     try:
         jsonschema.Draft202012Validator.check_schema(dts_schema)
     except jsonschema.exceptions.SchemaError as err:
-        raise Exception(f"Schema file {schema_path} is not a valid JSON schema: {err.message}") from err
+        raise Exception(
+            f"Schema file {schema_path} is not a valid JSON schema: {err.message}"
+        ) from err
     return jsonschema.Draft202012Validator(dts_schema)
 
 

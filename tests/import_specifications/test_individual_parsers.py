@@ -806,7 +806,9 @@ def write_dts_manifest(temp_dir: Generator[Path, None, None]) -> Callable[[dict 
     return manifest_writer
 
 
-def _dts_manifest_parse_fail(input_file: Path, validator: Draft202012Validator, errors: list[Error]):
+def _dts_manifest_parse_fail(
+    input_file: Path, validator: Draft202012Validator, errors: list[Error]
+):
     """
     Tests a failing DTS manifest parse.
     input_file - the path to the input file. Might be a directory or not exist.
@@ -818,7 +820,9 @@ def _dts_manifest_parse_fail(input_file: Path, validator: Draft202012Validator, 
     assert res.errors == tuple(errors)
 
 
-def test_dts_manifest_non_json(temp_dir: Generator[Path, None, None], dts_validator: Draft202012Validator):
+def test_dts_manifest_non_json(
+    temp_dir: Generator[Path, None, None], dts_validator: Draft202012Validator
+):
     test_file = temp_dir / str(uuid.uuid4())
     with open(test_file, "w", encoding="utf-8") as outfile:
         outfile.write("totally not json")
@@ -850,7 +854,9 @@ def test_dts_manifest_non_dict(
     )
 
 
-def test_dts_manifest_not_found(temp_dir: Generator[Path, None, None], dts_validator: Draft202012Validator):
+def test_dts_manifest_not_found(
+    temp_dir: Generator[Path, None, None], dts_validator: Draft202012Validator
+):
     manifest_path = temp_dir / "not_a_file"
     _dts_manifest_parse_fail(
         manifest_path,

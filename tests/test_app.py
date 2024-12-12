@@ -1293,11 +1293,7 @@ def test_load_and_validate_schema_malformed_file(tmp_path: Path):
 
 
 def test_load_and_validate_schema_bad(tmp_path: Path):
-    invalid = {
-        "properties": {
-            "some_prop": { "type": "not_real"}
-        }
-    }
+    invalid = {"properties": {"some_prop": {"type": "not_real"}}}
     schema_file = tmp_path / f"{uuid.uuid4()}.json"
     schema_file.write_text(json.dumps(invalid), encoding="utf-8")
     exp_err = f"Schema file {schema_file} is not a valid JSON schema: 'not_real' is not valid"
