@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
 from aiohttp import web
+import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
 from .auth2Client import KBaseAuth2
@@ -42,6 +43,7 @@ routes = web.RouteTableDef()
 VERSION = "1.3.6"
 
 _DATATYPE_MAPPINGS = None
+_DTS_MANIFEST_VALIDATOR: jsonschema.Draft202012Validator | None = None
 
 _APP_JSON = "application/json"
 
@@ -109,14 +111,17 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
 
 
 def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
-    """Makes a DTS file resolver."""
+    """Makes a DTS file resolver
+
+    This injects the DTS schema into the FileTypeResolution's parser call.
+    """
 
     def dts_file_resolver(path: PathPy) -> FileTypeResolution:
         # must be a ".json" file
         suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
         if suffix.lower() != JSON_EXTENSION:
             return FileTypeResolution(unsupported_type=suffix)
-        return FileTypeResolution(parser=parse_dts_manifest)
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_VALIDATOR))
 
     return dts_file_resolver
 
@@ -603,6 +608,26 @@ async def authorize_request(request):
     return username
 
 
+def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Validator:
+    """Loads and validates a JSON schema from a path.
+
+    This expects a JSON schema loaded that validates under the 2020-12 draft schema
+    format: https://json-schema.org/draft/2020-12
+
+    This is tested directly as a function in test_app.py, but the whole workflow when
+    the app server is run is only tested manually.
+    """
+    with open(schema_path) as schema_file:
+        dts_schema = json.load(schema_file)
+    try:
+        jsonschema.Draft202012Validator.check_schema(dts_schema)
+    except jsonschema.exceptions.SchemaError as err:
+        raise Exception(
+            f"Schema file {schema_path} is not a valid JSON schema: {err.message}"
+        ) from err
+    return jsonschema.Draft202012Validator(dts_schema)
+
+
 def inject_config_dependencies(config):
     """
     # TODO this is pretty hacky dependency injection
@@ -615,6 +640,7 @@ def inject_config_dependencies(config):
     META_DIR = config["staging_service"]["META_DIR"]
     CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
     FILE_EXTENSION_MAPPINGS = config["staging_service"]["FILE_EXTENSION_MAPPINGS"]
+    DTS_MANIFEST_SCHEMA_PATH = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
 
     if DATA_DIR.startswith("."):
         DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
@@ -625,6 +651,10 @@ def inject_config_dependencies(config):
     if FILE_EXTENSION_MAPPINGS.startswith("."):
         FILE_EXTENSION_MAPPINGS = os.path.normpath(
             os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
+        )
+    if DTS_MANIFEST_SCHEMA_PATH.startswith("."):
+        DTS_MANIFEST_SCHEMA_PATH = os.path.normpath(
+            os.path.join(os.getcwd(), DTS_MANIFEST_SCHEMA_PATH)
         )
 
     Path._DATA_DIR = DATA_DIR
@@ -639,6 +669,15 @@ def inject_config_dependencies(config):
 
     if Path._CONCIERGE_PATH is None:
         raise Exception("Please provide CONCIERGE_PATH in the config file ")
+
+    if DTS_MANIFEST_SCHEMA_PATH is None:
+        raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
+
+    global _DTS_MANIFEST_VALIDATOR
+    # will raise an Exception if the schema is invalid
+    # TODO: write automated tests that exercise this code under different config
+    # conditions and error states.
+    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
 
     if FILE_EXTENSION_MAPPINGS is None:
         raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")

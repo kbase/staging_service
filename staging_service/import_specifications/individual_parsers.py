@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
+from jsonschema import Draft202012Validator
 import magic
 import pandas
 from frozendict import frozendict
@@ -319,7 +320,7 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
 
 
-def parse_dts_manifest(path: Path) -> ParseResults:
+def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResults:
     """
     Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
     The manifest should have this format, with expected keys included:
@@ -342,7 +343,7 @@ def parse_dts_manifest(path: Path) -> ParseResults:
     and its value will be a Tuple of frozendicts of the parameters. Also, in keeping
     with the xsv parsers, each parameter value is expected to be a PRIMITIVE_TYPE.
 
-    TODO: include further details here, and in separate documentation - ADR?
+    TODO: include further details in separate documentation
     """
     spcsrc = SpecificationSource(path)
     errors = []
@@ -352,8 +353,13 @@ def parse_dts_manifest(path: Path) -> ParseResults:
         with open(path, "r") as manifest:
             manifest_json = json.load(manifest)
         if not isinstance(manifest_json, dict):
-            errors.append(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
-
+            return _error(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
+        for err in validator.iter_errors(manifest_json):
+            err_str = err.message
+            err_path = list(err.absolute_path)
+            if err_path:
+                err_str += f" at {err_path}"
+            errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:

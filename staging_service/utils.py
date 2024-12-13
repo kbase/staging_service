@@ -44,6 +44,7 @@ class Path(object):
     _DATA_DIR = None  # expects to be set by config
     _CONCIERGE_PATH = None  # expects to be set by config
     _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
+    _DTS_MANIFEST_SCHEMA_PATH = None  # expects to be set by config
 
     __slots__ = ["full_path", "metadata_path", "user_path", "name", "jgi_metadata"]
 
