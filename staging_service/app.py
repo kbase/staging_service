@@ -609,6 +609,14 @@ async def authorize_request(request):
 
 
 def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Validator:
+    """Loads and validates a JSON schema from a path.
+
+    This expects a JSON schema loaded that validates under the 2020-12 draft schema
+    format: https://json-schema.org/draft/2020-12
+
+    This is tested directly as a function in test_app.py, but the whole workflow when
+    the app server is run is only tested manually.
+    """
     with open(schema_path) as schema_file:
         dts_schema = json.load(schema_file)
     try:
@@ -667,6 +675,8 @@ def inject_config_dependencies(config):
 
     global _DTS_MANIFEST_VALIDATOR
     # will raise an Exception if the schema is invalid
+    # TODO: write automated tests that exercise this code under different config
+    # conditions and error states.
     _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
 
     if FILE_EXTENSION_MAPPINGS is None:
