@@ -1264,7 +1264,9 @@ def test_load_and_validate_schema_good():
 
 
 def test_load_and_validate_schema_missing_file():
-    not_real_file = Path("not_real")
+    not_real_file = Path(str(uuid.uuid4()))
+    # double-check that the file doesn't exist and make a new one if so.
+    # shouldn't ever happen, ideally, but easy to check.
     while not_real_file.exists():
         not_real_file = Path(str(uuid.uuid4()))
     with pytest.raises(FileNotFoundError, match="No such file or directory"):
