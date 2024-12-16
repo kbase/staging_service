@@ -797,12 +797,21 @@ def test_dts_manifest_parse_success(dts_validator: Draft202012Validator):
     assert res.results
     assert res.errors is None
     assert list(res.results.keys()) == ["gff_metagenome"]
-    assert res.results["gff_metagenome"]
     assert res.results["gff_metagenome"].source.file == f
-    assert len(res.results["gff_metagenome"].result) == 3
-    for parsed in res.results["gff_metagenome"].result:
-        assert parsed == {"param1": "value1", "param2": "value2"}
-
+    assert res.results["gff_metagenome"].result == (
+        frozendict({
+          "param1": "value1",
+          "param2": "value2"
+        }),
+        frozendict({
+          "param1": "value3",
+          "param2": "value4"
+        }),
+        frozendict({
+          "param1": "value5",
+          "param2": "value6"
+        })
+    )
 
 def test_dts_manifest_parse_multi_data_types_success(dts_validator: Draft202012Validator):
     f = _get_test_file("manifest_multiple.json")

@@ -111,15 +111,15 @@
       {
         "data_type": "gff_metagenome",
         "parameters": {
-          "param1": "value1",
-          "param2": "value2"
+          "param1": "value3",
+          "param2": "value4"
         }
       },
       {
         "data_type": "gff_metagenome",
         "parameters": {
-          "param1": "value1",
-          "param2": "value2"
+          "param1": "value5",
+          "param2": "value6"
         }
       }
     ]
