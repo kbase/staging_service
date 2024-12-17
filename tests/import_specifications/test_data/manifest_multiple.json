@@ -1,0 +1,62 @@
+{
+    "name": "manifest",
+    "resources": [
+      {
+        "id": "JDP:555518eb0d8785178e712d88",
+        "name": "61564.assembled",
+        "path": "img/submissions/61564/61564.assembled.gff",
+        "format": "gff"
+      },
+      {
+        "id": "JDP:555518eb0d8785178e712d84",
+        "name": "61564.assembled",
+        "path": "img/submissions/61564/61564.assembled.fna",
+        "format": "fasta"
+      },
+      {
+        "id": "JDP:555518ec0d8785178e712d9f",
+        "name": "61567.assembled",
+        "path": "img/submissions/61567/61567.assembled.gff",
+        "format": "gff"
+      },
+      {
+        "id": "JDP:555518ec0d8785178e712d9b",
+        "name": "61567.assembled",
+        "path": "img/submissions/61567/61567.assembled.fna",
+        "format": "fasta"
+      }
+    ],
+    "instructions": {
+      "protocol": "KBase narrative import",
+      "objects": [
+        {
+          "data_type": "gff_metagenome",
+          "parameters": {
+            "mg_param1": "value1",
+            "mg_param2": "value2"
+          }
+        },
+        {
+          "data_type": "gff_metagenome",
+          "parameters": {
+            "mg_param1": "value3",
+            "mg_param2": "value4"
+          }
+        },
+        {
+          "data_type": "gff_genome",
+          "parameters": {
+            "gen_param1": "value1",
+            "gen_param2": "value2"
+          }
+        },
+        {
+          "data_type": "gff_genome",
+          "parameters": {
+            "gen_param1": "value3",
+            "gen_param2": "value4"
+          }
+        }
+      ]
+    }
+  }
