@@ -375,7 +375,8 @@ def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResu
                 results[datatype].append(parameters)
             # Re-package results as a dict of {datatype: ParseResult}
             results = {
-                datatype: ParseResult(spcsrc, tuple(paramlist)) for datatype, paramlist in results.items()
+                datatype: ParseResult(spcsrc, tuple(paramlist))
+                for datatype, paramlist in results.items()
             }
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
