@@ -31,13 +31,6 @@
         "titles": null,
         "url": "",
         "version": ""
-      },
-      "instructions": {
-        "data_type": "gff_metagenome",
-        "parameters": {
-          "param1": "value1",
-          "param2": "value2"
-        }
       }
     },
     {
@@ -70,13 +63,6 @@
         "titles": null,
         "url": "",
         "version": ""
-      },
-      "instructions": {
-        "data_type": "gff_metagenome",
-        "parameters": {
-          "param1": "value1",
-          "param2": "value2"
-        }
       }
     },
     {
@@ -109,14 +95,33 @@
         "titles": null,
         "url": "",
         "version": ""
-      },
-      "instructions": {
+      }
+    }
+  ],
+  "instructions": {
+    "protocol": "KBase narrative import",
+    "objects": [
+      {
         "data_type": "gff_metagenome",
         "parameters": {
           "param1": "value1",
           "param2": "value2"
         }
+      },
+      {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value3",
+          "param2": "value4"
+        }
+      },
+      {
+        "data_type": "gff_metagenome",
+        "parameters": {
+          "param1": "value5",
+          "param2": "value6"
+        }
       }
-    }
-  ]
+    ]
+  }
 }

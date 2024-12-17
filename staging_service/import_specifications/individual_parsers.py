@@ -2,6 +2,7 @@
 Contains parser functions for use with the file parser framework.
 """
 
+from collections import defaultdict
 import csv
 import json
 import math
@@ -59,6 +60,11 @@ _EXCEL_MISSING_VALUES = [
     "n/a",
     "null",
 ]
+
+_DTS_INSTRUCTIONS_KEY = "instructions"
+_DTS_INSTRUCTIONS_DATATYPE_KEY = "data_type"
+_DTS_INSTRUCTIONS_PARAMETERS_KEY = "parameters"
+_DTS_INSTRUCTIONS_OBJECTS_KEY = "objects"
 
 
 class _ParseException(Exception):
@@ -351,15 +357,27 @@ def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResu
     results = {}
     try:
         with open(path, "r") as manifest:
-            manifest_json = json.load(manifest)
-        if not isinstance(manifest_json, dict):
+            manifest = json.load(manifest)
+        if not isinstance(manifest, dict):
             return _error(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
-        for err in validator.iter_errors(manifest_json):
+        for err in validator.iter_errors(manifest):
             err_str = err.message
             err_path = list(err.absolute_path)
             if err_path:
                 err_str += f" at {err_path}"
             errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
+        if not errors:
+            results = defaultdict(list)
+            instructions = manifest[_DTS_INSTRUCTIONS_KEY]
+            for resource_obj in instructions[_DTS_INSTRUCTIONS_OBJECTS_KEY]:
+                datatype = resource_obj[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+                parameters = frozendict(resource_obj[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
+                results[datatype].append(parameters)
+            # Re-package results as a dict of {datatype: ParseResult}
+            results = {
+                datatype: ParseResult(spcsrc, tuple(paramlist))
+                for datatype, paramlist in results.items()
+            }
     except json.JSONDecodeError:
         return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
     except FileNotFoundError:
