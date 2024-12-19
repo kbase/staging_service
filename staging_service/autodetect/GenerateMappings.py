@@ -50,6 +50,7 @@ from staging_service.autodetect.Mappings import (
     ZIP,
     assembly_id,
     decompress_id,
+    dts_manifest,
     escher_map_id,
     expression_matrix_id,
     extension_to_file_format_mapping,
@@ -90,6 +91,7 @@ app_id_to_title = {
     phenotype_set_id: "Phenotype Set",
     escher_map_id: "EscherMap",
     import_specification: "Import Specification",
+    dts_manifest: "Data Transfer Service Manifest"
 }
 
 file_format_to_app_mapping = {}
@@ -129,7 +131,7 @@ file_format_to_app_mapping[EXCEL] = [
     fba_model_id,
     import_specification,
 ]
-file_format_to_app_mapping[JSON] = [escher_map_id, import_specification]
+file_format_to_app_mapping[JSON] = [escher_map_id, dts_manifest]
 file_format_to_app_mapping[SBML] = [fba_model_id]
 
 app_id_to_extensions = defaultdict(list)
