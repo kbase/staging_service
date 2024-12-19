@@ -91,7 +91,7 @@ app_id_to_title = {
     phenotype_set_id: "Phenotype Set",
     escher_map_id: "EscherMap",
     import_specification: "Import Specification",
-    dts_manifest: "Data Transfer Service Manifest"
+    dts_manifest: "Data Transfer Service Manifest",
 }
 
 file_format_to_app_mapping = {}
