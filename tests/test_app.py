@@ -1898,7 +1898,8 @@ async def test_importer_filetypes():
         a2f = js["datatype_to_filetype"]
         assert a2f["assembly"] == ["FASTA"]
         assert a2f["gff_genome"] == ["FASTA", "GFF"]
-        assert a2f["import_specification"] == ["CSV", "EXCEL", "JSON", "TSV"]
+        assert a2f["import_specification"] == ["CSV", "EXCEL", "TSV"]
+        assert a2f["dts_manifest"] == ["JSON"]
 
         f2e = js["filetype_to_extensions"]
         assert f2e["FASTA"] == [
