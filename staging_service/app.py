@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from configparser import ConfigParser
 import json
 import logging
 import os
@@ -13,7 +14,7 @@ from aiohttp import web
 import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
-from .auth2Client import KBaseAuth2
+from .kb_auth_client import KBaseAuth
 from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
@@ -697,14 +698,12 @@ def inject_config_dependencies(config):
             "filetype_to_extensions": {k: sorted(extensions[k]) for k in extensions},
         }
 
-
 #
 # This situation will be fixed in a future PR
 #
 auth_client = None
 
-
-def app_factory(config):
+async def app_factory(config: ConfigParser) -> web.Application:
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(
@@ -722,5 +721,6 @@ def app_factory(config):
     inject_config_dependencies(config)
 
     global auth_client
-    auth_client = KBaseAuth2(config["staging_service"]["AUTH_URL"])
+    auth_client = await KBaseAuth.create(config["staging_service"]["AUTH_URL"])
+
     return app

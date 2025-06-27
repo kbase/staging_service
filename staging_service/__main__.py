@@ -11,4 +11,5 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())  # for speed of event lo
 
 config = configparser.ConfigParser()
 config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
-web.run_app(app_factory(config), port=3000)
+app = asyncio.run(app_factory(config))
+web.run_app(app, port=3000)
