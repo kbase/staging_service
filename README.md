@@ -26,6 +26,7 @@ to run inside docker run /run_in_docker.sh
 -  to test use `./run_tests.sh`
 -  requires python 3.11.4 or higher
 -  requires installation on mac of libmagic: `brew install libmagic` or `sudo port install libmagic`.
+-  auth client testing requires a KBase CI auth token (or wherever configured) and KBase user id. These should be in environment variables `KB_TEST_TOKEN` and `KB_TEST_USER`, respectively. If either is not present, those tests will be skipped.
 
 ## debugging
 

@@ -19,6 +19,7 @@ VALID_TEST_USER = "narrativetest"
 NOT_REAL_USER = "please_do_not_ever_make_this_username_what_is_wrong_with_you"
 INVALID_USER = "_(__)_"
 
+SKIP_AUTH_TESTS = not TEST_TOKEN or not TEST_USER
 
 @pytest.fixture
 async def auth_client():
@@ -27,6 +28,7 @@ async def auth_client():
     Avoids the extra lag from using KBaseAuth.create.
     """
     return await KBaseAuth.create(AUTH_URL)
+
 
 async def test_create():
     auth_client = await KBaseAuth.create(AUTH_URL)
@@ -48,10 +50,9 @@ async def test_non_json_error():
         await KBaseAuth.create("https://kbase.us/services")
 
 # TODO: test other service fail modes
-
+@pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_get_user_from_cache(auth_client: KBaseAuth):
-    # patch this to act as a spy, should only be called once with
-    # the caching done.
+    # patch this to act as a spy, should only be called once with the caching done.
     with patch("staging_service.kb_auth_client._get", wraps=_get) as spy_get:
         result = await auth_client.get_user(TEST_TOKEN)
         assert result == TEST_USER
@@ -62,6 +63,7 @@ async def test_get_user_from_cache(auth_client: KBaseAuth):
         # make sure it's only called once
         spy_get.assert_awaited_once()
 
+@pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_get_user_drop_cache():
     auth_client = await KBaseAuth.create(AUTH_URL, cache_expiration=1)
     with patch("staging_service.kb_auth_client._get", wraps=_get) as spy_get:
@@ -85,7 +87,6 @@ async def test_get_user_drop_cache():
 
 # TODO: test cache max size?
 
-
 @pytest.mark.parametrize("token", ["", None])
 async def test_get_user_no_token(auth_client: KBaseAuth, token: str | None):
     with pytest.raises(ValueError, match="token is required"):
@@ -97,14 +98,17 @@ async def test_get_user_fail(auth_client: KBaseAuth):
         await auth_client.get_user("some_token")
 
 
+@pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_is_valid_user(auth_client: KBaseAuth):
     assert await auth_client.is_valid_user(VALID_TEST_USER, TEST_TOKEN)
 
 
+@pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_is_valid_user_not_exist(auth_client: KBaseAuth):
     assert not await auth_client.is_valid_user(NOT_REAL_USER, TEST_TOKEN)
 
 
+@pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_is_valid_user_invalid(auth_client: KBaseAuth):
     with pytest.raises(InvalidUserError, match="Illegal character in user name"):
         await auth_client.is_valid_user(INVALID_USER, TEST_TOKEN)
