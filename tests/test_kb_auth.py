@@ -21,6 +21,7 @@ INVALID_USER = "_(__)_"
 
 SKIP_AUTH_TESTS = not TEST_TOKEN or not TEST_USER
 
+
 @pytest.fixture
 async def auth_client():
     """
@@ -49,6 +50,7 @@ async def test_non_json_error():
     with pytest.raises(IOError, match="Non-JSON response from KBase auth server"):
         await KBaseAuth.create("https://kbase.us/services")
 
+
 # TODO: test other service fail modes
 @pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_get_user_from_cache(auth_client: KBaseAuth):
@@ -62,6 +64,7 @@ async def test_get_user_from_cache(auth_client: KBaseAuth):
 
         # make sure it's only called once
         spy_get.assert_awaited_once()
+
 
 @pytest.mark.skipif(SKIP_AUTH_TESTS, reason="test auth credentials not set")
 async def test_get_user_drop_cache():
@@ -86,6 +89,7 @@ async def test_get_user_drop_cache():
 
 
 # TODO: test cache max size?
+
 
 @pytest.mark.parametrize("token", ["", None])
 async def test_get_user_no_token(auth_client: KBaseAuth, token: str | None):

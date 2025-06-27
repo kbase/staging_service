@@ -698,10 +698,12 @@ def inject_config_dependencies(config):
             "filetype_to_extensions": {k: sorted(extensions[k]) for k in extensions},
         }
 
+
 #
 # This situation will be fixed in a future PR
 #
 auth_client = None
+
 
 async def app_factory(config: ConfigParser) -> web.Application:
     app = web.Application(middlewares=[web.normalize_path_middleware()])

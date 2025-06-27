@@ -45,7 +45,7 @@ async def _check_error(r):
 
 
 class KBaseAuth:
-    """ A client for contacting the KBase authentication server. """
+    """A client for contacting the KBase authentication server."""
 
     @classmethod
     async def create(
@@ -90,8 +90,9 @@ class KBaseAuth:
         )
 
         if service_name != "Authentication Service":
-            raise IOError(f"The service at {self._url} does not appear to be the KBase "
-                          + "Authentication Service"
+            raise IOError(
+                f"The service at {self._url} does not appear to be the KBase "
+                + "Authentication Service"
             )
 
         # could use the server time to adjust for clock skew, probably not worth the trouble
@@ -114,7 +115,6 @@ class KBaseAuth:
         self._cache.set(token, result["user"])
         return result["user"]
 
-
     async def is_valid_user(self, user: str, token: str) -> bool:
         """
         Check if a user name is valid in the KBase auth service.
@@ -134,15 +134,15 @@ class KBaseAuth:
 
 
 class AuthenticationError(Exception):
-    """ An error thrown from the authentication service. """
+    """An error thrown from the authentication service."""
 
 
 class InvalidTokenError(AuthenticationError):
-    """ An error thrown when a token is invalid. """
+    """An error thrown when a token is invalid."""
 
 
 class InvalidUserError(AuthenticationError):
-    """ An error thrown when a username is invalid. """
+    """An error thrown when a username is invalid."""
 
 
 def _require_string(string: str, name: str) -> str:

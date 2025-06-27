@@ -65,7 +65,6 @@ def asyncgiven(**kwargs):
 
 
 async def mock_auth_app(config: configparser.ConfigParser, mock_username: str):
-
     application = await app.app_factory(config)
 
     # this might break if the auth api changes
@@ -203,7 +202,7 @@ async def test_cmd(txt):
 async def test_auth():
     # cli = await AppClient.create(config)
     async with await AppClient.create(config) as cli:
-    # async with await AppClient.create(config) as cli:
+        # async with await AppClient.create(config) as cli:
         resp = await cli.get("/test-auth")
         assert resp.status == 200
         text = await resp.text()
