@@ -19,6 +19,7 @@ async def _get(url: str, headers: dict[str, str]):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as r:
             await _check_error(r)
+            # TODO: handle edge case where status == 200, but JSON isn't returned
             return await r.json()
 
 

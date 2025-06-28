@@ -606,10 +606,13 @@ async def authorize_request(request):
         token = request.cookies.get("kbase_session_backup")
     try:
         username = await auth_client.get_user(token)
-    except ValueError:
-        raise web.HTTPUnauthorized(text="Must provide a valid KBase auth token")
-    except InvalidTokenError:
-        raise web.HTTPForbidden(text="KBase auth token is invalid")
+    except ValueError as err:
+        raise web.HTTPUnauthorized(text=str(err))
+    except InvalidTokenError as err:
+        raise web.HTTPForbidden(text=str(err))
+    except Exception as err:
+        # catches edge case IOErrors and anything else that might pop up
+        raise web.HTTPServerError(text=str(err))
     await assert_globusid_exists(username, token)
     return username
 
