@@ -57,9 +57,6 @@ class KBaseAuth:
         """
         Create the client.
         auth_url - The root url of the authentication service.
-        required_roles - The KBase Auth2 roles that the user must possess in order to be allowed
-            to use the service.
-        full_admin_roles -  The KBase Auth2 roles that determine that user is an administrator.
         cache_max_size -  the maximum size of the token cache.
         cache_expiration -  the expiration time for the token cache in
             seconds.
@@ -99,12 +96,13 @@ class KBaseAuth:
 
     async def get_user(self, token: str) -> str:
         """
-        Get a username from a token as well as the user's administration status.
-        Verifies the user has all the required roles set in the create() method.
+        Get a username from a token.
 
         token - The user's token.
 
         Returns the user.
+        Raises a ValueError if the token is missing
+        Raises a InvalidTokenError if the token is invalid
         """
         # TODO CODE should check the token for \n etc.
         _require_string(token, "token")
@@ -122,7 +120,9 @@ class KBaseAuth:
         user - the user name to check.
         token - a token to provide to the auth service to allow accessing the lookup endpoint.
 
-        Throws an exception if the user name is illegally formatted.
+        Raises a ValueError if either the user or token is missing
+        Raises an InvalidTokenError if the token is invalid
+        Raises an InvalidUserError if the username is invalid
         """
         # TODO PERF add a cache here. Currently this is only used by the DTS service to
         # verify a user exists before copying files over, so likely not used often,

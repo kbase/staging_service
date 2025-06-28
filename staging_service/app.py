@@ -14,7 +14,7 @@ from aiohttp import web
 import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
-from .kb_auth_client import KBaseAuth
+from .kb_auth_client import KBaseAuth, InvalidTokenError, InvalidUserError
 from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
@@ -604,7 +604,12 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
-    username = await auth_client.get_user(token)
+    try:
+        username = await auth_client.get_user(token)
+    except ValueError:
+        raise web.HTTPUnauthorized(text="Must provide a valid KBase auth token")
+    except InvalidTokenError:
+        raise web.HTTPForbidden(text="KBase auth token is invalid")
     await assert_globusid_exists(username, token)
     return username
 
