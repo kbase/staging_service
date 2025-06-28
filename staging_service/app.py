@@ -14,7 +14,7 @@ from aiohttp import web
 import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
-from .kb_auth_client import KBaseAuth, InvalidTokenError, InvalidUserError
+from .kb_auth_client import KBaseAuth, InvalidTokenError
 from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
