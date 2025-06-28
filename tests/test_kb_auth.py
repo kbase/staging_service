@@ -20,6 +20,7 @@ VALID_TEST_USER = "narrativetest"
 NOT_REAL_USER = "please_do_not_ever_make_this_username_what_is_wrong_with_you"
 INVALID_USER = "_(__)_"
 
+
 @pytest.fixture
 async def auth_client():
     """
@@ -51,8 +52,10 @@ async def test_non_json_error():
 
 # TODO: test other service fail modes
 
+
 async def test_get_user(auth_client: KBaseAuth):
     assert await auth_client.get_user(TEST_TOKEN) == TEST_USER
+
 
 async def test_get_user_from_cache(auth_client: KBaseAuth):
     # patch this to act as a spy, should only be called once with the caching done.
