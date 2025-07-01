@@ -80,7 +80,7 @@ class KBaseAuth:
         service_name: str,
     ):
         self._url = auth_url
-        self._me_url = self._url + "api/V2/me"
+        self._token_url = self._url + "api/V2/token"
         self._cache_timer = time.time  # TODO TEST figure out how to replace the timer to test
         # cache is intended to map tokens -> usernames
         self._cache = LRUCache(
@@ -110,7 +110,7 @@ class KBaseAuth:
 
         if token in self._cache:
             return self._cache.get(token)
-        result = await _get(self._me_url, {"Authorization": token})
+        result = await _get(self._token_url, {"Authorization": token})
         self._cache.set(token, result["user"])
         return result["user"]
 
