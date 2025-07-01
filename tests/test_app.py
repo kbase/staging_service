@@ -622,6 +622,7 @@ async def test_list():
             assert len(file_names) == 4
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None)
 @asyncgiven(txt=st.text())
 async def test_download(txt):
@@ -818,6 +819,7 @@ async def test_upload_fail_comma_in_file():
     await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name")
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None)
 @asyncgiven(contents=st.text())
 async def test_directory_decompression(contents):
@@ -877,6 +879,7 @@ async def test_directory_decompression(contents):
                 assert os.path.exists(f3)
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None)
 @asyncgiven(contents=st.text())
 async def test_file_decompression(contents):
