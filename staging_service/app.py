@@ -606,10 +606,11 @@ async def authorize_request(request):
         token = request.cookies.get("kbase_session_backup")
     try:
         username = await auth_client.get_user(token)
-    except ValueError as err:
+    # TODO: ValueError is raised if there's no token - this should be checked before
+    # calling the auth client, but it currently breaks lots of tests because of
+    # how the auth call is mocked. See https://github.com/kbase/staging_service/issues/221
+    except (ValueError, InvalidTokenError) as err:
         raise web.HTTPUnauthorized(text=str(err))
-    except InvalidTokenError as err:
-        raise web.HTTPForbidden(text=str(err))
     except Exception as err:
         # catches edge case IOErrors and anything else that might pop up
         raise web.HTTPServerError(text=str(err))
