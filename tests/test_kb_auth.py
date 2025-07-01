@@ -24,8 +24,7 @@ INVALID_USER = "_(__)_"
 @pytest.fixture
 async def auth_client():
     """
-    A fixture that makes a default auth client with a shiny new cache.
-    Avoids the extra lag from using KBaseAuth.create.
+    Makes a default auth client with a shiny new cache.
     """
     return await KBaseAuth.create(AUTH_URL)
 
