@@ -64,13 +64,15 @@ def asyncgiven(**kwargs):
     return real_decorator
 
 
-def mock_auth_app():
-    application = app.app_factory(config)
+async def mock_auth_app(config: configparser.ConfigParser, mock_username: str):
+    application = await app.app_factory(config)
 
-    async def mock_auth(*args, **kwargs):
-        return "testuser"
+    # this might break if the auth api changes
+    # TODO: add test auth token and user here
+    async def mock_get_user(*args, **kwargs):
+        return mock_username
 
-    app.auth_client.get_user = mock_auth
+    app.auth_client.get_user = mock_get_user
 
     async def mock_globus_id(*args, **kwargs):
         return ["testuser@globusid.org"]
@@ -80,8 +82,16 @@ def mock_auth_app():
 
 
 class AppClient:
-    def __init__(self, config, mock_username=None):
-        self.server = test_utils.TestServer(mock_auth_app())
+    @classmethod
+    async def create(cls, config, mock_username=None):
+        if mock_username is None:
+            mock_username = "testuser"
+        app = await mock_auth_app(config, mock_username)
+        server = test_utils.TestServer(app)
+        return AppClient(server)
+
+    def __init__(self, server: test_utils.TestServer):
+        self.server = server
 
     async def __aenter__(self):
         await self.server.start_server(loop=asyncio.get_event_loop())
@@ -190,7 +200,7 @@ async def test_cmd(txt):
 
 
 async def test_auth():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.get("/test-auth")
         assert resp.status == 200
         text = await resp.text()
@@ -198,7 +208,7 @@ async def test_auth():
 
 
 async def test_service():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.get("/test-service")
         assert resp.status == 200
         text = await resp.text()
@@ -210,7 +220,7 @@ async def test_jbi_metadata():
     username = "testuser"
     jbi_metadata = '{"file_owner": "sdm", "added_date": "2013-08-12T00:21:53.844000"}'
 
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_jgi.fastq"), txt)
@@ -238,7 +248,7 @@ async def test_jbi_metadata():
 async def test_metadata():
     txt = "testing text\n"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -338,7 +348,7 @@ async def test_metadata():
 async def test_define_upa():
     txt = "testing text\n"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -419,7 +429,7 @@ async def test_define_upa():
 async def test_mv():
     txt = "testing text\n"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -489,7 +499,7 @@ async def test_mv():
 async def test_delete():
     txt = "testing text\n"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -533,7 +543,7 @@ async def test_delete():
 async def test_list():
     txt = "testing text"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -612,10 +622,12 @@ async def test_list():
             assert len(file_names) == 4
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
+@settings(deadline=None)
 @asyncgiven(txt=st.text())
 async def test_download(txt):
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -631,7 +643,7 @@ async def test_download(txt):
 
 async def test_download_errors():
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
 
@@ -646,7 +658,7 @@ async def test_download_errors():
 async def test_similar():
     txt = "testing text"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1.fq"), txt)
@@ -679,7 +691,7 @@ async def test_similar():
 async def test_existence():
     txt = "testing text"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test_file_1"), txt)
@@ -735,7 +747,7 @@ async def test_existence():
 async def test_search():
     txt = "testing text"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(username, "test"))
             fs.make_file(os.path.join(username, "test", "test1"), txt)
@@ -761,7 +773,7 @@ async def test_search():
 async def test_upload():
     txt = "testing text\n"
     username = "testuser"
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         # testing missing body
         res1 = await cli.post("upload", headers={"Authorization": ""})
         assert res1.status == 400
@@ -780,7 +792,7 @@ async def test_upload():
 async def _upload_file_fail_filename(filename: str, err: str):
     # Note two file uploads in a row causes a test error:
     # https://github.com/aio-libs/aiohttp/issues/3968
-    async with AppClient(config, "fake") as cli:  # username is ignored by AppClient
+    async with await AppClient.create(config, "fake") as cli:  # username is ignored by AppClient
         formdata = FormData()
         formdata.add_field("destPath", "/")
         formdata.add_field("uploads", BytesIO(b"sometext"), filename=filename)
@@ -807,6 +819,7 @@ async def test_upload_fail_comma_in_file():
     await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name")
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None)
 @asyncgiven(contents=st.text())
 async def test_directory_decompression(contents):
@@ -828,7 +841,7 @@ async def test_directory_decompression(contents):
         ("bztar", ".tar.bz"),
         ("tar", ".tar"),
     ]
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(username, dirname))
@@ -866,6 +879,8 @@ async def test_directory_decompression(contents):
                 assert os.path.exists(f3)
 
 
+# remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
+@settings(deadline=None)
 @asyncgiven(contents=st.text())
 async def test_file_decompression(contents):
     fname = "test"
@@ -878,7 +893,7 @@ async def test_file_decompression(contents):
         return
     methods = [("gzip", ".gz"), ("bzip2", ".bz2")]
 
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(username, dirname))
@@ -913,7 +928,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt"]}
     qs1 = urlencode(data, doseq=True)
 
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         resp = await cli.get(f"importer_mappings/?{qs1}")
         assert resp.status == 200
         text = await resp.json()
@@ -925,7 +940,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
     qs2 = urlencode(data, doseq=True)
 
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         resp = await cli.get(f"importer_mappings/?{qs2}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -941,7 +956,7 @@ async def test_importer_mappings():
     # A dict is passed in
     data = {"file_list": [{}]}
     qs3 = urlencode(data, doseq=True)
-    async with AppClient(config, username) as cli:
+    async with await AppClient.create(config, username) as cli:
         resp = await cli.get(f"importer_mappings/?{qs3}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -959,7 +974,7 @@ async def test_importer_mappings():
 
     for data in bad_data:
         qsd = urlencode(data, doseq=True)
-        async with AppClient(config, username) as cli:
+        async with await AppClient.create(config, username) as cli:
             resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
@@ -968,7 +983,7 @@ async def test_importer_mappings():
 
 async def test_bulk_specification_success():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser/somefolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1053,7 +1068,7 @@ async def test_bulk_specification_success():
 
 
 async def test_bulk_specification_dts_success():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"testuser/{sub_dir}"
@@ -1145,7 +1160,7 @@ async def test_bulk_specification_dts_success():
 
 
 async def test_bulk_specification_dts_fail_json_without_dts():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"testuser/{sub_dir}"
@@ -1186,7 +1201,7 @@ async def test_bulk_specification_dts_fail_json_without_dts():
 
 
 async def test_bulk_specification_dts_fail_wrong_format():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"testuser/{sub_dir}"
@@ -1221,7 +1236,7 @@ async def test_bulk_specification_dts_fail_wrong_format():
     ],
 )
 async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"testuser/{sub_dir}"
@@ -1294,7 +1309,7 @@ def test_load_and_validate_schema_bad(tmp_path: Path):
 
 
 async def test_bulk_specification_fail_no_files():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
             resp = await cli.get(f"bulk_specification/{f}")
             jsn = await resp.json()
@@ -1303,7 +1318,7 @@ async def test_bulk_specification_fail_no_files():
 
 
 async def test_bulk_specification_fail_not_found():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1330,7 +1345,7 @@ async def test_bulk_specification_fail_parse_fail():
     Tests a number of different parse fail cases, including incorrect file types.
     Also tests that all the errors are combined correctly.
     """
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser/otherfolder")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1439,7 +1454,7 @@ async def test_bulk_specification_fail_parse_fail():
 
 
 async def test_bulk_specification_fail_column_count():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1512,7 +1527,7 @@ async def test_bulk_specification_fail_column_count():
 
 
 async def test_bulk_specification_fail_multiple_specs_per_type():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1605,7 +1620,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type_excel():
     Test an excel file with an internal data type collision.
     This is the only case when all 5 error fields are filled out.
     """
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             base = Path(fu.base_dir) / "testuser"
@@ -1680,7 +1695,7 @@ _IMPORT_SPEC_TEST_DATA = {
 
 async def test_write_bulk_specification_success_csv():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             resp = await cli.post(
@@ -1723,7 +1738,7 @@ async def test_write_bulk_specification_success_csv():
 
 async def test_write_bulk_specification_success_tsv():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             types = dict(_IMPORT_SPEC_TEST_DATA)
@@ -1768,7 +1783,7 @@ async def test_write_bulk_specification_success_tsv():
 
 async def test_write_bulk_specification_success_excel():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         with FileUtil() as fu:
             fu.make_dir("testuser")  # testuser is hardcoded in the auth mock
             resp = await cli.post(
@@ -1815,7 +1830,7 @@ async def test_write_bulk_specification_success_excel():
 
 
 async def test_write_bulk_specification_fail_wrong_data_type():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.post("write_bulk_specification/", data="foo")
         js = await resp.json()
         assert js == {"error": "Required content-type is application/json"}
@@ -1823,7 +1838,7 @@ async def test_write_bulk_specification_fail_wrong_data_type():
 
 
 async def test_write_bulk_specification_fail_no_content_length():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.post(
             "write_bulk_specification", headers={"content-type": "application/json"}
         )
@@ -1833,7 +1848,7 @@ async def test_write_bulk_specification_fail_no_content_length():
 
 
 async def test_write_bulk_specification_fail_large_input():
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
         txt = await resp.text()
         # this seems to be a built in (somewhat inaccurate) server feature
@@ -1842,7 +1857,7 @@ async def test_write_bulk_specification_fail_large_input():
 
 
 async def _write_bulk_specification_json_fail(json: Any, err: str):
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.post("write_bulk_specification", json=json)
         js = await resp.json()
         assert js == {"error": err}
@@ -1891,7 +1906,7 @@ async def test_importer_filetypes():
     """
     Only checks a few example entries since the list may expand over time
     """
-    async with AppClient(config) as cli:
+    async with await AppClient.create(config) as cli:
         resp = await cli.get("importer_filetypes")
         js = await resp.json()
         assert set(js.keys()) == {"datatype_to_filetype", "filetype_to_extensions"}

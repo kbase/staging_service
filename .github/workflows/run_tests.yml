@@ -26,6 +26,9 @@ jobs:
         pip install -r requirements.txt
 
     - name: Test with pytest
+      env:
+        KBASE_TEST_TOKEN: ${{ secrets.KBASE_BOT_TOKEN_CI }}
+        KBASE_TEST_USER: ${{ secrets.KBASE_BOT_USER_CI }}
       run: |
         bash run_tests.sh
 

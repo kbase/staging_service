@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from configparser import ConfigParser
 import json
 import logging
 import os
@@ -13,7 +14,7 @@ from aiohttp import web
 import jsonschema
 
 from .app_error_formatter import format_import_spec_errors
-from .auth2Client import KBaseAuth2
+from .kb_auth_client import KBaseAuth, InvalidTokenError
 from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
 from .globus import assert_globusid_exists, is_globusid
@@ -603,7 +604,16 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
-    username = await auth_client.get_user(token)
+    try:
+        username = await auth_client.get_user(token)
+    # TODO: ValueError is raised if there's no token - this should be checked before
+    # calling the auth client, but it currently breaks lots of tests because of
+    # how the auth call is mocked. See https://github.com/kbase/staging_service/issues/221
+    except (ValueError, InvalidTokenError) as err:
+        raise web.HTTPUnauthorized(text=str(err))
+    except Exception as err:
+        # catches edge case IOErrors and anything else that might pop up
+        raise web.HTTPServerError(text=str(err))
     await assert_globusid_exists(username, token)
     return username
 
@@ -704,7 +714,7 @@ def inject_config_dependencies(config):
 auth_client = None
 
 
-def app_factory(config):
+async def app_factory(config: ConfigParser) -> web.Application:
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(
@@ -722,5 +732,6 @@ def app_factory(config):
     inject_config_dependencies(config)
 
     global auth_client
-    auth_client = KBaseAuth2(config["staging_service"]["AUTH_URL"])
+    auth_client = await KBaseAuth.create(config["staging_service"]["AUTH_URL"])
+
     return app
