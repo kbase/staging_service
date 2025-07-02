@@ -6,7 +6,7 @@ import os
 from unittest.mock import patch
 
 config = bootstrap_config()
-AUTH_URL = config["staging_service"]["AUTH_URL"]
+AUTH_URL = config.auth_url
 
 # NOTE: These tests are intended to be run against the auth service at
 # https://ci.kbase.us/services/auth

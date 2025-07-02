@@ -22,6 +22,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import staging_service.app as app
+from staging_service.config import StagingServiceConfig
 import staging_service.globus as globus
 import staging_service.utils as utils
 from staging_service.AutoDetectUtils import AutoDetectUtils
@@ -37,18 +38,24 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
 decoder = json.JSONDecoder()
 
-config = configparser.ConfigParser()
-config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
+config = StagingServiceConfig(os.environ["KB_DEPLOYMENT_CONFIG"])
 
-DATA_DIR = config["staging_service"]["DATA_DIR"]
-META_DIR = config["staging_service"]["META_DIR"]
-AUTH_URL = config["staging_service"]["AUTH_URL"]
-if DATA_DIR.startswith("."):
-    DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
-if META_DIR.startswith("."):
-    META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
-utils.Path._DATA_DIR = DATA_DIR
-utils.Path._META_DIR = META_DIR
+utils.Path._DATA_DIR = config.data_dir
+utils.Path._META_DIR = config.meta_dir
+AUTH_URL = config.auth_url
+
+# config = configparser.ConfigParser()
+# config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
+
+# DATA_DIR = config["staging_service"]["DATA_DIR"]
+# META_DIR = config["staging_service"]["META_DIR"]
+# AUTH_URL = config["staging_service"]["AUTH_URL"]
+# if DATA_DIR.startswith("."):
+#     DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
+# if META_DIR.startswith("."):
+#     META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
+# utils.Path._DATA_DIR = DATA_DIR
+# utils.Path._META_DIR = META_DIR
 
 
 def asyncgiven(**kwargs):
@@ -118,7 +125,7 @@ class AppClient:
 
 
 class FileUtil:
-    def __init__(self, base_dir=DATA_DIR):
+    def __init__(self, base_dir=config.data_dir):
         self.base_dir = base_dir
 
     def __enter__(self):
@@ -184,9 +191,9 @@ def test_path_cases(username_first, username_rest):
 def test_path_sanitation(username_first, username_rest, path):
     username = username_first + username_rest
     validated = utils.Path.validate_path(username, path)
-    assert validated.full_path.startswith(DATA_DIR)
+    assert validated.full_path.startswith(config.data_dir)
     assert validated.user_path.startswith(username)
-    assert validated.metadata_path.startswith(META_DIR)
+    assert validated.metadata_path.startswith(config.meta_dir)
     assert validated.full_path.find("/..") == -1
     assert validated.user_path.find("/..") == -1
     assert validated.metadata_path.find("/..") == -1
@@ -197,7 +204,7 @@ def test_path_sanitation(username_first, username_rest, path):
 
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
-    with FileUtil(DATA_DIR) as fs:
+    with FileUtil(config.data_dir) as fs:
         d = fs.make_dir("test")
         assert "" == await utils.run_command("ls", d)
         f = fs.make_file("test/test2", txt)
@@ -347,7 +354,7 @@ async def test_metadata():
             assert not json.get("isFolder")
 
             # testing corrupted metadata file
-            path = os.path.join(META_DIR, TEST_USER, "test", "test_file_1")
+            path = os.path.join(config.meta_dir, TEST_USER, "test", "test_file_1")
             with open(path, encoding="utf-8", mode="w") as f:
                 f.write('{"source": "Unknown"}')
             res3 = await cli.get(
@@ -1275,7 +1282,7 @@ def test_bulk_specification_dts_fail_bad_schema():
 
 def test_load_and_validate_schema_good():
     # TODO: update this after updating how config is handled
-    schema_file = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
+    schema_file = config.dts_manifest_schema
     validator = app.load_and_validate_schema(schema_file)
     assert isinstance(validator, jsonschema.Draft202012Validator)
 
