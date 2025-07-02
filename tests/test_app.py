@@ -213,47 +213,37 @@ async def test_cmd(txt):
         assert md5 == expected_md5
 
 
-async def test_auth():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+async def do_auth_test(
+    token: str, cookies: dict[str, str] | None, expected_status: int, expected_text: str
+):
+    async with await AppClient.create(config, token, cookies=cookies) as cli:
         resp = await cli.get("/test-auth")
-        assert resp.status == 200
+        assert resp.status == expected_status
         text = await resp.text()
-        assert f"I'm authenticated as {TEST_USER}" in text
+        assert expected_text in text
+
+
+async def test_auth():
+    await do_auth_test(TEST_TOKEN, None, 200, f"I'm authenticated as {TEST_USER}")
 
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
 async def test_auth_cookies(cookie_name):
-    async with await AppClient.create(config, None, cookies={cookie_name: TEST_TOKEN}) as cli:
-        resp = await cli.get("/test-auth")
-        assert resp.status == 200
-        text = await resp.text()
-        assert f"I'm authenticated as {TEST_USER}" in text
+    await do_auth_test(None, {cookie_name: TEST_TOKEN}, 200, f"I'm authenticated as {TEST_USER}")
 
 
 @pytest.mark.parametrize("token", [None, ""])
 async def test_auth_fail_no_token(token):
-    async with await AppClient.create(config, token) as cli:
-        resp = await cli.get("/test-auth")
-        assert resp.status == 401
-        text = await resp.text()
-        assert "must provide an auth token" in text
+    await do_auth_test(token, None, 401, "must provide an auth token")
 
 
 async def test_auth_fail_bad_token():
-    async with await AppClient.create(config, "bad token") as cli:
-        resp = await cli.get("/test-auth")
-        assert resp.status == 401
-        text = await resp.text()
-        assert "token is invalid" in text
+    await do_auth_test("bad_token", None, 401, "token is invalid")
 
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
 async def test_auth_fail_bad_cookie_token(cookie_name):
-    async with await AppClient.create(config, None, cookies={cookie_name: "bad_token"}) as cli:
-        resp = await cli.get("/test-auth")
-        assert resp.status == 401
-        text = await resp.text()
-        assert "token is invalid" in text
+    await do_auth_test(None, {cookie_name: "bad_token"}, 401, "token is invalid")
 
 
 async def test_auth_fail_service_err():
