@@ -79,7 +79,12 @@ async def mock_globus_app(config: configparser.ConfigParser, mock_username: str)
 
 class AppClient:
     @classmethod
-    async def create(cls, config: configparser.ConfigParser, auth_token: str | None, cookies: dict[str, str] | None = None) -> "AppClient":
+    async def create(
+        cls,
+        config: configparser.ConfigParser,
+        auth_token: str | None,
+        cookies: dict[str, str] | None = None,
+    ) -> "AppClient":
         """
         Creating this with an auth token sets the headers call by default to use the
         provided auth token in the Authorization header.
@@ -90,7 +95,9 @@ class AppClient:
         server = test_utils.TestServer(app)
         return AppClient(server, auth_token, cookies)
 
-    def __init__(self, server: test_utils.TestServer, auth_token: str | None, cookies: dict[str, str] | None):
+    def __init__(
+        self, server: test_utils.TestServer, auth_token: str | None, cookies: dict[str, str] | None
+    ):
         self.server = server
         self.auth_token = auth_token
         self.cookies = cookies
@@ -212,6 +219,7 @@ async def test_auth():
         assert resp.status == 200
         text = await resp.text()
         assert f"I'm authenticated as {TEST_USER}" in text
+
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
 async def test_auth_cookies(cookie_name):
