@@ -214,7 +214,7 @@ async def test_cmd(txt):
 
 
 async def do_auth_test(
-    token: str, cookies: dict[str, str] | None, expected_status: int, expected_text: str
+    token: str | None, cookies: dict[str, str] | None, expected_status: int, expected_text: str
 ):
     async with await AppClient.create(config, token, cookies=cookies) as cli:
         resp = await cli.get("/test-auth")
