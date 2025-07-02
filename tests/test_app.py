@@ -79,7 +79,7 @@ async def mock_globus_app(config: configparser.ConfigParser, mock_username: str)
 
 class AppClient:
     @classmethod
-    async def create(cls, config: configparser.ConfigParser, auth_token: str | None) -> "AppClient":
+    async def create(cls, config: configparser.ConfigParser, auth_token: str | None, cookies: dict[str, str] | None = None) -> "AppClient":
         """
         Creating this with an auth token sets the headers call by default to use the
         provided auth token in the Authorization header.
@@ -88,11 +88,12 @@ class AppClient:
         """
         app = await mock_globus_app(config, auth_token)
         server = test_utils.TestServer(app)
-        return AppClient(server, auth_token)
+        return AppClient(server, auth_token, cookies)
 
-    def __init__(self, server: test_utils.TestServer, auth_token: str | None):
+    def __init__(self, server: test_utils.TestServer, auth_token: str | None, cookies: dict[str, str] | None):
         self.server = server
         self.auth_token = auth_token
+        self.cookies = cookies
 
     async def __aenter__(self) -> test_utils.TestClient:
         await self.server.start_server(loop=asyncio.get_event_loop())
@@ -100,7 +101,7 @@ class AppClient:
         if self.auth_token is not None:
             headers["Authorization"] = self.auth_token
         self.client = test_utils.TestClient(
-            self.server, loop=asyncio.get_event_loop(), headers=headers
+            self.server, loop=asyncio.get_event_loop(), headers=headers, cookies=self.cookies
         )
         return self.client
 
@@ -211,6 +212,46 @@ async def test_auth():
         assert resp.status == 200
         text = await resp.text()
         assert f"I'm authenticated as {TEST_USER}" in text
+
+@pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
+async def test_auth_cookies(cookie_name):
+    async with await AppClient.create(config, None, cookies={cookie_name: TEST_TOKEN}) as cli:
+        resp = await cli.get("/test-auth")
+        assert resp.status == 200
+        text = await resp.text()
+        assert f"I'm authenticated as {TEST_USER}" in text
+
+
+@pytest.mark.parametrize("token", [None, ""])
+async def test_auth_fail_no_token(token):
+    async with await AppClient.create(config, token) as cli:
+        resp = await cli.get("/test-auth")
+        assert resp.status == 401
+        text = await resp.text()
+        assert "must provide an auth token" in text
+
+
+async def test_auth_fail_bad_token():
+    async with await AppClient.create(config, "bad token") as cli:
+        resp = await cli.get("/test-auth")
+        assert resp.status == 401
+        text = await resp.text()
+        assert "token is invalid" in text
+
+
+@pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
+async def test_auth_fail_bad_cookie_token(cookie_name):
+    async with await AppClient.create(config, None, cookies={cookie_name: "bad_token"}) as cli:
+        resp = await cli.get("/test-auth")
+        assert resp.status == 401
+        text = await resp.text()
+        assert "token is invalid" in text
+
+
+async def test_auth_fail_service_err():
+    # Not sure how to test this, as the service should fail on startup with a bad auth URL
+    # TODO: configure a local auth server with bad data to test this
+    pass
 
 
 async def test_service():
