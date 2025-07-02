@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from configparser import ConfigParser
 import json
 import logging
 import os
@@ -12,6 +11,8 @@ from urllib.parse import parse_qs, unquote
 import aiohttp_cors
 from aiohttp import web
 import jsonschema
+
+from staging_service.config import StagingServiceConfig
 
 from .app_error_formatter import format_import_spec_errors
 from .kb_auth_client import KBaseAuth, InvalidTokenError
@@ -637,7 +638,7 @@ def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Valid
     return jsonschema.Draft202012Validator(dts_schema)
 
 
-def inject_config_dependencies(config):
+def inject_config_dependencies(config: StagingServiceConfig):
     """
     # TODO this is pretty hacky dependency injection
     # potentially some type of code restructure would allow this without a bunch of globals
@@ -645,52 +646,17 @@ def inject_config_dependencies(config):
     :param config: The staging service main config
     """
 
-    DATA_DIR = config["staging_service"]["DATA_DIR"]
-    META_DIR = config["staging_service"]["META_DIR"]
-    CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
-    FILE_EXTENSION_MAPPINGS = config["staging_service"]["FILE_EXTENSION_MAPPINGS"]
-    DTS_MANIFEST_SCHEMA_PATH = config["staging_service"]["DTS_MANIFEST_SCHEMA"]
-
-    if DATA_DIR.startswith("."):
-        DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
-    if META_DIR.startswith("."):
-        META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
-    if CONCIERGE_PATH.startswith("."):
-        CONCIERGE_PATH = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_PATH))
-    if FILE_EXTENSION_MAPPINGS.startswith("."):
-        FILE_EXTENSION_MAPPINGS = os.path.normpath(
-            os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
-        )
-    if DTS_MANIFEST_SCHEMA_PATH.startswith("."):
-        DTS_MANIFEST_SCHEMA_PATH = os.path.normpath(
-            os.path.join(os.getcwd(), DTS_MANIFEST_SCHEMA_PATH)
-        )
-
-    Path._DATA_DIR = DATA_DIR
-    Path._META_DIR = META_DIR
-    Path._CONCIERGE_PATH = CONCIERGE_PATH
-
-    if Path._DATA_DIR is None:
-        raise Exception("Please provide DATA_DIR in the config file ")
-
-    if Path._META_DIR is None:
-        raise Exception("Please provide META_DIR in the config file ")
-
-    if Path._CONCIERGE_PATH is None:
-        raise Exception("Please provide CONCIERGE_PATH in the config file ")
-
-    if DTS_MANIFEST_SCHEMA_PATH is None:
-        raise Exception("Please provide DTS_MANIFEST_SCHEMA in the config file")
+    Path._DATA_DIR = config.data_dir
+    Path._META_DIR = config.meta_dir
+    Path._CONCIERGE_PATH = config.concierge_path
 
     global _DTS_MANIFEST_VALIDATOR
     # will raise an Exception if the schema is invalid
     # TODO: write automated tests that exercise this code under different config
     # conditions and error states.
-    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(DTS_MANIFEST_SCHEMA_PATH)
+    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(config.dts_manifest_schema)
 
-    if FILE_EXTENSION_MAPPINGS is None:
-        raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
-    with open(FILE_EXTENSION_MAPPINGS, "r", encoding="utf-8") as file_extension_mappings_file:
+    with open(config.file_extension_mappings, "r", encoding="utf-8") as file_extension_mappings_file:
         AutoDetectUtils.set_mappings(json.load(file_extension_mappings_file))
         datatypes = defaultdict(set)
         extensions = defaultdict(set)
@@ -713,7 +679,7 @@ def inject_config_dependencies(config):
 auth_client = None
 
 
-async def app_factory(config: ConfigParser) -> web.Application:
+async def app_factory(config: StagingServiceConfig) -> web.Application:
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(
@@ -731,6 +697,6 @@ async def app_factory(config: ConfigParser) -> web.Application:
     inject_config_dependencies(config)
 
     global auth_client
-    auth_client = await KBaseAuth.create(config["staging_service"]["AUTH_URL"])
+    auth_client = await KBaseAuth.create(config.auth_url)
 
     return app
