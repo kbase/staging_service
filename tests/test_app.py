@@ -67,7 +67,7 @@ def asyncgiven(**kwargs):
     return real_decorator
 
 
-async def mock_globus_app(config: configparser.ConfigParser, mock_username: str):
+async def mock_globus_app(config: configparser.ConfigParser):
     application = await app.app_factory(config)
 
     async def mock_globus_id(*args, **kwargs):
@@ -91,7 +91,7 @@ class AppClient:
         If you want to make a call with a different header, you can
         do so by setting headers directly in the call.
         """
-        app = await mock_globus_app(config, auth_token)
+        app = await mock_globus_app(config)
         server = test_utils.TestServer(app)
         return AppClient(server, auth_token, cookies)
 
