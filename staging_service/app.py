@@ -604,12 +604,11 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
+    if not token or not token.strip():
+        raise web.HTTPUnauthorized(text="must provide an auth token")
     try:
         username = await auth_client.get_user(token)
-    # TODO: ValueError is raised if there's no token - this should be checked before
-    # calling the auth client, but it currently breaks lots of tests because of
-    # how the auth call is mocked. See https://github.com/kbase/staging_service/issues/221
-    except (ValueError, InvalidTokenError) as err:
+    except InvalidTokenError as err:
         raise web.HTTPUnauthorized(text=str(err))
     except Exception as err:
         # catches edge case IOErrors and anything else that might pop up
