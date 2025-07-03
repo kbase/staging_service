@@ -35,13 +35,13 @@ if os.environ.get("KB_DEPLOYMENT_CONFIG") is None:
 
     bootstrap()
 
-decoder = json.JSONDecoder()
+DECODER = json.JSONDecoder()
 
-config = StagingServiceConfig(os.environ["KB_DEPLOYMENT_CONFIG"])
+CONFIG = StagingServiceConfig(os.environ["KB_DEPLOYMENT_CONFIG"])
 
-utils.Path._DATA_DIR = config.data_dir
-utils.Path._META_DIR = config.meta_dir
-AUTH_URL = config.auth_url
+utils.Path._DATA_DIR = CONFIG.data_dir
+utils.Path._META_DIR = CONFIG.meta_dir
+AUTH_URL = CONFIG.auth_url
 
 
 def asyncgiven(**kwargs):
@@ -111,7 +111,7 @@ class AppClient:
 
 
 class FileUtil:
-    def __init__(self, base_dir=config.data_dir):
+    def __init__(self, base_dir=CONFIG.data_dir):
         self.base_dir = base_dir
 
     def __enter__(self):
@@ -177,9 +177,9 @@ def test_path_cases(username_first, username_rest):
 def test_path_sanitation(username_first, username_rest, path):
     username = username_first + username_rest
     validated = utils.Path.validate_path(username, path)
-    assert validated.full_path.startswith(config.data_dir)
+    assert validated.full_path.startswith(CONFIG.data_dir)
     assert validated.user_path.startswith(username)
-    assert validated.metadata_path.startswith(config.meta_dir)
+    assert validated.metadata_path.startswith(CONFIG.meta_dir)
     assert validated.full_path.find("/..") == -1
     assert validated.user_path.find("/..") == -1
     assert validated.metadata_path.find("/..") == -1
@@ -190,7 +190,7 @@ def test_path_sanitation(username_first, username_rest, path):
 
 @asyncgiven(txt=st.text())
 async def test_cmd(txt):
-    with FileUtil(config.data_dir) as fs:
+    with FileUtil(CONFIG.data_dir) as fs:
         d = fs.make_dir("test")
         assert "" == await utils.run_command("ls", d)
         f = fs.make_file("test/test2", txt)
@@ -209,7 +209,7 @@ async def test_cmd(txt):
 async def do_auth_test(
     token: str | None, cookies: dict[str, str] | None, expected_status: int, expected_text: str
 ):
-    async with await AppClient.create(config, token, cookies=cookies) as cli:
+    async with await AppClient.create(CONFIG, token, cookies=cookies) as cli:
         resp = await cli.get("/test-auth")
         assert resp.status == expected_status
         text = await resp.text()
@@ -246,7 +246,7 @@ async def test_auth_fail_service_err():
 
 
 async def test_service():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.get("/test-service")
         assert resp.status == 200
         text = await resp.text()
@@ -257,7 +257,7 @@ async def test_jgi_metadata():
     txt = "testing text\n"
     jgi_metadata = '{"file_owner": "sdm", "added_date": "2013-08-12T00:21:53.844000"}'
 
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_jgi.fastq"), txt)
@@ -265,7 +265,7 @@ async def test_jgi_metadata():
             res1 = await cli.get(os.path.join("jgi-metadata", "test", "test_jgi.fastq"))
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             expected_keys = ["file_owner", "added_date"]
             assert set(json.keys()) >= set(expected_keys)
             assert json.get("file_owner") == "sdm"
@@ -280,14 +280,14 @@ async def test_jgi_metadata():
 
 async def test_metadata():
     txt = "testing text\n"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
             res1 = await cli.get(os.path.join("metadata", "test", "test_file_1"))
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             expected_keys = [
                 "source",
                 "md5",
@@ -316,7 +316,7 @@ async def test_metadata():
             )
             assert res2.status == 200
             json_text = await res2.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             expected_keys = [
                 "source",
                 "md5",
@@ -340,7 +340,7 @@ async def test_metadata():
             assert not json.get("isFolder")
 
             # testing corrupted metadata file
-            path = os.path.join(config.meta_dir, TEST_USER, "test", "test_file_1")
+            path = os.path.join(CONFIG.meta_dir, TEST_USER, "test", "test_file_1")
             with open(path, encoding="utf-8", mode="w") as f:
                 f.write('{"source": "Unknown"}')
             res3 = await cli.get(
@@ -348,7 +348,7 @@ async def test_metadata():
             )
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             expected_keys = [
                 "source",
                 "md5",
@@ -374,7 +374,7 @@ async def test_metadata():
 
 async def test_define_upa():
     txt = "testing text\n"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -399,7 +399,7 @@ async def test_define_upa():
             )
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             expected_keys = [
                 "source",
                 "md5",
@@ -446,7 +446,7 @@ async def test_define_upa():
 
 async def test_mv():
     txt = "testing text\n"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -457,7 +457,7 @@ async def test_mv():
             )
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 1
             assert json[0]["name"] == "test_file_1"
 
@@ -475,7 +475,7 @@ async def test_mv():
             )
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 1
             assert json[0]["name"] == "test_file_2"
 
@@ -509,7 +509,7 @@ async def test_mv():
 
 async def test_delete():
     txt = "testing text\n"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -520,7 +520,7 @@ async def test_delete():
             )
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 1
             assert json[0]["name"] == "test_file_1"
 
@@ -537,7 +537,7 @@ async def test_delete():
             )
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 0
 
             # testing non-existing file
@@ -549,7 +549,7 @@ async def test_delete():
 
 async def test_list():
     txt = "testing text"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -566,7 +566,7 @@ async def test_list():
             res3 = await cli.get("/list/")
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             file_folder_count = [file_json["isFolder"] for file_json in json]
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
@@ -579,7 +579,7 @@ async def test_list():
             res4 = await cli.get("/list")
             assert res4.status == 200
             json_text = await res4.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             file_folder_count = [file_json["isFolder"] for file_json in json]
             assert json[0]["isFolder"] is True
             assert json[0]["name"] == "test"
@@ -592,7 +592,7 @@ async def test_list():
             res5 = await cli.get(os.path.join("list", "test"))
             assert res5.status == 200
             json_text = await res5.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             file_folder_count = [file_json["isFolder"] for file_json in json]
             # 1 sub-directory, 1 file in sub-directory and 1 file in root
             assert len(file_folder_count) == 3
@@ -607,7 +607,7 @@ async def test_list():
             res6 = await cli.get("/list/")
             assert res6.status == 200
             json_text = await res6.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
 
             file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" not in file_names  # NOSONAR python:S1192
@@ -618,7 +618,7 @@ async def test_list():
             res7 = await cli.get("/list/", params={"showHidden": "True"})
             assert res7.status == 200
             json_text = await res7.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             file_names = [file_json["name"] for file_json in json if not file_json["isFolder"]]
             assert ".test_file_1" in file_names  # NOSONAR python:S1192
             assert ".globus_id" in file_names
@@ -629,7 +629,7 @@ async def test_list():
 @settings(deadline=None)
 @asyncgiven(txt=st.text())
 async def test_download(txt):
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -643,7 +643,7 @@ async def test_download(txt):
 
 
 async def test_download_errors():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
 
@@ -659,7 +659,7 @@ async def test_download_errors():
 
 async def test_similar():
     txt = "testing text"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1.fq"), txt)
@@ -675,7 +675,7 @@ async def test_similar():
             res1 = await cli.get("similar/test/test_file_1.fq")
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 2
             assert json[0].get("name") in ["test_file_2.fq", "test_file_right.fq"]
             assert json[1].get("name") in ["test_file_2.fq", "test_file_right.fq"]
@@ -691,7 +691,7 @@ async def test_similar():
 
 async def test_existence():
     txt = "testing text"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -708,7 +708,7 @@ async def test_existence():
             res1 = await cli.get("existence/test_file_1")
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert json["exists"] is True
             assert json["isFolder"] is False
 
@@ -716,7 +716,7 @@ async def test_existence():
             res2 = await cli.get("existence/test_file_2")
             assert res2.status == 200
             json_text = await res2.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert json["exists"] is True
             assert json["isFolder"] is False
 
@@ -724,7 +724,7 @@ async def test_existence():
             res3 = await cli.get("existence/test_sub_dir")
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert json["exists"] is True
             assert json["isFolder"] is True
 
@@ -732,21 +732,21 @@ async def test_existence():
             res4 = await cli.get("existence/fake_file")
             assert res4.status == 200
             json_text = await res4.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert json["exists"] is False
             assert json["isFolder"] is False
 
             res5 = await cli.get("existence/test_sub")
             assert res5.status == 200
             json_text = await res5.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert json["exists"] is False
             assert json["isFolder"] is False
 
 
 async def test_search():
     txt = "testing text"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test1"), txt)
@@ -755,23 +755,23 @@ async def test_search():
             res1 = await cli.get("search/")
             assert res1.status == 200
             json_text = await res1.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 4
             res2 = await cli.get("search/test1")
             assert res2.status == 200
             json_text = await res2.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 1
             res3 = await cli.get("search/test2")
             assert res3.status == 200
             json_text = await res3.text()
-            json = decoder.decode(json_text)
+            json = DECODER.decode(json_text)
             assert len(json) == 2
 
 
 async def test_upload():
     txt = "testing text\n"
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         # testing missing body
         res1 = await cli.post("upload")
         assert res1.status == 400
@@ -791,7 +791,7 @@ async def _upload_file_fail_filename(filename: str, err: str):
     # Note two file uploads in a row causes a test error:
     # https://github.com/aio-libs/aiohttp/issues/3968
     async with await AppClient.create(
-        config, TEST_TOKEN
+        CONFIG, TEST_TOKEN
     ) as cli:  # username is ignored by AppClient
         formdata = FormData()
         formdata.add_field("destPath", "/")
@@ -840,7 +840,7 @@ async def test_directory_decompression(contents):
         ("bztar", ".tar.bz"),
         ("tar", ".tar"),
     ]
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(TEST_USER, dirname))
@@ -891,7 +891,7 @@ async def test_file_decompression(contents):
         return
     methods = [("gzip", ".gz"), ("bzip2", ".bz2")]
 
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(TEST_USER, dirname))
@@ -923,7 +923,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt"]}
     qs1 = urlencode(data, doseq=True)
 
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs1}")
         assert resp.status == 200
         text = await resp.json()
@@ -935,7 +935,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
     qs2 = urlencode(data, doseq=True)
 
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs2}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -951,7 +951,7 @@ async def test_importer_mappings():
     # A dict is passed in
     data = {"file_list": [{}]}
     qs3 = urlencode(data, doseq=True)
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs3}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -969,7 +969,7 @@ async def test_importer_mappings():
 
     for data in bad_data:
         qsd = urlencode(data, doseq=True)
-        async with await AppClient.create(config, TEST_TOKEN) as cli:
+        async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
             resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
@@ -978,7 +978,7 @@ async def test_importer_mappings():
 
 async def test_bulk_specification_success():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/somefolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1063,7 +1063,7 @@ async def test_bulk_specification_success():
 
 
 async def test_bulk_specification_dts_success():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1155,7 +1155,7 @@ async def test_bulk_specification_dts_success():
 
 
 async def test_bulk_specification_dts_fail_json_without_dts():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1196,7 +1196,7 @@ async def test_bulk_specification_dts_fail_json_without_dts():
 
 
 async def test_bulk_specification_dts_fail_wrong_format():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1231,7 +1231,7 @@ async def test_bulk_specification_dts_fail_wrong_format():
     ],
 )
 async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1268,7 +1268,7 @@ def test_bulk_specification_dts_fail_bad_schema():
 
 def test_load_and_validate_schema_good():
     # TODO: update this after updating how config is handled
-    schema_file = config.dts_manifest_schema
+    schema_file = CONFIG.dts_manifest_schema
     validator = app.load_and_validate_schema(schema_file)
     assert isinstance(validator, jsonschema.Draft202012Validator)
 
@@ -1304,7 +1304,7 @@ def test_load_and_validate_schema_bad(tmp_path: Path):
 
 
 async def test_bulk_specification_fail_no_files():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
             resp = await cli.get(f"bulk_specification/{f}")
             jsn = await resp.json()
@@ -1313,7 +1313,7 @@ async def test_bulk_specification_fail_no_files():
 
 
 async def test_bulk_specification_fail_not_found():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/otherfolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1340,7 +1340,7 @@ async def test_bulk_specification_fail_parse_fail():
     Tests a number of different parse fail cases, including incorrect file types.
     Also tests that all the errors are combined correctly.
     """
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/otherfolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1449,7 +1449,7 @@ async def test_bulk_specification_fail_parse_fail():
 
 
 async def test_bulk_specification_fail_column_count():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1522,7 +1522,7 @@ async def test_bulk_specification_fail_column_count():
 
 
 async def test_bulk_specification_fail_multiple_specs_per_type():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1615,7 +1615,7 @@ async def test_bulk_specification_fail_multiple_specs_per_type_excel():
     Test an excel file with an internal data type collision.
     This is the only case when all 5 error fields are filled out.
     """
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1690,7 +1690,7 @@ _IMPORT_SPEC_TEST_DATA = {
 
 async def test_write_bulk_specification_success_csv():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             resp = await cli.post(
@@ -1733,7 +1733,7 @@ async def test_write_bulk_specification_success_csv():
 
 async def test_write_bulk_specification_success_tsv():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             types = dict(_IMPORT_SPEC_TEST_DATA)
@@ -1778,7 +1778,7 @@ async def test_write_bulk_specification_success_tsv():
 
 async def test_write_bulk_specification_success_excel():
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             resp = await cli.post(
@@ -1825,7 +1825,7 @@ async def test_write_bulk_specification_success_excel():
 
 
 async def test_write_bulk_specification_fail_wrong_data_type():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification/", data="foo")
         js = await resp.json()
         assert js == {"error": "Required content-type is application/json"}
@@ -1833,7 +1833,7 @@ async def test_write_bulk_specification_fail_wrong_data_type():
 
 
 async def test_write_bulk_specification_fail_no_content_length():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.post(
             "write_bulk_specification", headers={"content-type": "application/json"}
         )
@@ -1843,7 +1843,7 @@ async def test_write_bulk_specification_fail_no_content_length():
 
 
 async def test_write_bulk_specification_fail_large_input():
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
         txt = await resp.text()
         # this seems to be a built in (somewhat inaccurate) server feature
@@ -1852,7 +1852,7 @@ async def test_write_bulk_specification_fail_large_input():
 
 
 async def _write_bulk_specification_json_fail(json: Any, err: str):
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification", json=json)
         js = await resp.json()
         assert js == {"error": err}
@@ -1901,7 +1901,7 @@ async def test_importer_filetypes():
     """
     Only checks a few example entries since the list may expand over time
     """
-    async with await AppClient.create(config, TEST_TOKEN) as cli:
+    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
         resp = await cli.get("importer_filetypes")
         js = await resp.json()
         assert set(js.keys()) == {"datatype_to_filetype", "filetype_to_extensions"}
