@@ -73,5 +73,3 @@ def _get_path_value(section: SectionProxy, key: str) -> str:
 
 class MissingAuthToken(Exception):
     """Should be raised if the auth token environment variable is missing or empty"""
-
-    pass
