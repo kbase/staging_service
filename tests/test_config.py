@@ -1,41 +1,59 @@
 import pytest
 from pathlib import Path
-from configparser import ConfigParser
-from staging_service.config import StagingServiceConfig #, _get_value, _get_path_value
+from staging_service.config import MissingAuthToken, StagingServiceConfig
+import os
 
-VALID_CONFIG = """
+# separate these for easier assertions
+AUTH_URL = "https://example.com/auth"
+DATA_DIR = "/kb/deployment/data/bulk"
+META_DIR = "/kb/deployment/data/metadata"
+CONCIERGE_PATH = "/kbaseconcierge"
+FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
+DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
+
+VALID_CONFIG = f"""
 [staging_service]
-AUTH_URL = https://example.com/auth
-DATA_DIR = /kb/deployment/data
-META_DIR = /kb/deployment/data/meta
-CONCIERGE_PATH = /kb/deployment/concierge.json
-FILE_EXTENSION_MAPPINGS = ./mappings.json
-DTS_MANIFEST_SCHEMA = ./schema.json
+AUTH_URL = {AUTH_URL}
+DATA_DIR = {DATA_DIR}
+META_DIR = {META_DIR}
+CONCIERGE_PATH = {CONCIERGE_PATH}
+FILE_EXTENSION_MAPPINGS = {FILE_EXTENSION_MAPPINGS}
+DTS_MANIFEST_SCHEMA = {DTS_MANIFEST_SCHEMA}
 """
 
+
 def write_config_file(config_dir: Path, content: str) -> str:
-    # writes out some content to "config.cfg" in the provided
-    # directory. Returns the path to the file as a string.
+    """
+    Writes out some content to "config.cfg" in the provided
+    directory. Returns the path to the file as a string.
+    """
     file = config_dir / "config.cfg"
     file.write_text(content)
     return str(file)
 
-def test_valid_config_parsing(tmp_path):
+
+def test_valid_config(tmp_path):
     config_path = write_config_file(tmp_path, VALID_CONFIG)
     config = StagingServiceConfig(config_path)
 
-    assert config.auth_url == "https://example.com/auth"
-    assert Path(config.data_dir).is_absolute()
-    assert config.data_dir.endswith("data")
-    assert config.meta_dir.endswith("meta")
+    assert config.auth_url == AUTH_URL
+    assert config.data_dir == DATA_DIR
+    assert config.meta_dir == META_DIR
+    assert config.concierge_path == CONCIERGE_PATH
+    assert config.file_extension_mappings == FILE_EXTENSION_MAPPINGS
+    assert config.dts_manifest_schema == DTS_MANIFEST_SCHEMA
+    assert config.auth_token == os.environ["AUTH_TOKEN"]
+
 
 def test_missing_config_path():
     with pytest.raises(ValueError, match="config_path is required"):
         StagingServiceConfig("")
 
-def test_nonexistent_config_file():
+
+def test_missing_config_file():
     with pytest.raises(FileNotFoundError):
-        StagingServiceConfig("nonexistent.ini")
+        StagingServiceConfig("missing.cfg")
+
 
 def test_missing_heading(tmp_path):
     bad_config = "[wrong_section]\nfoo=bar"
@@ -43,16 +61,40 @@ def test_missing_heading(tmp_path):
     with pytest.raises(ValueError, match="missing required section"):
         StagingServiceConfig(config_path)
 
+
 def test_missing_required_key(tmp_path):
     bad_config = "[staging_service]\nDATA_DIR=./data"
     config_path = write_config_file(tmp_path, bad_config)
     with pytest.raises(ValueError, match="Please provide AUTH_URL"):
         StagingServiceConfig(config_path)
 
-def test_relative_path_resolution(tmp_path, monkeypatch):
-    config = ConfigParser()
-    config.add_section("staging_service")
-    config.set("staging_service", "DATA_DIR", "./relative_dir")
-    monkeypatch.chdir(tmp_path)
-    path = _get_path_value(config["staging_service"], "DATA_DIR")
-    assert Path(path) == tmp_path / "relative_dir"
+
+def test_path_resolution(tmp_path):
+    non_relative_config = f"""
+        [staging_service]
+        AUTH_URL = {AUTH_URL}
+        DATA_DIR = ./data
+        META_DIR = ./meta
+        CONCIERGE_PATH = ./concierge
+        FILE_EXTENSION_MAPPINGS = ./file_extension_mappings.json
+        DTS_MANIFEST_SCHEMA = ./dts_manifest_schema.json
+    """
+    config_path = write_config_file(tmp_path, non_relative_config)
+    config = StagingServiceConfig(config_path)
+    config_keys = [
+        "data_dir",
+        "meta_dir",
+        "concierge_path",
+        "file_extension_mappings",
+        "dts_manifest_schema",
+    ]
+    for key in config_keys:
+        value = getattr(config, key)
+        assert Path(value).is_absolute()
+
+
+def test_missing_auth_token(monkeypatch, tmp_path):
+    monkeypatch.delenv("AUTH_TOKEN")
+    config_path = write_config_file(tmp_path, VALID_CONFIG)
+    with pytest.raises(MissingAuthToken, match="AUTH_TOKEN environment variable must be provided"):
+        StagingServiceConfig(config_path)

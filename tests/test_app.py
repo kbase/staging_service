@@ -1,5 +1,4 @@
 import asyncio
-import configparser
 import hashlib
 import json
 import os
@@ -44,19 +43,6 @@ utils.Path._DATA_DIR = config.data_dir
 utils.Path._META_DIR = config.meta_dir
 AUTH_URL = config.auth_url
 
-# config = configparser.ConfigParser()
-# config.read(os.environ["KB_DEPLOYMENT_CONFIG"])
-
-# DATA_DIR = config["staging_service"]["DATA_DIR"]
-# META_DIR = config["staging_service"]["META_DIR"]
-# AUTH_URL = config["staging_service"]["AUTH_URL"]
-# if DATA_DIR.startswith("."):
-#     DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
-# if META_DIR.startswith("."):
-#     META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
-# utils.Path._DATA_DIR = DATA_DIR
-# utils.Path._META_DIR = META_DIR
-
 
 def asyncgiven(**kwargs):
     """alternative to hypothesis.given decorator for async"""
@@ -74,7 +60,7 @@ def asyncgiven(**kwargs):
     return real_decorator
 
 
-async def mock_globus_app(config: configparser.ConfigParser):
+async def mock_globus_app(config: StagingServiceConfig):
     application = await app.app_factory(config)
 
     async def mock_globus_id(*args, **kwargs):
@@ -88,7 +74,7 @@ class AppClient:
     @classmethod
     async def create(
         cls,
-        config: configparser.ConfigParser,
+        config: StagingServiceConfig,
         auth_token: str | None,
         cookies: dict[str, str] | None = None,
     ) -> "AppClient":
@@ -285,7 +271,7 @@ async def test_jgi_metadata():
             assert json.get("file_owner") == "sdm"
             assert json.get("added_date") == "2013-08-12T00:21:53.844000"
 
-            # testing non-existing jbi metadata file
+            # testing non-existing jgi metadata file
             res1 = await cli.get(
                 os.path.join("jgi-metadata", "test", "non_existing.1617.2.1467.fastq")
             )
@@ -439,7 +425,7 @@ async def test_define_upa():
             assert json.get("UPA") is not None
             assert json.get("UPA") == "test_UPA"
 
-            # testing non-existing jbi metadata file
+            # testing non-existing jgi metadata file
             res4 = await cli.post(
                 os.path.join("define-upa", "test", "non_existing.test_file_1"),
                 data={"UPA": "test_UPA"},

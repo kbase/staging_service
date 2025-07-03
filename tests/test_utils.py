@@ -1,4 +1,3 @@
-import configparser
 import os
 import traceback
 from pathlib import Path
