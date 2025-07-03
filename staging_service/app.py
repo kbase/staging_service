@@ -656,7 +656,9 @@ def inject_config_dependencies(config: StagingServiceConfig):
     # conditions and error states.
     _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(config.dts_manifest_schema)
 
-    with open(config.file_extension_mappings, "r", encoding="utf-8") as file_extension_mappings_file:
+    with open(
+        config.file_extension_mappings, "r", encoding="utf-8"
+    ) as file_extension_mappings_file:
         AutoDetectUtils.set_mappings(json.load(file_extension_mappings_file))
         datatypes = defaultdict(set)
         extensions = defaultdict(set)
