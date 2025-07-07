@@ -67,10 +67,7 @@ def _get_path_value(section: SectionProxy, key: str) -> str:
     TODO: This returns paths as strings, not Path-like objects, as much of the rest of the service
     expects them that way. Consider changing it later.
     """
-    value = _get_value(section, key)
-    if value is not None and value.startswith("."):
-        value = str(Path(value).absolute().resolve())
-    return value
+    return str(Path(_get_value(section, key)).absolute().resolve())
 
 
 class MissingAuthToken(Exception):
