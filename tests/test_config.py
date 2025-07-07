@@ -10,10 +10,13 @@ META_DIR = "/kb/deployment/data/metadata"
 CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
+TEST_TOKEN = None
+TEST_USER = None
+AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
 VALID_HEADER = "[staging_service]"
 
-VALID_CONFIG_DICT = {
+DEFAULT_CONFIG_DICT = {
     "AUTH_URL": AUTH_URL,
     "DATA_DIR": DATA_DIR,
     "META_DIR": META_DIR,
@@ -37,17 +40,44 @@ def write_config_file(config_dir: Path, content: str) -> str:
     return str(file)
 
 
-def test_valid_config(tmp_path):
-    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, VALID_CONFIG_DICT))
-    config = StagingServiceConfig(config_path)
+def validate_config(config: StagingServiceConfig, **kwargs):
+    """
+    Not the prettiest validator, but avoids a zillion kwargs.
+    This validates that each attribute in the config file is as expected.
+    Default values are given in DEFAULT_CONFIG_DICT above, along with a default
+    None for test_token and test_user.
+    The default auth_token is taken from the environment variable AUTH_TOKEN.
+    These can be updated to your use case by changing the relevant kwarg.
+    See test_valid_config_with_test_info for an example.
+    """
+    config_attrs = ["auth_url", "data_dir", "meta_dir", "concierge_path", "file_extension_mappings", "dts_manifest_schema", "auth_token", "test_token", "test_user"]
+    config_values = {key.lower(): value for key, value in DEFAULT_CONFIG_DICT.items()}
+    config_values = config_values | {
+        "test_token": TEST_TOKEN,
+        "test_user": TEST_USER,
+        "auth_token": AUTH_TOKEN
+    }
+    config_values = config_values | kwargs
+    for attr in config_attrs:
+        assert getattr(config, attr) == config_values[attr]
 
-    assert config.auth_url == AUTH_URL
-    assert config.data_dir == DATA_DIR
-    assert config.meta_dir == META_DIR
-    assert config.concierge_path == CONCIERGE_PATH
-    assert config.file_extension_mappings == FILE_EXTENSION_MAPPINGS
-    assert config.dts_manifest_schema == DTS_MANIFEST_SCHEMA
-    assert config.auth_token == os.environ["AUTH_TOKEN"]
+
+def test_valid_config(tmp_path):
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, DEFAULT_CONFIG_DICT))
+    config = StagingServiceConfig(config_path)
+    validate_config(config)
+
+
+def test_valid_config_with_test_info(tmp_path):
+    fake_token = "fake_token"
+    fake_user = "fake_user"
+    config_with_tokens = dummy_config(
+        VALID_HEADER,
+        DEFAULT_CONFIG_DICT | {"TEST_TOKEN": fake_token, "TEST_USER": fake_user}
+    )
+    config_path = write_config_file(tmp_path, config_with_tokens)
+    config = StagingServiceConfig(config_path)
+    validate_config(config, test_token=fake_token, test_user=fake_user)
 
 
 def test_missing_config_path():
@@ -68,9 +98,9 @@ def test_missing_heading(tmp_path):
         StagingServiceConfig(config_path)
 
 
-@pytest.mark.parametrize("missing_key", VALID_CONFIG_DICT.keys())
+@pytest.mark.parametrize("missing_key", DEFAULT_CONFIG_DICT.keys())
 def test_missing_required_key(tmp_path, missing_key):
-    missing_config_dict = VALID_CONFIG_DICT.copy()
+    missing_config_dict = DEFAULT_CONFIG_DICT.copy()
     del missing_config_dict[missing_key]
     config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, missing_config_dict))
     with pytest.raises(ValueError, match=f"Please provide {missing_key} in the config file section {VALID_HEADER}"):
@@ -96,6 +126,7 @@ def test_path_resolution(tmp_path):
         "file_extension_mappings",
         "dts_manifest_schema",
     ]
+    print(config.data_dir)
     for key in config_keys:
         value = getattr(config, key)
         assert Path(value).is_absolute()
@@ -103,6 +134,6 @@ def test_path_resolution(tmp_path):
 
 def test_missing_auth_token(monkeypatch, tmp_path):
     monkeypatch.delenv("AUTH_TOKEN")
-    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, VALID_CONFIG_DICT))
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, DEFAULT_CONFIG_DICT))
     with pytest.raises(MissingAuthToken, match="AUTH_TOKEN environment variable must be provided"):
         StagingServiceConfig(config_path)

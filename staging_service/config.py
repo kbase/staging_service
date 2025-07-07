@@ -10,7 +10,8 @@ _CONCIERGE_PATH = "CONCIERGE_PATH"
 _FILE_EXTENSION_MAPPINGS = "FILE_EXTENSION_MAPPINGS"
 _DTS_MANIFEST_SCHEMA = "DTS_MANIFEST_SCHEMA"
 _HEADING = "staging_service"
-
+_TEST_TOKEN = "TEST_TOKEN"
+_TEST_USER = "TEST_USER"
 
 class StagingServiceConfig:
     """
@@ -44,14 +45,17 @@ class StagingServiceConfig:
         self.concierge_path = _get_path_value(heading, _CONCIERGE_PATH)
         self.file_extension_mappings = _get_path_value(heading, _FILE_EXTENSION_MAPPINGS)
         self.dts_manifest_schema = _get_path_value(heading, _DTS_MANIFEST_SCHEMA)
+        self.test_token = _get_value(heading, _TEST_TOKEN, is_required=False)
+        self.test_user = _get_value(heading, _TEST_USER, is_required=False)
 
 
-def _get_value(section: SectionProxy, key: str) -> str:
+def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str | None:
     """
     Returns the value for a key in the given ConfigParser section.
-    If not present, this raises a ValueError
+    If is_required is True, and the value isn't present, this raises a ValueError.
+    If is_required is False, and the value isn't present, this returns None.
     """
-    if key not in section:
+    if key not in section and is_required:
         raise ValueError(f"Please provide {key} in the config file section {section.name}")
     return section.get(key)
 
@@ -62,8 +66,6 @@ def _get_path_value(section: SectionProxy, key: str) -> str:
     it absolute. I.e. a path like ./foo becomes /path/to/local/dir/foo
     TODO: This returns paths as strings, not Path-like objects, as much of the rest of the service
     expects them that way. Consider changing it later.
-    TODO: Consider adding path validation here for required paths (like the data directory or the
-    DTS manifest schema file)
     """
     value = _get_value(section, key)
     if value is not None and value.startswith("."):

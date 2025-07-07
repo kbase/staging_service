@@ -2,19 +2,18 @@ import asyncio
 import pytest
 from staging_service.kb_auth_client import InvalidUserError, KBaseAuth, InvalidTokenError, _get
 from tests.test_utils import bootstrap_config
-import os
 from unittest.mock import patch
 
-AUTH_URL = bootstrap_config().auth_url
+CONFIG = bootstrap_config()
+AUTH_URL = CONFIG.auth_url
+TEST_TOKEN = CONFIG.test_token
+TEST_USER = CONFIG.test_user
 
 # NOTE: These tests are intended to be run against the auth service at
 # https://ci.kbase.us/services/auth
 # Any unexpected failures should check the auth service, the given test
 # token, and whether the test user exists or not.
 
-# TODO: add env var names to test config
-TEST_TOKEN = os.environ.get("KBASE_TEST_TOKEN")
-TEST_USER = os.environ.get("KBASE_TEST_USER")
 VALID_TEST_USER = "narrativetest"
 NOT_REAL_USER = "please_do_not_ever_make_this_username_what_is_wrong_with_you"
 INVALID_USER = "_(__)_"
