@@ -11,15 +11,20 @@ CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
 
-VALID_CONFIG = f"""
-[staging_service]
-AUTH_URL = {AUTH_URL}
-DATA_DIR = {DATA_DIR}
-META_DIR = {META_DIR}
-CONCIERGE_PATH = {CONCIERGE_PATH}
-FILE_EXTENSION_MAPPINGS = {FILE_EXTENSION_MAPPINGS}
-DTS_MANIFEST_SCHEMA = {DTS_MANIFEST_SCHEMA}
-"""
+VALID_HEADER = "[staging_service]"
+
+VALID_CONFIG_DICT = {
+    "AUTH_URL": AUTH_URL,
+    "DATA_DIR": DATA_DIR,
+    "META_DIR": META_DIR,
+    "CONCIERGE_PATH": CONCIERGE_PATH,
+    "FILE_EXTENSION_MAPPINGS": FILE_EXTENSION_MAPPINGS,
+    "DTS_MANIFEST_SCHEMA": DTS_MANIFEST_SCHEMA
+}
+
+
+def dummy_config(header: str, config_dict: dict[str, str]) -> str:
+    return header + "\n" + "\n".join([f"{k} = {v}" for k, v in config_dict.items()])
 
 
 def write_config_file(config_dir: Path, content: str) -> str:
@@ -33,7 +38,7 @@ def write_config_file(config_dir: Path, content: str) -> str:
 
 
 def test_valid_config(tmp_path):
-    config_path = write_config_file(tmp_path, VALID_CONFIG)
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, VALID_CONFIG_DICT))
     config = StagingServiceConfig(config_path)
 
     assert config.auth_url == AUTH_URL
@@ -51,21 +56,24 @@ def test_missing_config_path():
 
 
 def test_missing_config_file():
-    with pytest.raises(FileNotFoundError):
-        StagingServiceConfig("missing.cfg")
+    missing_file = "missing.cfg"
+    with pytest.raises(FileNotFoundError, match=f"config path {missing_file} does not exist"):
+        StagingServiceConfig(missing_file)
 
 
 def test_missing_heading(tmp_path):
     bad_config = "[wrong_section]\nfoo=bar"
     config_path = write_config_file(tmp_path, bad_config)
-    with pytest.raises(ValueError, match="missing required section"):
+    with pytest.raises(ValueError, match=f"config file {config_path} is missing required section {VALID_HEADER}"):
         StagingServiceConfig(config_path)
 
 
-def test_missing_required_key(tmp_path):
-    bad_config = "[staging_service]\nDATA_DIR=./data"
-    config_path = write_config_file(tmp_path, bad_config)
-    with pytest.raises(ValueError, match="Please provide AUTH_URL"):
+@pytest.mark.parametrize("missing_key", VALID_CONFIG_DICT.keys())
+def test_missing_required_key(tmp_path, missing_key):
+    missing_config_dict = VALID_CONFIG_DICT.copy()
+    del missing_config_dict[missing_key]
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, missing_config_dict))
+    with pytest.raises(ValueError, match=f"Please provide {missing_key} in the config file section {VALID_HEADER}"):
         StagingServiceConfig(config_path)
 
 
@@ -95,6 +103,6 @@ def test_path_resolution(tmp_path):
 
 def test_missing_auth_token(monkeypatch, tmp_path):
     monkeypatch.delenv("AUTH_TOKEN")
-    config_path = write_config_file(tmp_path, VALID_CONFIG)
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, VALID_CONFIG_DICT))
     with pytest.raises(MissingAuthToken, match="AUTH_TOKEN environment variable must be provided"):
         StagingServiceConfig(config_path)
