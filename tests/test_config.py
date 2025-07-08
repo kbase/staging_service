@@ -139,7 +139,6 @@ def test_path_resolution(tmp_path):
         "file_extension_mappings",
         "dts_manifest_schema",
     ]
-    print(config.data_dir)
     for key in config_keys:
         value = getattr(config, key)
         assert Path(value).is_absolute()
