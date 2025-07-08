@@ -22,7 +22,7 @@ DEFAULT_CONFIG_DICT = {
     "META_DIR": META_DIR,
     "CONCIERGE_PATH": CONCIERGE_PATH,
     "FILE_EXTENSION_MAPPINGS": FILE_EXTENSION_MAPPINGS,
-    "DTS_MANIFEST_SCHEMA": DTS_MANIFEST_SCHEMA
+    "DTS_MANIFEST_SCHEMA": DTS_MANIFEST_SCHEMA,
 }
 
 
@@ -50,12 +50,22 @@ def validate_config(config: StagingServiceConfig, **kwargs):
     These can be updated to your use case by changing the relevant kwarg.
     See test_valid_config_with_test_info for an example.
     """
-    config_attrs = ["auth_url", "data_dir", "meta_dir", "concierge_path", "file_extension_mappings", "dts_manifest_schema", "auth_token", "test_token", "test_user"]
+    config_attrs = [
+        "auth_url",
+        "data_dir",
+        "meta_dir",
+        "concierge_path",
+        "file_extension_mappings",
+        "dts_manifest_schema",
+        "auth_token",
+        "test_token",
+        "test_user",
+    ]
     config_values = {key.lower(): value for key, value in DEFAULT_CONFIG_DICT.items()}
     config_values = config_values | {
         "test_token": TEST_TOKEN,
         "test_user": TEST_USER,
-        "auth_token": AUTH_TOKEN
+        "auth_token": AUTH_TOKEN,
     }
     config_values = config_values | kwargs
     for attr in config_attrs:
@@ -72,8 +82,7 @@ def test_valid_config_with_test_info(tmp_path):
     fake_token = "fake_token"
     fake_user = "fake_user"
     config_with_tokens = dummy_config(
-        VALID_HEADER,
-        DEFAULT_CONFIG_DICT | {"TEST_TOKEN": fake_token, "TEST_USER": fake_user}
+        VALID_HEADER, DEFAULT_CONFIG_DICT | {"TEST_TOKEN": fake_token, "TEST_USER": fake_user}
     )
     config_path = write_config_file(tmp_path, config_with_tokens)
     config = StagingServiceConfig(config_path)
@@ -94,7 +103,9 @@ def test_missing_config_file():
 def test_missing_heading(tmp_path):
     bad_config = "[wrong_section]\nfoo=bar"
     config_path = write_config_file(tmp_path, bad_config)
-    with pytest.raises(ValueError, match=f"config file {config_path} is missing required section {VALID_HEADER}"):
+    with pytest.raises(
+        ValueError, match=f"config file {config_path} is missing required section {VALID_HEADER}"
+    ):
         StagingServiceConfig(config_path)
 
 
@@ -103,7 +114,9 @@ def test_missing_required_key(tmp_path, missing_key):
     missing_config_dict = DEFAULT_CONFIG_DICT.copy()
     del missing_config_dict[missing_key]
     config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, missing_config_dict))
-    with pytest.raises(ValueError, match=f"Please provide {missing_key} in the config file section {VALID_HEADER}"):
+    with pytest.raises(
+        ValueError, match=f"Please provide {missing_key} in the config file section {VALID_HEADER}"
+    ):
         StagingServiceConfig(config_path)
 
 

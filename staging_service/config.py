@@ -13,6 +13,7 @@ _HEADING = "staging_service"
 _TEST_TOKEN = "TEST_TOKEN"
 _TEST_USER = "TEST_USER"
 
+
 class StagingServiceConfig:
     """
     Constructs a simple config object from a passed config file path.

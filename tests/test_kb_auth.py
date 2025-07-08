@@ -3,11 +3,15 @@ import pytest
 from staging_service.kb_auth_client import InvalidUserError, KBaseAuth, InvalidTokenError, _get
 from tests.test_utils import bootstrap_config
 from unittest.mock import patch
+import os
 
 CONFIG = bootstrap_config()
 AUTH_URL = CONFIG.auth_url
-TEST_TOKEN = CONFIG.test_token
-TEST_USER = CONFIG.test_user
+# TODO: temporary until config is templated, then update to
+# CONFIG.test_token, CONFIG.test_user
+# see github issue 228: https://github.com/kbase/staging_service/issues/228
+TEST_TOKEN = os.environ.get("KBASE_TEST_TOKEN")
+TEST_USER = os.environ.get("KBASE_TEST_USER")
 
 # NOTE: These tests are intended to be run against the auth service at
 # https://ci.kbase.us/services/auth
