@@ -17,13 +17,25 @@ _TEST_USER = "TEST_USER"
 class StagingServiceConfig:
     """
     Constructs a simple config object from a passed config file path.
-    This requires that all values are present.
+    This requires that all required values are present.
     See deployment/conf/deployment.cfg for an example.
     It also holds the service auth token from the AUTH_TOKEN environment variable.
     TODO: update when AUTH_TOKEN is moved into the config - see issue #228
     """
 
     def __init__(self, config_path: str):
+        """
+        Reads the INI-formatted config file at `config_path`.
+        This expects a single section - staging_service.
+        Required keys are given above - all except _TEST_TOKEN and _TEST_USER.
+        Any required key that is missing or null will raise a ValueError.
+        Raises a ValueError if the config_path is not provided.
+        Raises a FileNotFoundError if config_path is not found.
+        Raises a MissingAuthToken error if the AUTH_TOKEN environment variable is not provided.
+        (TODO: update with issue #228)
+
+        config_path: str - the path to the INI-formatted config file
+        """
         if not config_path:
             raise ValueError("config_path is required")
 
