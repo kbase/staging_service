@@ -70,8 +70,9 @@ class StagingServiceConfig:
 def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str | None:
     """
     Returns the value for a key in the given ConfigParser section.
-    If is_required is True, and the value isn't present, this raises a ValueError.
-    If is_required is False, and the value isn't present, this returns None.
+    If is_required is True, and the key or value isn't present, this raises a ValueError.
+    If is_required is False, and the key isn't present, this returns None. If present with no
+    value, it returns an empty string.
     """
     if key not in section and is_required:
         raise ValueError(f"missing required key {key} in section {section.name}")
