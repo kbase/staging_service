@@ -75,7 +75,12 @@ def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str
     """
     if key not in section and is_required:
         raise ValueError(f"missing required key {key} in section {section.name}")
-    return section.get(key)
+    value = section.get(key)
+    if not value and is_required:
+        raise ValueError(
+            f"required key {key} in section {section.name} must not be empty or all whitespace"
+        )
+    return value
 
 
 def _get_path_value(section: SectionProxy, key: str) -> str:

@@ -15,7 +15,8 @@ TEST_TOKEN = None
 TEST_USER = None
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
-VALID_HEADER = "[staging_service]"
+VALID_HEADER_NAME = "staging_service"
+VALID_HEADER = f"[{VALID_HEADER_NAME}]"
 
 DEFAULT_CONFIG_DICT = {
     "AUTH_URL": AUTH_URL,
@@ -105,7 +106,8 @@ def test_missing_heading(tmp_path):
     bad_config = "[wrong_section]\nfoo=bar"
     config_path = write_config_file(tmp_path, bad_config)
     with pytest.raises(
-        ValueError, match=f"Config file {config_path} is missing required section {VALID_HEADER}"
+        ValueError,
+        match=f"Config file {config_path} is missing required section {VALID_HEADER_NAME}",
     ):
         StagingServiceConfig(config_path)
 
@@ -117,7 +119,19 @@ def test_missing_required_key(tmp_path, missing_key):
     config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, missing_config_dict))
     with pytest.raises(
         ValueError,
-        match=f"Config file {config_path} error: missing required key {missing_key} in section {VALID_HEADER}",
+        match=f"Config file {config_path} error: missing required key {missing_key} in section {VALID_HEADER_NAME}",
+    ):
+        StagingServiceConfig(config_path)
+
+
+@pytest.mark.parametrize("whitespace_key", DEFAULT_CONFIG_DICT.keys())
+def test_whitespace_required_key(tmp_path, whitespace_key):
+    whitespace_config_dict = DEFAULT_CONFIG_DICT.copy()
+    whitespace_config_dict[whitespace_key] = "   "
+    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, whitespace_config_dict))
+    with pytest.raises(
+        ValueError,
+        match=f"Config file {config_path} error: required key {whitespace_key} in section {VALID_HEADER_NAME} must not be empty or all whitespace",
     ):
         StagingServiceConfig(config_path)
 
