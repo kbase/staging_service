@@ -20,7 +20,7 @@ class StagingServiceConfig:
     This requires that all values are present.
     See deployment/conf/deployment.cfg for an example.
     It also holds the service auth token from the AUTH_TOKEN environment variable.
-    TODO: update when AUTH_TOKEN is moved into the config - see issue #227
+    TODO: update when AUTH_TOKEN is moved into the config - see issue #228
     """
 
     def __init__(self, config_path: str):

@@ -10,7 +10,7 @@ META_DIR = "/kb/deployment/data/metadata"
 CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
-# TODO update the below when config file templates are in place - issue #227
+# TODO update the below when config file templates are in place - issue #228
 TEST_TOKEN = None
 TEST_USER = None
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
