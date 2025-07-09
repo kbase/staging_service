@@ -116,7 +116,8 @@ def test_missing_required_key(tmp_path, missing_key):
     del missing_config_dict[missing_key]
     config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, missing_config_dict))
     with pytest.raises(
-        ValueError, match=f"Config file {config_path} error: missing required key {missing_key} in section {VALID_HEADER}"
+        ValueError,
+        match=f"Config file {config_path} error: missing required key {missing_key} in section {VALID_HEADER}",
     ):
         StagingServiceConfig(config_path)
 
