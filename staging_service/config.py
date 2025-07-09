@@ -20,6 +20,7 @@ class StagingServiceConfig:
     This requires that all values are present.
     See deployment/conf/deployment.cfg for an example.
     It also holds the service auth token from the AUTH_TOKEN environment variable.
+    TODO: update when AUTH_TOKEN is moved into the config - see issue #227
     """
 
     def __init__(self, config_path: str):
@@ -27,25 +28,29 @@ class StagingServiceConfig:
             raise ValueError("config_path is required")
 
         if not Path(config_path).exists():
-            raise FileNotFoundError(f"config path {config_path} does not exist")
+            raise FileNotFoundError(f"Config path {config_path} does not exist")
 
         config = ConfigParser()
         config.read(config_path)
 
         if _HEADING not in config:
-            raise ValueError(f"config file {config_path} is missing required section {_HEADING}")
+            raise ValueError(f"Config file {config_path} is missing required section {_HEADING}")
 
         if _ENV_AUTH_TOKEN not in os.environ or not os.environ[_ENV_AUTH_TOKEN]:
             raise MissingAuthToken("AUTH_TOKEN environment variable must be provided")
         self.auth_token = os.environ[_ENV_AUTH_TOKEN]
 
         heading = config[_HEADING]
-        self.auth_url = _get_value(heading, _AUTH_URL)
-        self.data_dir = _get_path_value(heading, _DATA_DIR)
-        self.meta_dir = _get_path_value(heading, _META_DIR)
-        self.concierge_path = _get_path_value(heading, _CONCIERGE_PATH)
-        self.file_extension_mappings = _get_path_value(heading, _FILE_EXTENSION_MAPPINGS)
-        self.dts_manifest_schema = _get_path_value(heading, _DTS_MANIFEST_SCHEMA)
+        try:
+            self.auth_url = _get_value(heading, _AUTH_URL)
+            self.data_dir = _get_path_value(heading, _DATA_DIR)
+            self.meta_dir = _get_path_value(heading, _META_DIR)
+            self.concierge_path = _get_path_value(heading, _CONCIERGE_PATH)
+            self.file_extension_mappings = _get_path_value(heading, _FILE_EXTENSION_MAPPINGS)
+            self.dts_manifest_schema = _get_path_value(heading, _DTS_MANIFEST_SCHEMA)
+        except ValueError as err:
+            # tack the file name on the error string
+            raise ValueError(f"Config file {config_path} error: " + str(err))
         self.test_token = _get_value(heading, _TEST_TOKEN, is_required=False)
         self.test_user = _get_value(heading, _TEST_USER, is_required=False)
 
@@ -57,7 +62,7 @@ def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str
     If is_required is False, and the value isn't present, this returns None.
     """
     if key not in section and is_required:
-        raise ValueError(f"Please provide {key} in the config file section {section.name}")
+        raise ValueError(f"missing required key {key} in section {section.name}")
     return section.get(key)
 
 
