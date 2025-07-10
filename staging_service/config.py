@@ -11,6 +11,7 @@ _FILE_EXTENSION_MAPPINGS = "FILE_EXTENSION_MAPPINGS"
 _DTS_MANIFEST_SCHEMA = "DTS_MANIFEST_SCHEMA"
 _HEADING = "staging_service"
 
+
 class StagingServiceConfig:
     """
     Constructs a simple config object from a passed config file path.
@@ -60,6 +61,7 @@ class StagingServiceConfig:
         except ValueError as err:
             # tack the file name on the error string
             raise ValueError(f"Config file {config_path} error: " + str(err))
+
 
 def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str | None:
     """
