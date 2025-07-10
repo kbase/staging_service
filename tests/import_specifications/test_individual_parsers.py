@@ -40,7 +40,7 @@ def temp_dir_fixture() -> Generator[Path, None, None]:
 @pytest.fixture(scope="module")
 def dts_validator() -> Generator[Draft202012Validator, None, None]:
     config = bootstrap_config()
-    with open(config["staging_service"]["DTS_MANIFEST_SCHEMA"]) as dts_schema_file:
+    with open(config.dts_manifest_schema) as dts_schema_file:
         schema = json.load(dts_schema_file)
         yield Draft202012Validator(schema)
 

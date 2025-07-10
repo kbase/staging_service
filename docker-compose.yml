@@ -1,5 +1,4 @@
 # WARNING this file does not sync up with the deployment automatically
-version: "3.1"
 services:
   staging_service:
     image: kbase/staging_service:develop
@@ -10,7 +9,8 @@ services:
     volumes:
       - "./data:/kb/deployment/lib/src/data"
       - "./:/staging_service"
-
     environment:
-      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
-      - FILE_LIFETIME="90"
+      KB_DEPLOYMENT_CONFIG: /kb/deployment/conf/deployment.cfg
+      FILE_LIFETIME: "90"
+      # This is the expected service token. Modify this so it's real for the environment.
+      AUTH_TOKEN: fake_token
