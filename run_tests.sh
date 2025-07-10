@@ -2,7 +2,6 @@
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 export KB_DEPLOYMENT_CONFIG="$DIR/deployment/conf/testing.cfg"
 export TESTS="${1:-tests}"
-export AUTH_TOKEN="fake_token"
 echo
 echo "****************************"
 echo "**"
