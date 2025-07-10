@@ -282,11 +282,6 @@ async def test_auth(request: web.Request):
     return web.Response(text=f"I'm authenticated as {username}")
 
 
-@routes.get("/file-lifetime")
-async def file_lifetime(_: web.Request):
-    return web.Response(text=os.environ["FILE_LIFETIME"])
-
-
 @routes.get("/existence/{query:.*}")
 async def file_exists(request: web.Request):
     username = await authorize_request(request)
