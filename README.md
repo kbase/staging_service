@@ -124,26 +124,6 @@ Error Connecting to auth service ...
 Must supply token
 ```
 
-### File Lifetime
-
-**URL** : `ci.kbase.us/services/staging_service/file-lifetime`
-**local URL** : `localhost:3000/file-lifetime`
-
-**Method** : `GET`
-
-#### Success Response
-
-**Code** : `200 OK`
-
-**Content example**
-number of days a file will be held for in staging service before being deleted
-this is not actually handled by the server but is expected to be performed by a
-cron job which shares the env variable read here
-
-```
-90
-```
-
 ### List Directory
 
 defaults to not show hidden dotfiles
