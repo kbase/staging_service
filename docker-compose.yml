@@ -12,5 +12,3 @@ services:
     environment:
       KB_DEPLOYMENT_CONFIG: /kb/deployment/conf/deployment.cfg
       FILE_LIFETIME: "90"
-      # This is the expected service token. Modify this so it's real for the environment.
-      AUTH_TOKEN: fake_token

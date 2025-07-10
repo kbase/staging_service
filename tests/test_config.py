@@ -1,7 +1,6 @@
 import pytest
 from pathlib import Path
-from staging_service.config import MissingAuthToken, StagingServiceConfig
-import os
+from staging_service.config import StagingServiceConfig
 
 # separate these for easier assertions
 AUTH_URL = "https://example.com/auth"
@@ -10,8 +9,7 @@ META_DIR = "/kb/deployment/data/metadata"
 CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
-# TODO update the below when config file templates are in place - issue #228
-AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
+AUTH_TOKEN = "fake_auth_token"
 
 VALID_HEADER_NAME = "staging_service"
 VALID_HEADER = f"[{VALID_HEADER_NAME}]"
@@ -23,6 +21,7 @@ DEFAULT_CONFIG_DICT = {
     "CONCIERGE_PATH": CONCIERGE_PATH,
     "FILE_EXTENSION_MAPPINGS": FILE_EXTENSION_MAPPINGS,
     "DTS_MANIFEST_SCHEMA": DTS_MANIFEST_SCHEMA,
+    "AUTH_TOKEN": AUTH_TOKEN
 }
 
 
@@ -45,7 +44,6 @@ def validate_config(config: StagingServiceConfig, **kwargs):
     Not the prettiest validator, but avoids a zillion kwargs.
     This validates that each attribute in the config file is as expected.
     Default values are given in DEFAULT_CONFIG_DICT above.
-    The default auth_token is taken from the environment variable AUTH_TOKEN.
     These can be updated to your use case by changing the relevant kwarg.
     See test_valid_config_with_test_info for an example.
     """
@@ -59,9 +57,6 @@ def validate_config(config: StagingServiceConfig, **kwargs):
         "auth_token",
     ]
     config_values = {key.lower(): value for key, value in DEFAULT_CONFIG_DICT.items()}
-    config_values = config_values | {
-        "auth_token": AUTH_TOKEN,
-    }
     config_values = config_values | kwargs
     for attr in config_attrs:
         assert getattr(config, attr) == config_values[attr]
@@ -122,6 +117,7 @@ def test_path_resolution(tmp_path):
     non_relative_config = f"""
         [staging_service]
         AUTH_URL = {AUTH_URL}
+        AUTH_TOKEN = {AUTH_TOKEN}
         DATA_DIR = ./data
         META_DIR = ./meta
         CONCIERGE_PATH = ./concierge
@@ -140,11 +136,3 @@ def test_path_resolution(tmp_path):
     for key in config_keys:
         value = getattr(config, key)
         assert Path(value).is_absolute()
-
-
-# TODO remove once AUTH_TOKEN becomes part of the config file (see issue #228)
-def test_missing_auth_token(monkeypatch, tmp_path):
-    monkeypatch.delenv("AUTH_TOKEN")
-    config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, DEFAULT_CONFIG_DICT))
-    with pytest.raises(MissingAuthToken, match="AUTH_TOKEN environment variable must be provided"):
-        StagingServiceConfig(config_path)
