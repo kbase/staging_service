@@ -77,7 +77,3 @@ def _get_path_value(section: SectionProxy, key: str) -> str:
     expects them that way. Consider changing it later.
     """
     return str(Path(_get_value(section, key)).absolute().resolve())
-
-
-class MissingAuthToken(Exception):
-    """Should be raised if the auth token environment variable is missing or empty"""
