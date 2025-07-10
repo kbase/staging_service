@@ -1,5 +1,4 @@
 from configparser import ConfigParser, SectionProxy
-import os
 from pathlib import Path
 
 _AUTH_TOKEN = "AUTH_TOKEN"
