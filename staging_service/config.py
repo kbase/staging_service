@@ -25,8 +25,7 @@ class StagingServiceConfig:
         """
         Reads the INI-formatted config file at `config_path`.
         This expects a single section - staging_service.
-        Required keys are given above - all except _TEST_TOKEN and _TEST_USER.
-        Any required key that is missing or null will raise a ValueError.
+        Any key that is missing or null will raise a ValueError.
         Raises a ValueError if the config_path is not provided.
         Raises a FileNotFoundError if config_path is not found.
         Raises a MissingAuthToken error if the AUTH_TOKEN environment variable is not provided.
@@ -63,17 +62,15 @@ class StagingServiceConfig:
             raise ValueError(f"Config file {config_path} error: " + str(err))
 
 
-def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str | None:
+def _get_value(section: SectionProxy, key: str) -> str:
     """
     Returns the value for a key in the given ConfigParser section.
-    If is_required is True, and the key or value isn't present, this raises a ValueError.
-    If is_required is False, and the key isn't present, this returns None. If present with no
-    value, it returns an empty string.
+    If the key or value isn't present, this raises a ValueError.
     """
-    if key not in section and is_required:
+    if key not in section:
         raise ValueError(f"missing required key {key} in section {section.name}")
     value = section.get(key)
-    if not value and is_required:
+    if not value:
         raise ValueError(
             f"required key {key} in section {section.name} must not be empty or all whitespace"
         )
