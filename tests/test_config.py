@@ -11,8 +11,6 @@ CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
 # TODO update the below when config file templates are in place - issue #228
-TEST_TOKEN = None
-TEST_USER = None
 AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
 
 VALID_HEADER_NAME = "staging_service"
@@ -46,8 +44,7 @@ def validate_config(config: StagingServiceConfig, **kwargs):
     """
     Not the prettiest validator, but avoids a zillion kwargs.
     This validates that each attribute in the config file is as expected.
-    Default values are given in DEFAULT_CONFIG_DICT above, along with a default
-    None for test_token and test_user.
+    Default values are given in DEFAULT_CONFIG_DICT above.
     The default auth_token is taken from the environment variable AUTH_TOKEN.
     These can be updated to your use case by changing the relevant kwarg.
     See test_valid_config_with_test_info for an example.
@@ -60,13 +57,9 @@ def validate_config(config: StagingServiceConfig, **kwargs):
         "file_extension_mappings",
         "dts_manifest_schema",
         "auth_token",
-        "test_token",
-        "test_user",
     ]
     config_values = {key.lower(): value for key, value in DEFAULT_CONFIG_DICT.items()}
     config_values = config_values | {
-        "test_token": TEST_TOKEN,
-        "test_user": TEST_USER,
         "auth_token": AUTH_TOKEN,
     }
     config_values = config_values | kwargs
@@ -78,17 +71,6 @@ def test_valid_config(tmp_path):
     config_path = write_config_file(tmp_path, dummy_config(VALID_HEADER, DEFAULT_CONFIG_DICT))
     config = StagingServiceConfig(config_path)
     validate_config(config)
-
-
-def test_valid_config_with_test_info(tmp_path):
-    fake_token = "fake_token"
-    fake_user = "fake_user"
-    config_with_tokens = dummy_config(
-        VALID_HEADER, DEFAULT_CONFIG_DICT | {"TEST_TOKEN": fake_token, "TEST_USER": fake_user}
-    )
-    config_path = write_config_file(tmp_path, config_with_tokens)
-    config = StagingServiceConfig(config_path)
-    validate_config(config, test_token=fake_token, test_user=fake_user)
 
 
 def test_missing_config_path():

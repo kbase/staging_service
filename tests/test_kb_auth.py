@@ -7,9 +7,6 @@ import os
 
 CONFIG = bootstrap_config()
 AUTH_URL = CONFIG.auth_url
-# TODO: temporary until config is templated, then update to
-# CONFIG.test_token, CONFIG.test_user
-# see github issue 228: https://github.com/kbase/staging_service/issues/228
 TEST_TOKEN = os.environ.get("KBASE_TEST_TOKEN")
 TEST_USER = os.environ.get("KBASE_TEST_USER")
 

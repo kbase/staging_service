@@ -10,9 +10,6 @@ _CONCIERGE_PATH = "CONCIERGE_PATH"
 _FILE_EXTENSION_MAPPINGS = "FILE_EXTENSION_MAPPINGS"
 _DTS_MANIFEST_SCHEMA = "DTS_MANIFEST_SCHEMA"
 _HEADING = "staging_service"
-_TEST_TOKEN = "TEST_TOKEN"
-_TEST_USER = "TEST_USER"
-
 
 class StagingServiceConfig:
     """
@@ -63,9 +60,6 @@ class StagingServiceConfig:
         except ValueError as err:
             # tack the file name on the error string
             raise ValueError(f"Config file {config_path} error: " + str(err))
-        self.test_token = _get_value(heading, _TEST_TOKEN, is_required=False)
-        self.test_user = _get_value(heading, _TEST_USER, is_required=False)
-
 
 def _get_value(section: SectionProxy, key: str, is_required: bool = True) -> str | None:
     """
