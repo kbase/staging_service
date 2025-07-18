@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 import json
 import logging
@@ -13,6 +14,7 @@ from aiohttp import web
 import jsonschema
 
 from staging_service.config import StagingServiceConfig
+from staging_service.dts_file_watcher import DTSFileWatcher
 
 from .app_error_formatter import format_import_spec_errors
 from .kb_auth_client import KBaseAuth, InvalidTokenError
@@ -696,5 +698,20 @@ async def app_factory(config: StagingServiceConfig) -> web.Application:
 
     global auth_client
     auth_client = await KBaseAuth.create(config.auth_url)
+
+    watcher = DTSFileWatcher(auth_client, config, PathPy(Path._DTS_STAGING_DIR))
+
+    async def start_watcher(app: web.Application):
+        # In the aiohttp docs this seems to be the preferred way to track things
+        # in the web app - just treat the app object like a dictionary.
+        # That feels really weird, but I'm doing it anyway.
+        app["file_watch_task"] = asyncio.create_task(watcher.start_watching_for_files())
+
+    async def stop_watcher(app: web.Application):
+        watcher.stop_watching_for_files()
+        await app["file_watch_task"]
+
+    app.on_startup.append(start_watcher)
+    app.on_shutdown.append(stop_watcher)
 
     return app

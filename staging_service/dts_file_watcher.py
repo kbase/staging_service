@@ -1,0 +1,172 @@
+import asyncio
+from watchfiles import Change, awatch
+from pathlib import Path
+import logging
+import json
+import shutil
+
+from staging_service.config import StagingServiceConfig
+from staging_service.kb_auth_client import KBaseAuth
+from .utils import Path as UserPath
+
+logger = logging.getLogger("dts_file_watcher")
+
+# TODO: move these to config
+TARGET_FILE_NAME = "manifest.json"
+WAIT_INTERVAL_SEC = 1.0
+STABLE_TIME = 2.0
+WAIT_FOR_FILE_LIMIT = 5
+WATCHFILES_POLL_DELAY_MS = 500
+WATCHFILES_FORCE_POLLING = True
+
+
+class DTSFileWatcher:
+    """
+    DTS File Watcher
+    This uses watchfiles to monitor the given watch_dir for Data Transfer Service (DTS) manifest files.
+    When files are copied over from the DTS, they are expected to follow a few rules:
+    1. They come to the watched directory in a subdirectory (generally a UUID name, but doesn't matter)
+    2. The last file to appear is a "manifest.json" file which contains information about the files copied.
+    3. The root object of the file includes a username key that denotes the username.
+
+    When a manifest.json file is detected, the entire directory it is located in should be moved to
+    the user's staging area.
+    """
+    def __init__(self, auth_client: KBaseAuth, config: StagingServiceConfig, watch_dir: Path):
+        self._auth_client = auth_client
+        self._watch_dir = watch_dir
+        self._config = config
+        # the watcher listens for this on each loop, and stops when it's set.
+        self._stop_event = asyncio.Event()
+
+    async def start_watching_for_files(self) -> None:
+        """
+        Starts up the process for watching for DTS files.
+        This uses the async version of watchfiles. This expects to run forever unless the asyncio
+        stop event is triggered (self._stop_event).
+
+        Because of the nature of file io messages not playing consistently with Docker containers,
+        this uses the file system polling version. That is, instead of listening for inotify events,
+        it periodically asks for them from the operating system. This is definitely not the most
+        performant way this can work, but given how deployments happen, it seems to be ok.
+        If there are performance issues with the staging service, adjust the poll delay time.
+
+        Errors that occur while parsing manifest files or trying to move them will be logged, but
+        shouldn't raise an error.
+
+        TODO: add a tracker for the file copying process with a service endpoint for monitoring
+        """
+        if not self._watch_dir.exists():
+            err_str = (
+                f"Directory to watch: {self._watch_dir} does not exist. Not watching for DTS files."
+            )
+            logger.error(err_str)
+            raise FileNotFoundError(err_str)
+
+        logger.info(f"watching dir {self._watch_dir} for DTS manifest files.")
+
+        async for changes in awatch(
+            self._watch_dir,
+            force_polling=WATCHFILES_FORCE_POLLING,
+            poll_delay_ms=WATCHFILES_POLL_DELAY_MS,
+            step=1,
+            stop_event=self._stop_event,
+            yield_on_timeout=True,
+        ):
+            for change_type, change_file_path in changes:
+                file_path = Path(change_file_path)
+                # manifest file must be in a subdirectory to be detected
+                if (
+                    change_type == Change.added
+                    and file_path.name == TARGET_FILE_NAME
+                    and file_path.parent != self._watch_dir
+                ):
+                    logger.info(f"New DTS manifest file detected: {file_path}")
+                    try:
+                        await self._process_complete_manifest(file_path)
+                    except (ValueError, RuntimeError) as e:
+                        logger.error(str(e))
+                    except json.JSONDecodeError as e:
+                        logger.error(f"File {file_path} does not appear to be JSON formatted.", e)
+        logger.info(f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files.")
+
+    def stop_watching_for_files(self) -> None:
+        self._stop_event.set()
+
+    async def _process_complete_manifest(self, manifest_path: Path):
+        """
+        It's incredibly unlikely for a "file created" event to get caught by watchfiles
+        and not have the file present. This, however, gives it a few seconds, if that
+        edge case happens.
+        """
+        wait_cycle = 0
+        while not manifest_path.exists() and wait_cycle < WAIT_FOR_FILE_LIMIT:
+            logger.info(f"waiting for manifest file at {manifest_path} to appear")
+            await asyncio.sleep(WAIT_INTERVAL_SEC)
+            wait_cycle += 1
+
+        if not manifest_path.exists():
+            raise RuntimeError(
+                f"manifest file {manifest_path} did not appear after {WAIT_FOR_FILE_LIMIT * WAIT_INTERVAL_SEC} seconds"
+            )
+
+        # Wait for the file size to stabilize for WAIT_INTERVAL_SEC
+        cur_size = manifest_path.stat().st_size
+        last_check = asyncio.get_event_loop().time()
+
+        while True:
+            await asyncio.sleep(WAIT_INTERVAL_SEC)
+            new_size = manifest_path.stat().st_size
+            now = asyncio.get_event_loop().time()
+
+            if new_size != cur_size:
+                cur_size = new_size
+                last_check = now
+            elif now - last_check >= STABLE_TIME:
+                break
+        username = await self._get_user_from_manifest(manifest_path)
+        # If the user doesn't exist in KBase, fail.
+        if not await self._auth_client.is_valid_user(username):
+            raise ValueError(
+                f"User {username} referenced in manifest file {manifest_path} does not exist."
+            )
+        # always move files from the root of the manifest path to a subdirectory for the
+        # user matching the manifest path.
+        # e.g. if the manifest is in /data/bulk/dts/some_transfer_uuid/manifest.json
+        # and the username is "kbase_user" move all files in that directory to
+        # DATA_DIR/kbase_user/some_transfer_uuid/
+        user_path = UserPath.validate_path(username)
+        dts_path_name = manifest_path.parent.name
+        # TODO: verify user staging service directory (util?)
+        dest_path = Path(user_path.full_path) / dts_path_name
+        return await self._move_dts_files(manifest_path.parent, dest_path)
+
+    async def _get_user_from_manifest(self, manifest_path: Path) -> str:
+        """
+        Opens the manifest JSON file and extract the username, expected at the
+        top level.
+        Raises a ValueError if:
+        * File does not exist.
+        * File's JSON has no "username" field at the top level, or username is an empty string.
+        * Username is not a valid KBase user id.
+        Raises a JSONDecodeError if the file is not JSON, or is malformed.
+        """
+        with open(manifest_path, "r") as manifest_infile:
+            manifest = json.load(manifest_infile)
+        if "username" not in manifest:
+            raise ValueError("Manifest file {manifest_path} is missing the 'username' key.")
+        username = manifest["username"]
+        if username is None or username == "":
+            raise ValueError("Username is not a valid string")
+        return username
+
+    async def _move_dts_files(self, src_path: Path, dest_path: Path):
+        logger.info(f"Moving files from {src_path} to {dest_path}")
+        # TODO: copy with checksum before removing?
+        # TODO: modify dest path if it exists
+        try:
+            # Needs to be stuffed in a thread, or this will block the webapp
+            return await asyncio.to_thread(shutil.move, src_path, dest_path)
+            # shutil.copytree(path.parent, dest_path)
+        except Exception as e:
+            logger.error(e)
