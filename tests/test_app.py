@@ -44,6 +44,7 @@ utils.Path._DATA_DIR = CONFIG.data_dir
 utils.Path._META_DIR = CONFIG.meta_dir
 AUTH_URL = CONFIG.auth_url
 
+
 @pytest.fixture(scope="function")
 def config_temp_dir(tmp_path):
     configured_dts_path = CONFIG.dts_staging_dir
@@ -200,7 +201,11 @@ async def test_cmd(txt):
 
 
 async def do_auth_test(
-    token: str | None, cookies: dict[str, str] | None, expected_status: int, expected_text: str, config: StagingServiceConfig
+    token: str | None,
+    cookies: dict[str, str] | None,
+    expected_status: int,
+    expected_text: str,
+    config: StagingServiceConfig,
 ):
     async with await AppClient.create(config, token, cookies=cookies) as cli:
         resp = await cli.get("/test-auth")
@@ -215,7 +220,9 @@ async def test_auth(config_temp_dir):
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
 async def test_auth_cookies(cookie_name, config_temp_dir):
-    await do_auth_test(None, {cookie_name: TEST_TOKEN}, 200, f"I'm authenticated as {TEST_USER}", config_temp_dir)
+    await do_auth_test(
+        None, {cookie_name: TEST_TOKEN}, 200, f"I'm authenticated as {TEST_USER}", config_temp_dir
+    )
 
 
 @pytest.mark.parametrize("token", [None, ""])
@@ -636,7 +643,9 @@ async def test_download(txt, config_temp_dir):
             result_text = await res.read()
             assert result_text == txt.encode()
 
+
 print(inspect.signature(test_download))
+
 
 async def test_download_errors(config_temp_dir):
     async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
@@ -812,7 +821,9 @@ async def test_upload_fail_dotfile(config_temp_dir):
 
 
 async def test_upload_fail_comma_in_file(config_temp_dir):
-    await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name", config_temp_dir)
+    await _upload_file_fail_filename(
+        "test,file", "cannot upload file with ',' in name", config_temp_dir
+    )
 
 
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
@@ -1228,7 +1239,9 @@ async def test_bulk_specification_dts_fail_wrong_format(config_temp_dir):
         ("some_manifest", app.NO_EXTENSION),
     ],
 )
-async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str, config_temp_dir):
+async def test_bulk_specification_dts_fail_wrong_extension(
+    manifest: str, expected: str, config_temp_dir
+):
     async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
@@ -1871,7 +1884,9 @@ async def test_write_bulk_specification_fail_no_output_dir(config_temp_dir):
 
 async def test_write_bulk_specification_fail_wrong_type_for_output_dir(config_temp_dir):
     await _write_bulk_specification_json_fail(
-        {"output_directory": 4}, "output_directory is required and must be a string", config_temp_dir
+        {"output_directory": 4},
+        "output_directory is required and must be a string",
+        config_temp_dir,
     )
 
 
@@ -1885,7 +1900,7 @@ async def test_write_bulk_specification_fail_wrong_file_type(config_temp_dir):
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo", "output_file_type": "XSV"},
         "Invalid output_file_type: XSV",
-        config_temp_dir
+        config_temp_dir,
     )
 
 
@@ -1893,7 +1908,7 @@ async def test_write_bulk_specification_fail_invalid_type_value(config_temp_dir)
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
         "The value for data type a must be a mapping",
-        config_temp_dir
+        config_temp_dir,
     )
 
 

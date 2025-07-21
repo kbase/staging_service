@@ -32,6 +32,7 @@ class DTSFileWatcher:
     When a manifest.json file is detected, the entire directory it is located in should be moved to
     the user's staging area.
     """
+
     def __init__(self, auth_client: KBaseAuth, config: StagingServiceConfig, watch_dir: Path):
         self._auth_client = auth_client
         self._watch_dir = watch_dir
@@ -88,7 +89,9 @@ class DTSFileWatcher:
                         logger.error(str(e))
                     except json.JSONDecodeError as e:
                         logger.error(f"File {file_path} does not appear to be JSON formatted.", e)
-        logger.info(f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files.")
+        logger.info(
+            f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files."
+        )
 
     def stop_watching_for_files(self) -> None:
         self._stop_event.set()
