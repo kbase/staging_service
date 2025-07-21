@@ -1,4 +1,5 @@
 import asyncio
+import aiofiles
 import hashlib
 import json
 import os
@@ -340,8 +341,8 @@ async def test_metadata(config_temp_dir):
 
             # testing corrupted metadata file
             path = os.path.join(CONFIG.meta_dir, TEST_USER, "test", "test_file_1")
-            with open(path, encoding="utf-8", mode="w") as f:
-                f.write('{"source": "Unknown"}')
+            async with aiofiles.open(path, encoding="utf-8", mode="w") as f:
+                await f.write('{"source": "Unknown"}')
             res3 = await cli.get(
                 os.path.join("metadata", "test", "test_file_1"),
             )
@@ -988,8 +989,8 @@ async def test_bulk_specification_success(config_temp_dir):
             fu.make_dir(f"{TEST_USER}/somefolder")
             base = Path(fu.base_dir) / TEST_USER
             tsv = "genomes.tsv"
-            with open(base / tsv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / tsv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
                         "spec1\tspec2\t   spec3   \n",
@@ -999,8 +1000,8 @@ async def test_bulk_specification_success(config_temp_dir):
                     ]
                 )
             csv = "somefolder/breakfastcereals.csv"
-            with open(base / csv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / csv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
                         "s1,s2,s3\n",
@@ -1124,10 +1125,10 @@ async def test_bulk_specification_dts_success(config_temp_dir):
                     ],
                 },
             }
-            with open(base / manifest_1, "w", encoding="utf-8") as f:
-                json.dump(manifest_1_dict, f)
-            with open(base / manifest_2, "w", encoding="utf-8") as f:
-                json.dump(manifest_2_dict, f)
+            async with aiofiles.open(base / manifest_1, "w", encoding="utf-8") as f:
+                await json.dump(manifest_1_dict, f)
+            async with aiofiles.open(base / manifest_2, "w", encoding="utf-8") as f:
+                await json.dump(manifest_2_dict, f)
             resp = await cli.get(
                 f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts"
             )
@@ -1183,8 +1184,8 @@ async def test_bulk_specification_dts_fail_json_without_dts(config_temp_dir):
                     ],
                 },
             }
-            with open(base / manifest_1, "w", encoding="utf-8") as f:
-                json.dump(manifest_1_dict, f)
+            async with aiofiles.open(base / manifest_1, "w", encoding="utf-8") as f:
+                await json.dump(manifest_1_dict, f)
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}")
             jsn = await resp.json()
             assert jsn == {
@@ -1209,8 +1210,8 @@ async def test_bulk_specification_dts_fail_wrong_format(config_temp_dir):
             base = Path(fu.base_dir) / TEST_USER / sub_dir
             manifest = "test_manifest.json"
             manifest_data = ["wrong", "format"]
-            with open(base / manifest, "w", encoding="utf-8") as f:
-                json.dump(manifest_data, f)
+            async with aiofiles.open(base / manifest, "w", encoding="utf-8") as f:
+                await json.dump(manifest_data, f)
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
@@ -1245,8 +1246,8 @@ async def test_bulk_specification_dts_fail_wrong_extension(
             fu.make_dir(dts_dir)
             base = Path(fu.base_dir) / TEST_USER / sub_dir
             manifest_data = {"resources": [], "instructions": {}}
-            with open(base / manifest, "w", encoding="utf-8") as f:
-                json.dump(manifest_data, f)
+            async with aiofiles.open(base / manifest, "w", encoding="utf-8") as f:
+                await json.dump(manifest_data, f)
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
@@ -1325,8 +1326,8 @@ async def test_bulk_specification_fail_not_found(config_temp_dir):
             fu.make_dir(f"{TEST_USER}/otherfolder")
             base = Path(fu.base_dir) / TEST_USER
             tsv = "otherfolder/genomes.tsv"
-            with open(base / tsv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / tsv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
                         "spec1\tspec2\t   spec3   \n",
@@ -1353,8 +1354,8 @@ async def test_bulk_specification_fail_parse_fail(config_temp_dir):
             base = Path(fu.base_dir) / TEST_USER
             tsv = "otherfolder/genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / tsv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
                         "spec1\tspec2\t   spec3   \n",
@@ -1364,8 +1365,8 @@ async def test_bulk_specification_fail_parse_fail(config_temp_dir):
                 )
             csv = "otherfolder/thing.csv"
             # this one has a misspelling in the header
-            with open(base / csv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / csv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Dater type: breakfastcereals; Columns: 3; Version: 1\n",
                         "s1,s2,s3\n",
@@ -1462,8 +1463,8 @@ async def test_bulk_specification_fail_column_count(config_temp_dir):
             base = Path(fu.base_dir) / TEST_USER
             tsv = "genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / tsv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
                         "spec1\tspec2\t   spec3   \n",
@@ -1473,8 +1474,8 @@ async def test_bulk_specification_fail_column_count(config_temp_dir):
                 )
             csv = "thing.csv"
             # this one is missing a column in the last row
-            with open(base / csv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / csv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
                         "s1,s2,s3\n",
@@ -1535,8 +1536,8 @@ async def test_bulk_specification_fail_multiple_specs_per_type(config_temp_dir):
             base = Path(fu.base_dir) / TEST_USER
             tsv = "genomes.tsv"
             # this one is fine
-            with open(base / tsv, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / tsv, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: genomes; Columns: 3; Version: 1\n",
                         "spec1\tspec2\t   spec3   \n",
@@ -1546,8 +1547,8 @@ async def test_bulk_specification_fail_multiple_specs_per_type(config_temp_dir):
                 )
             csv1 = "thing.csv"
             # this is the first of the breakfastcereals data sources, so fine
-            with open(base / csv1, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / csv1, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 3; Version: 1\n",
                         "s1,s2,s3\n",
@@ -1557,8 +1558,8 @@ async def test_bulk_specification_fail_multiple_specs_per_type(config_temp_dir):
                 )
             csv2 = "thing2.csv"
             # this data type is also breakfastcereals, so will cause an error
-            with open(base / csv2, "w", encoding="utf-8") as f:
-                f.writelines(
+            async with aiofiles.open(base / csv2, "w", encoding="utf-8") as f:
+                await f.writelines(
                     [
                         "Data type: breakfastcereals; Columns: 2; Version: 1\n",
                         "s1,s2\n",
