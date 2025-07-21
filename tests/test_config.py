@@ -10,6 +10,7 @@ CONCIERGE_PATH = "/kbaseconcierge"
 FILE_EXTENSION_MAPPINGS = "/kb/deployment/file_mappings.json"
 DTS_MANIFEST_SCHEMA = "/kb/deployment/dts_manifest_schema.json"
 AUTH_TOKEN = "fake_auth_token"
+DTS_STAGING_DIR = "/kb/deployment/data/dts_staging"
 
 VALID_HEADER_NAME = "staging_service"
 VALID_HEADER = f"[{VALID_HEADER_NAME}]"
@@ -18,6 +19,7 @@ DEFAULT_CONFIG_DICT = {
     "AUTH_URL": AUTH_URL,
     "DATA_DIR": DATA_DIR,
     "META_DIR": META_DIR,
+    "DTS_STAGING_DIR": DTS_STAGING_DIR,
     "CONCIERGE_PATH": CONCIERGE_PATH,
     "FILE_EXTENSION_MAPPINGS": FILE_EXTENSION_MAPPINGS,
     "DTS_MANIFEST_SCHEMA": DTS_MANIFEST_SCHEMA,
@@ -55,6 +57,7 @@ def validate_config(config: StagingServiceConfig, **kwargs):
         "file_extension_mappings",
         "dts_manifest_schema",
         "auth_token",
+        "dts_staging_dir",
     ]
     config_values = {key.lower(): value for key, value in DEFAULT_CONFIG_DICT.items()}
     config_values = config_values | kwargs
@@ -123,6 +126,7 @@ def test_path_resolution(tmp_path):
         CONCIERGE_PATH = ./concierge
         FILE_EXTENSION_MAPPINGS = ./file_extension_mappings.json
         DTS_MANIFEST_SCHEMA = ./dts_manifest_schema.json
+        DTS_STAGING_DIR = ./data/dts_staging
     """
     config_path = write_config_file(tmp_path, non_relative_config)
     config = StagingServiceConfig(config_path)
@@ -132,6 +136,7 @@ def test_path_resolution(tmp_path):
         "concierge_path",
         "file_extension_mappings",
         "dts_manifest_schema",
+        "dts_staging_dir",
     ]
     for key in config_keys:
         value = getattr(config, key)

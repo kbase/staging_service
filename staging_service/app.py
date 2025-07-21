@@ -644,6 +644,7 @@ def inject_config_dependencies(config: StagingServiceConfig):
     Path._DATA_DIR = config.data_dir
     Path._META_DIR = config.meta_dir
     Path._CONCIERGE_PATH = config.concierge_path
+    Path._DTS_STAGING_DIR = config.dts_staging_dir
 
     global _DTS_MANIFEST_VALIDATOR
     # will raise an Exception if the schema is invalid

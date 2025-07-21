@@ -8,6 +8,7 @@ _AUTH_URL = "AUTH_URL"
 _CONCIERGE_PATH = "CONCIERGE_PATH"
 _FILE_EXTENSION_MAPPINGS = "FILE_EXTENSION_MAPPINGS"
 _DTS_MANIFEST_SCHEMA = "DTS_MANIFEST_SCHEMA"
+_DTS_STAGING_DIR = "DTS_STAGING_DIR"
 _HEADING = "staging_service"
 
 
@@ -49,6 +50,7 @@ class StagingServiceConfig:
             self.concierge_path = _get_path_value(heading, _CONCIERGE_PATH)
             self.file_extension_mappings = _get_path_value(heading, _FILE_EXTENSION_MAPPINGS)
             self.dts_manifest_schema = _get_path_value(heading, _DTS_MANIFEST_SCHEMA)
+            self.dts_staging_dir = _get_path_value(heading, _DTS_STAGING_DIR)
         except ValueError as err:
             # tack the file name on the error string
             raise ValueError(f"Config file {config_path} error: " + str(err))
