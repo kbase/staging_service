@@ -85,10 +85,10 @@ class DTSFileWatcher:
                     logger.info(f"New DTS manifest file detected: {file_path}")
                     try:
                         await self._process_complete_manifest(file_path)
-                    except (ValueError, RuntimeError) as e:
-                        logger.error(str(e))
                     except json.JSONDecodeError as e:
                         logger.error(f"File {file_path} does not appear to be JSON formatted.", e)
+                    except (ValueError, RuntimeError) as e:
+                        logger.error(str(e))
         logger.info(
             f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files."
         )
