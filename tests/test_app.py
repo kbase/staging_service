@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import inspect
 import json
 import os
 import platform
@@ -17,7 +18,7 @@ from urllib.parse import unquote, urlencode
 import openpyxl
 import pandas
 from aiohttp import FormData, test_utils
-from hypothesis import given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 import staging_service.app as app
@@ -43,21 +44,12 @@ utils.Path._DATA_DIR = CONFIG.data_dir
 utils.Path._META_DIR = CONFIG.meta_dir
 AUTH_URL = CONFIG.auth_url
 
-
-def asyncgiven(**kwargs):
-    """alternative to hypothesis.given decorator for async"""
-
-    def real_decorator(fn):
-        @given(**kwargs)
-        def aio_wrapper(*args, **kwargs):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            future = asyncio.wait_for(fn(*args, **kwargs), timeout=60)
-            loop.run_until_complete(future)
-
-        return aio_wrapper
-
-    return real_decorator
+@pytest.fixture(scope="function")
+def config_temp_dir(tmp_path):
+    configured_dts_path = CONFIG.dts_staging_dir
+    CONFIG.dts_staging_dir = tmp_path
+    yield CONFIG
+    CONFIG.dts_staging_dir = configured_dts_path
 
 
 async def mock_globus_app(config: StagingServiceConfig):
@@ -188,7 +180,8 @@ def test_path_sanitation(username_first, username_rest, path):
     assert validated.metadata_path.find("../") == -1
 
 
-@asyncgiven(txt=st.text())
+@given(txt=st.text())
+@pytest.mark.asyncio
 async def test_cmd(txt):
     with FileUtil(CONFIG.data_dir) as fs:
         d = fs.make_dir("test")
@@ -207,36 +200,36 @@ async def test_cmd(txt):
 
 
 async def do_auth_test(
-    token: str | None, cookies: dict[str, str] | None, expected_status: int, expected_text: str
+    token: str | None, cookies: dict[str, str] | None, expected_status: int, expected_text: str, config: StagingServiceConfig
 ):
-    async with await AppClient.create(CONFIG, token, cookies=cookies) as cli:
+    async with await AppClient.create(config, token, cookies=cookies) as cli:
         resp = await cli.get("/test-auth")
         assert resp.status == expected_status
         text = await resp.text()
         assert expected_text in text
 
 
-async def test_auth():
-    await do_auth_test(TEST_TOKEN, None, 200, f"I'm authenticated as {TEST_USER}")
+async def test_auth(config_temp_dir):
+    await do_auth_test(TEST_TOKEN, None, 200, f"I'm authenticated as {TEST_USER}", config_temp_dir)
 
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
-async def test_auth_cookies(cookie_name):
-    await do_auth_test(None, {cookie_name: TEST_TOKEN}, 200, f"I'm authenticated as {TEST_USER}")
+async def test_auth_cookies(cookie_name, config_temp_dir):
+    await do_auth_test(None, {cookie_name: TEST_TOKEN}, 200, f"I'm authenticated as {TEST_USER}", config_temp_dir)
 
 
 @pytest.mark.parametrize("token", [None, ""])
-async def test_auth_fail_no_token(token):
-    await do_auth_test(token, None, 401, "must provide an auth token")
+async def test_auth_fail_no_token(token, config_temp_dir):
+    await do_auth_test(token, None, 401, "must provide an auth token", config_temp_dir)
 
 
-async def test_auth_fail_bad_token():
-    await do_auth_test("bad_token", None, 401, "token is invalid")
+async def test_auth_fail_bad_token(config_temp_dir):
+    await do_auth_test("bad_token", None, 401, "token is invalid", config_temp_dir)
 
 
 @pytest.mark.parametrize("cookie_name", ["kbase_session", "kbase_session_backup"])
-async def test_auth_fail_bad_cookie_token(cookie_name):
-    await do_auth_test(None, {cookie_name: "bad_token"}, 401, "token is invalid")
+async def test_auth_fail_bad_cookie_token(cookie_name, config_temp_dir):
+    await do_auth_test(None, {cookie_name: "bad_token"}, 401, "token is invalid", config_temp_dir)
 
 
 async def test_auth_fail_service_err():
@@ -245,19 +238,19 @@ async def test_auth_fail_service_err():
     pass
 
 
-async def test_service():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_service(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.get("/test-service")
         assert resp.status == 200
         text = await resp.text()
         assert "staging service version" in text
 
 
-async def test_jgi_metadata():
+async def test_jgi_metadata(config_temp_dir):
     txt = "testing text\n"
     jgi_metadata = '{"file_owner": "sdm", "added_date": "2013-08-12T00:21:53.844000"}'
 
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_jgi.fastq"), txt)
@@ -278,9 +271,9 @@ async def test_jgi_metadata():
             assert res1.status == 404
 
 
-async def test_metadata():
+async def test_metadata(config_temp_dir):
     txt = "testing text\n"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -372,9 +365,9 @@ async def test_metadata():
             assert not json.get("isFolder")
 
 
-async def test_define_upa():
+async def test_define_upa(config_temp_dir):
     txt = "testing text\n"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -444,9 +437,9 @@ async def test_define_upa():
             assert res6.status == 400
 
 
-async def test_mv():
+async def test_mv(config_temp_dir):
     txt = "testing text\n"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -507,9 +500,9 @@ async def test_mv():
             assert res7.status == 404
 
 
-async def test_delete():
+async def test_delete(config_temp_dir):
     txt = "testing text\n"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -547,9 +540,9 @@ async def test_delete():
             assert res5.status == 404
 
 
-async def test_list():
+async def test_list(config_temp_dir):
     txt = "testing text"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -626,10 +619,12 @@ async def test_list():
 
 
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
-@settings(deadline=None)
-@asyncgiven(txt=st.text())
-async def test_download(txt):
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+# ignore hypothesis warning about function scoped fixture
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(txt=st.text())
+@pytest.mark.asyncio
+async def test_download(txt, config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -641,9 +636,10 @@ async def test_download(txt):
             result_text = await res.read()
             assert result_text == txt.encode()
 
+print(inspect.signature(test_download))
 
-async def test_download_errors():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_download_errors(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
 
@@ -657,9 +653,9 @@ async def test_download_errors():
             assert res2.status == 400
 
 
-async def test_similar():
+async def test_similar(config_temp_dir):
     txt = "testing text"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1.fq"), txt)
@@ -689,9 +685,9 @@ async def test_similar():
             assert res3.status == 400
 
 
-async def test_existence():
+async def test_existence(config_temp_dir):
     txt = "testing text"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
@@ -744,9 +740,9 @@ async def test_existence():
             assert json["isFolder"] is False
 
 
-async def test_search():
+async def test_search(config_temp_dir):
     txt = "testing text"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
             fs.make_dir(os.path.join(TEST_USER, "test"))
             fs.make_file(os.path.join(TEST_USER, "test", "test1"), txt)
@@ -769,9 +765,9 @@ async def test_search():
             assert len(json) == 2
 
 
-async def test_upload():
+async def test_upload(config_temp_dir):
     txt = "testing text\n"
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         # testing missing body
         res1 = await cli.post("upload")
         assert res1.status == 400
@@ -787,11 +783,11 @@ async def test_upload():
             assert res2.status == 200
 
 
-async def _upload_file_fail_filename(filename: str, err: str):
+async def _upload_file_fail_filename(filename: str, err: str, config: StagingServiceConfig):
     # Note two file uploads in a row causes a test error:
     # https://github.com/aio-libs/aiohttp/issues/3968
     async with await AppClient.create(
-        CONFIG, TEST_TOKEN
+        config, TEST_TOKEN
     ) as cli:  # username is ignored by AppClient
         formdata = FormData()
         formdata.add_field("destPath", "/")
@@ -803,26 +799,27 @@ async def _upload_file_fail_filename(filename: str, err: str):
         assert res.status == 403
 
 
-async def test_upload_fail_leading_space():
+async def test_upload_fail_leading_space(config_temp_dir):
     await _upload_file_fail_filename(
-        " test_file", "cannot upload file with name beginning with space"
+        " test_file", "cannot upload file with name beginning with space", config_temp_dir
     )
 
 
-async def test_upload_fail_dotfile():
+async def test_upload_fail_dotfile(config_temp_dir):
     await _upload_file_fail_filename(
-        ".test_file", "cannot upload file with name beginning with '.'"
+        ".test_file", "cannot upload file with name beginning with '.'", config_temp_dir
     )
 
 
-async def test_upload_fail_comma_in_file():
-    await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name")
+async def test_upload_fail_comma_in_file(config_temp_dir):
+    await _upload_file_fail_filename("test,file", "cannot upload file with ',' in name", config_temp_dir)
 
 
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
-@settings(deadline=None)
-@asyncgiven(contents=st.text())
-async def test_directory_decompression(contents):
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(contents=st.text())
+@pytest.mark.asyncio
+async def test_directory_decompression(config_temp_dir, contents):
     fname = "test"
     dirname = "dirname"
     path = utils.Path.validate_path(TEST_USER, os.path.join(dirname, fname))
@@ -840,7 +837,7 @@ async def test_directory_decompression(contents):
         ("bztar", ".tar.bz"),
         ("tar", ".tar"),
     ]
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(TEST_USER, dirname))
@@ -879,9 +876,10 @@ async def test_directory_decompression(contents):
 
 
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
-@settings(deadline=None)
-@asyncgiven(contents=st.text())
-async def test_file_decompression(contents):
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(contents=st.text())
+@pytest.mark.asyncio
+async def test_file_decompression(config_temp_dir, contents):
     fname = "test"
     dirname = "dirname"
     path = utils.Path.validate_path(TEST_USER, os.path.join(dirname, fname))
@@ -891,7 +889,7 @@ async def test_file_decompression(contents):
         return
     methods = [("gzip", ".gz"), ("bzip2", ".bz2")]
 
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         for method, extension in methods:
             with FileUtil() as fs:
                 d = fs.make_dir(os.path.join(TEST_USER, dirname))
@@ -914,7 +912,7 @@ async def test_file_decompression(contents):
                 assert os.path.exists(f1)
 
 
-async def test_importer_mappings():
+async def test_importer_mappings(config_temp_dir):
     """
     This tests calling with simple good cases, and some expected bad cases
     :return:
@@ -923,7 +921,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt"]}
     qs1 = urlencode(data, doseq=True)
 
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs1}")
         assert resp.status == 200
         text = await resp.json()
@@ -935,7 +933,7 @@ async def test_importer_mappings():
     data = {"file_list": ["file1.txt", "file.tar.gz"]}
     qs2 = urlencode(data, doseq=True)
 
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs2}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -951,7 +949,7 @@ async def test_importer_mappings():
     # A dict is passed in
     data = {"file_list": [{}]}
     qs3 = urlencode(data, doseq=True)
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.get(f"importer_mappings/?{qs3}", data=data)
         assert resp.status == 200
         text = await resp.json()
@@ -969,16 +967,16 @@ async def test_importer_mappings():
 
     for data in bad_data:
         qsd = urlencode(data, doseq=True)
-        async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+        async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
             resp = await cli.get(f"importer_mappings/?{qsd}")
             assert resp.status == 400
             text = await resp.text()
             assert f"must provide file_list field. Your provided qs: {unquote(qsd)}" in text
 
 
-async def test_bulk_specification_success():
+async def test_bulk_specification_success(config_temp_dir):
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/somefolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1062,8 +1060,8 @@ async def test_bulk_specification_success():
             assert resp.status == 200
 
 
-async def test_bulk_specification_dts_success():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_dts_success(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1154,8 +1152,8 @@ async def test_bulk_specification_dts_success():
             assert resp.status == 200
 
 
-async def test_bulk_specification_dts_fail_json_without_dts():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_dts_fail_json_without_dts(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1195,8 +1193,8 @@ async def test_bulk_specification_dts_fail_json_without_dts():
             assert resp.status == 400
 
 
-async def test_bulk_specification_dts_fail_wrong_format():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_dts_fail_wrong_format(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1230,8 +1228,8 @@ async def test_bulk_specification_dts_fail_wrong_format():
         ("some_manifest", app.NO_EXTENSION),
     ],
 )
-async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str):
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_dts_fail_wrong_extension(manifest: str, expected: str, config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             sub_dir = "dts_folder"
             dts_dir = f"{TEST_USER}/{sub_dir}"
@@ -1303,8 +1301,8 @@ def test_load_and_validate_schema_bad(tmp_path: Path):
         app.load_and_validate_schema(schema_file)
 
 
-async def test_bulk_specification_fail_no_files():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_fail_no_files(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         for f in ["", "?files=", "?files=  ,   ,,   ,  "]:
             resp = await cli.get(f"bulk_specification/{f}")
             jsn = await resp.json()
@@ -1312,8 +1310,8 @@ async def test_bulk_specification_fail_no_files():
             assert resp.status == 400
 
 
-async def test_bulk_specification_fail_not_found():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_fail_not_found(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/otherfolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1335,12 +1333,12 @@ async def test_bulk_specification_fail_not_found():
             assert resp.status == 404
 
 
-async def test_bulk_specification_fail_parse_fail():
+async def test_bulk_specification_fail_parse_fail(config_temp_dir):
     """
     Tests a number of different parse fail cases, including incorrect file types.
     Also tests that all the errors are combined correctly.
     """
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(f"{TEST_USER}/otherfolder")
             base = Path(fu.base_dir) / TEST_USER
@@ -1448,8 +1446,8 @@ async def test_bulk_specification_fail_parse_fail():
             assert resp.status == 400
 
 
-async def test_bulk_specification_fail_column_count():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_fail_column_count(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1521,8 +1519,8 @@ async def test_bulk_specification_fail_column_count():
             assert resp.status == 400
 
 
-async def test_bulk_specification_fail_multiple_specs_per_type():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_bulk_specification_fail_multiple_specs_per_type(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1610,12 +1608,12 @@ async def test_bulk_specification_fail_multiple_specs_per_type():
             assert resp.status == 400
 
 
-async def test_bulk_specification_fail_multiple_specs_per_type_excel():
+async def test_bulk_specification_fail_multiple_specs_per_type_excel(config_temp_dir):
     """
     Test an excel file with an internal data type collision.
     This is the only case when all 5 error fields are filled out.
     """
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             base = Path(fu.base_dir) / TEST_USER
@@ -1688,9 +1686,9 @@ _IMPORT_SPEC_TEST_DATA = {
 }
 
 
-async def test_write_bulk_specification_success_csv():
+async def test_write_bulk_specification_success_csv(config_temp_dir):
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             resp = await cli.post(
@@ -1731,9 +1729,9 @@ async def test_write_bulk_specification_success_csv():
             )
 
 
-async def test_write_bulk_specification_success_tsv():
+async def test_write_bulk_specification_success_tsv(config_temp_dir):
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             types = dict(_IMPORT_SPEC_TEST_DATA)
@@ -1776,9 +1774,9 @@ async def test_write_bulk_specification_success_tsv():
             )
 
 
-async def test_write_bulk_specification_success_excel():
+async def test_write_bulk_specification_success_excel(config_temp_dir):
     # In other tests a username is passed to AppClient but AppClient completely ignores it...
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fu:
             fu.make_dir(TEST_USER)
             resp = await cli.post(
@@ -1824,16 +1822,16 @@ async def test_write_bulk_specification_success_excel():
             )
 
 
-async def test_write_bulk_specification_fail_wrong_data_type():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_write_bulk_specification_fail_wrong_data_type(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification/", data="foo")
         js = await resp.json()
         assert js == {"error": "Required content-type is application/json"}
         assert resp.status == 415
 
 
-async def test_write_bulk_specification_fail_no_content_length():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_write_bulk_specification_fail_no_content_length(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.post(
             "write_bulk_specification", headers={"content-type": "application/json"}
         )
@@ -1842,8 +1840,8 @@ async def test_write_bulk_specification_fail_no_content_length():
         assert resp.status == 411
 
 
-async def test_write_bulk_specification_fail_large_input():
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def test_write_bulk_specification_fail_large_input(config_temp_dir):
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification/", json="a" * (1024 * 1024 - 2))
         txt = await resp.text()
         # this seems to be a built in (somewhat inaccurate) server feature
@@ -1851,57 +1849,59 @@ async def test_write_bulk_specification_fail_large_input():
         assert resp.status == 413
 
 
-async def _write_bulk_specification_json_fail(json: Any, err: str):
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+async def _write_bulk_specification_json_fail(json: Any, err: str, config: StagingServiceConfig):
+    async with await AppClient.create(config, TEST_TOKEN) as cli:
         resp = await cli.post("write_bulk_specification", json=json)
         js = await resp.json()
         assert js == {"error": err}
         assert resp.status == 400
 
 
-async def test_write_bulk_specification_fail_not_dict():
+async def test_write_bulk_specification_fail_not_dict(config_temp_dir):
     await _write_bulk_specification_json_fail(
-        ["foo"], "The top level JSON element must be a mapping"
+        ["foo"], "The top level JSON element must be a mapping", config_temp_dir
     )
 
 
-async def test_write_bulk_specification_fail_no_output_dir():
+async def test_write_bulk_specification_fail_no_output_dir(config_temp_dir):
     await _write_bulk_specification_json_fail(
-        {}, "output_directory is required and must be a string"
+        {}, "output_directory is required and must be a string", config_temp_dir
     )
 
 
-async def test_write_bulk_specification_fail_wrong_type_for_output_dir():
+async def test_write_bulk_specification_fail_wrong_type_for_output_dir(config_temp_dir):
     await _write_bulk_specification_json_fail(
-        {"output_directory": 4}, "output_directory is required and must be a string"
+        {"output_directory": 4}, "output_directory is required and must be a string", config_temp_dir
     )
 
 
-async def test_write_bulk_specification_fail_no_file_type():
+async def test_write_bulk_specification_fail_no_file_type(config_temp_dir):
     await _write_bulk_specification_json_fail(
-        {"output_directory": "foo"}, "Invalid output_file_type: None"
+        {"output_directory": "foo"}, "Invalid output_file_type: None", config_temp_dir
     )
 
 
-async def test_write_bulk_specification_fail_wrong_file_type():
+async def test_write_bulk_specification_fail_wrong_file_type(config_temp_dir):
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo", "output_file_type": "XSV"},
         "Invalid output_file_type: XSV",
+        config_temp_dir
     )
 
 
-async def test_write_bulk_specification_fail_invalid_type_value():
+async def test_write_bulk_specification_fail_invalid_type_value(config_temp_dir):
     await _write_bulk_specification_json_fail(
         {"output_directory": "foo", "output_file_type": "CSV", "types": {"a": "fake"}},
         "The value for data type a must be a mapping",
+        config_temp_dir
     )
 
 
-async def test_importer_filetypes():
+async def test_importer_filetypes(config_temp_dir):
     """
     Only checks a few example entries since the list may expand over time
     """
-    async with await AppClient.create(CONFIG, TEST_TOKEN) as cli:
+    async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         resp = await cli.get("importer_filetypes")
         js = await resp.json()
         assert set(js.keys()) == {"datatype_to_filetype", "filetype_to_extensions"}
