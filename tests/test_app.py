@@ -1128,9 +1128,9 @@ async def test_bulk_specification_dts_success(config_temp_dir):
                 },
             }
             async with aiofiles.open(base / manifest_1, "w", encoding="utf-8") as f:
-                await json.dump(manifest_1_dict, f)
+                await f.write(json.dumps(manifest_1_dict))
             async with aiofiles.open(base / manifest_2, "w", encoding="utf-8") as f:
-                await json.dump(manifest_2_dict, f)
+                await f.write(json.dumps(manifest_2_dict))
             resp = await cli.get(
                 f"bulk_specification/?files={sub_dir}/{manifest_1}  ,   {sub_dir}/{manifest_2}&dts"
             )
@@ -1187,7 +1187,7 @@ async def test_bulk_specification_dts_fail_json_without_dts(config_temp_dir):
                 },
             }
             async with aiofiles.open(base / manifest_1, "w", encoding="utf-8") as f:
-                await json.dump(manifest_1_dict, f)
+                await f.write(json.dumps(manifest_1_dict))
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest_1}")
             jsn = await resp.json()
             assert jsn == {
@@ -1213,7 +1213,7 @@ async def test_bulk_specification_dts_fail_wrong_format(config_temp_dir):
             manifest = "test_manifest.json"
             manifest_data = ["wrong", "format"]
             async with aiofiles.open(base / manifest, "w", encoding="utf-8") as f:
-                await json.dump(manifest_data, f)
+                await f.write(json.dumps(manifest_data))
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
@@ -1249,7 +1249,7 @@ async def test_bulk_specification_dts_fail_wrong_extension(
             base = Path(fu.base_dir) / TEST_USER / sub_dir
             manifest_data = {"resources": [], "instructions": {}}
             async with aiofiles.open(base / manifest, "w", encoding="utf-8") as f:
-                await json.dump(manifest_data, f)
+                await f.write(json.dumps(manifest_data))
             resp = await cli.get(f"bulk_specification/?files={sub_dir}/{manifest}&dts")
             jsn = await resp.json()
             assert jsn == {
