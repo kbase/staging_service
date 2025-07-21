@@ -1,6 +1,5 @@
 import asyncio
 import hashlib
-import inspect
 import json
 import os
 import platform
@@ -642,9 +641,6 @@ async def test_download(txt, config_temp_dir):
             assert res.status == 200
             result_text = await res.read()
             assert result_text == txt.encode()
-
-
-print(inspect.signature(test_download))
 
 
 async def test_download_errors(config_temp_dir):
