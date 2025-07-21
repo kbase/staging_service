@@ -782,7 +782,9 @@ async def test_upload(config_temp_dir):
             fs.make_dir(os.path.join(TEST_USER, "test"))
             f = fs.make_file(os.path.join(TEST_USER, "test", "test_file_1"), txt)
 
-            files = {"destPath": "/", "uploads": open(f, "rb")}
+            # SonarQube whines (loudly) about this being a blocking operation.
+            # Not really an issue with a test that blocks anyway.
+            files = {"destPath": "/", "uploads": open(f, "rb")}  # NOSONAR
 
             res2 = await cli.post(os.path.join("upload"), data=files)
 
