@@ -1,3 +1,4 @@
+import aiofiles
 import asyncio
 from watchfiles import Change, awatch
 from pathlib import Path
@@ -154,8 +155,8 @@ class DTSFileWatcher:
         * Username is not a valid KBase user id.
         Raises a JSONDecodeError if the file is not JSON, or is malformed.
         """
-        with open(manifest_path, "r") as manifest_infile:
-            manifest = json.load(manifest_infile)
+        async with aiofiles.open(manifest_path, "r") as manifest_infile:
+            manifest = await json.load(manifest_infile)
         if "username" not in manifest:
             raise ValueError("Manifest file {manifest_path} is missing the 'username' key.")
         username = manifest["username"]
