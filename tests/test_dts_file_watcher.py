@@ -1,30 +1,86 @@
+import json
+import os
 from typing import Callable, Tuple
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch
-from staging_service.dts_file_watcher import DTSFileWatcher
+from staging_service.config import StagingServiceConfig
+from staging_service.dts_file_watcher import (
+    WAIT_FOR_FILE_LIMIT,
+    WAIT_INTERVAL_SEC,
+    DTSFileWatcher,
+    LOGGER_NAME,
+)
 from pathlib import Path
 from watchfiles import Change
+from staging_service.utils import Path as StagingPath
+
+from staging_service.kb_auth_client import KBaseAuth
+from tests.test_utils import bootstrap_config
+
+CONFIG = bootstrap_config()
+# TODO: remove when adding templated config files
+TEST_TOKEN = os.environ.get("KBASE_TEST_TOKEN")
+CONFIG.auth_token = TEST_TOKEN
+
+CI_USERNAME = "narrativetest"
+CI_USERNAME_NOT_FOUND = "not_a_real_user_name_please_never_make_this_real_omg"
 
 
-async def _run_watcher_once(watcher: DTSFileWatcher):
+@pytest.fixture(scope="function")
+def config_tmp_path(tmp_path):
+    """
+    Monkeypatch file paths in the config to be rooted in tmp_path
+    ONLY configures data_dir and dts_staging_dir
+    """
+    data_dir = CONFIG.data_dir
+    dts_staging_dir = CONFIG.dts_staging_dir
+    meta_dir = CONFIG.meta_dir
+    CONFIG.data_dir = tmp_path / "data"
+    CONFIG.data_dir.mkdir()
+    CONFIG.dts_staging_dir = tmp_path / "dts"
+    CONFIG.dts_staging_dir.mkdir()
+    CONFIG.meta_dir = tmp_path / "metadata"
+    CONFIG.meta_dir.mkdir()
+    StagingPath._DATA_DIR = CONFIG.data_dir
+    StagingPath._META_DIR = CONFIG.meta_dir
+    yield CONFIG
+    CONFIG.data_dir = data_dir
+    CONFIG.dts_staging_dir = dts_staging_dir
+    CONFIG.meta_dir = meta_dir
+    StagingPath._DATA_DIR = None
+    StagingPath._META_DIR = None
+
+
+@pytest.fixture(scope="module")
+async def auth_client():
+    return await KBaseAuth.create(CONFIG.auth_url)
+
+
+async def _run_watcher_once(watcher: DTSFileWatcher, wait_time: int = 0):
     """
     A convenience method that starts and stops the watcher at its first cycle.
     """
     task = asyncio.create_task(watcher.start_watching_for_files())
+    await asyncio.sleep(wait_time)
     watcher.stop_watching_for_files()
     await task
 
 
 def make_mocked_awatch(returned_events: list[Tuple[Change, str]]) -> Callable:
+    """
+    Don't actually watch the file system, but make an awatch that gets fed events
+    to monitor, so we don't have to muck around with file io things as much.
+    """
+
     async def fake_awatch(*args, **kwargs):
         yield returned_events
 
     return fake_awatch
 
 
-async def test_dts_file_watcher_loop_runs_and_stops(tmp_path):
-    watcher = DTSFileWatcher(None, None, tmp_path)
+async def test_dts_file_watcher_loop_runs_and_stops(config_tmp_path):
+    watcher = DTSFileWatcher(None, config_tmp_path)
 
     task = asyncio.create_task(watcher.start_watching_for_files())
     await asyncio.sleep(1)  # give it time to enter the loop
@@ -33,11 +89,11 @@ async def test_dts_file_watcher_loop_runs_and_stops(tmp_path):
     assert task.done()
 
 
-async def test_top_level_manifest_ignored(tmp_path):
-    manifest_path = tmp_path / "manifest.json"
+async def test_top_level_manifest_ignored(config_tmp_path):
+    manifest_path = config_tmp_path.dts_staging_dir / "manifest.json"
     manifest_path.touch()
 
-    watcher = DTSFileWatcher(None, None, tmp_path)
+    watcher = DTSFileWatcher(None, config_tmp_path)
     watcher._process_complete_manifest = AsyncMock()
 
     with patch(
@@ -49,13 +105,14 @@ async def test_top_level_manifest_ignored(tmp_path):
     watcher._process_complete_manifest.assert_not_awaited()
 
 
-async def test_manifest_found(tmp_path):
-    manifest_dir = tmp_path / "subdir"
+async def test_manifest_found(config_tmp_path):
+    manifest_dir = config_tmp_path.dts_staging_dir / "subdir"
     manifest_dir.mkdir()
     manifest_path = manifest_dir / "manifest.json"
     manifest_path.touch()
 
-    watcher = DTSFileWatcher(None, None, tmp_path)
+    watcher = DTSFileWatcher(None, config_tmp_path)
+    # mocking here, test is focused on manifest detection
     watcher._process_complete_manifest = AsyncMock()
 
     with patch(
@@ -69,6 +126,167 @@ async def test_manifest_found(tmp_path):
 
 async def test_dts_file_watcher_fail_no_dir():
     fake_dir = Path("/not/a/real/directory")
-    watcher = DTSFileWatcher(None, None, fake_dir)
+    config = bootstrap_config()
+    config.dts_staging_dir = fake_dir
+    watcher = DTSFileWatcher(None, config)
     with pytest.raises(FileNotFoundError, match="Not watching for DTS files"):
         await watcher.start_watching_for_files()
+
+
+def make_manifest_file(config: StagingServiceConfig, manifest_text: str | None = None) -> Path:
+    manifest_dir = config.dts_staging_dir / "fake_transfer"
+    manifest_dir.mkdir()
+    manifest_file = manifest_dir / "manifest.json"
+    if manifest_text is not None:
+        manifest_file.write_text(manifest_text)
+
+    return manifest_file
+
+
+async def run_manifest_fail_test(
+    auth_client: KBaseAuth,
+    config: StagingServiceConfig,
+    manifest_path: Path,
+    caplog,
+    expected_err_log: str,
+):
+    """
+    Assumes that config.dts_staging_dir is empty and can be freely written to.
+    Should probably be a temp path.
+    """
+    # Setup dummy manifest file
+
+    watcher = DTSFileWatcher(auth_client, config)
+    with patch(
+        "staging_service.dts_file_watcher.awatch",
+        new=make_mocked_awatch([(Change.added, str(manifest_path))]),
+    ):
+        with caplog.at_level("ERROR", logger=LOGGER_NAME):
+            await _run_watcher_once(watcher)
+
+    assert expected_err_log in caplog.messages[0]
+
+
+async def test_manifest_not_json(config_tmp_path, caplog):
+    manifest_path = make_manifest_file(config_tmp_path, "this is not json")
+
+    await run_manifest_fail_test(
+        None,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"File {manifest_path} does not appear to be JSON formatted",
+    )
+
+
+async def test_manifest_user_not_found(config_tmp_path, caplog):
+    # Setup dummy manifest file
+    bad_user = "invalid_user"
+    manifest_text = json.dumps({"username": bad_user})
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=manifest_text)
+
+    mock_auth_client = AsyncMock()
+    mock_auth_client.is_valid_user.return_value = False
+
+    await run_manifest_fail_test(
+        mock_auth_client,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"User {bad_user} referenced in manifest file {manifest_path} does not exist.",
+    )
+
+
+@pytest.mark.parametrize("empty_user", [None, "  ", ""])
+async def test_manifest_no_user(config_tmp_path, caplog, empty_user):
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": empty_user}))
+
+    await run_manifest_fail_test(
+        None,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"Username in manifest file {manifest_path} is not a valid string.",
+    )
+
+
+async def test_manifest_no_username_key(config_tmp_path, caplog):
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"foo": "bar"}))
+
+    await run_manifest_fail_test(
+        None,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"Manifest file {manifest_path} is missing the 'username' key.",
+    )
+
+
+async def test_manifest_not_found(config_tmp_path, caplog):
+    manifest_path = make_manifest_file(config_tmp_path)
+
+    # TODO: update to config values
+    await run_manifest_fail_test(
+        None,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"Manifest file {manifest_path} did not appear after {WAIT_FOR_FILE_LIMIT * WAIT_INTERVAL_SEC} seconds",
+    )
+
+
+async def test_user_not_found_real(config_tmp_path, caplog, auth_client):
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME_NOT_FOUND}))
+
+    await run_manifest_fail_test(
+        auth_client,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"User {CI_USERNAME_NOT_FOUND} referenced in manifest file {manifest_path} does not exist.",
+    )
+
+
+async def test_user_invalid_string(config_tmp_path, caplog, auth_client):
+    illegal_user = "123__++??"
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": illegal_user}))
+
+    await run_manifest_fail_test(
+        auth_client,
+        config_tmp_path,
+        manifest_path,
+        caplog,
+        f"Auth service failure while looking up username {illegal_user} in manifest file {manifest_path}",
+    )
+
+
+async def test_move_dts_files_fail(tmp_path):
+    pass
+
+
+async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_client):
+    # put files in tmp_path/dts (use tmp_path as config for dts staging)
+    # make another tmp_path/base for base dir, make config as such
+    # use real username in CI
+    # start watcher
+    # test that move worked
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME}))
+    dts_dir = manifest_path.parent
+    target_dir_name = dts_dir.name
+    file_list = {"foo.fasta", "bar.fasta", "baz.zip"}
+    for filename in file_list:
+        (dts_dir / filename).touch()
+        (dts_dir / filename).write_text(f"my name is {filename}")
+
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    with patch(
+        "staging_service.dts_file_watcher.awatch",
+        new=make_mocked_awatch([(Change.added, str(manifest_path))]),
+    ):
+        with caplog.at_level("INFO", logger=LOGGER_NAME):
+            await _run_watcher_once(watcher, wait_time=5)
+
+    print(caplog.messages)
+    target_dir = config_tmp_path.data_dir / CI_USERNAME / target_dir_name
+    assert target_dir.exists()
+    assert target_dir.is_dir()

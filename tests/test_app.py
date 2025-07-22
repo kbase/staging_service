@@ -182,7 +182,6 @@ def test_path_sanitation(username_first, username_rest, path):
 
 
 @given(txt=st.text())
-@pytest.mark.asyncio
 async def test_cmd(txt):
     with FileUtil(CONFIG.data_dir) as fs:
         d = fs.make_dir("test")
@@ -629,7 +628,6 @@ async def test_list(config_temp_dir):
 # ignore hypothesis warning about function scoped fixture
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(txt=st.text())
-@pytest.mark.asyncio
 async def test_download(txt, config_temp_dir):
     async with await AppClient.create(config_temp_dir, TEST_TOKEN) as cli:
         with FileUtil() as fs:
@@ -828,7 +826,6 @@ async def test_upload_fail_comma_in_file(config_temp_dir):
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(contents=st.text())
-@pytest.mark.asyncio
 async def test_directory_decompression(config_temp_dir, contents):
     fname = "test"
     dirname = "dirname"
@@ -888,7 +885,6 @@ async def test_directory_decompression(config_temp_dir, contents):
 # remove deadline from hypothesis, since this test can be laggy and lead to false-negative fails
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(contents=st.text())
-@pytest.mark.asyncio
 async def test_file_decompression(config_temp_dir, contents):
     fname = "test"
     dirname = "dirname"

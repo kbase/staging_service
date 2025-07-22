@@ -1,3 +1,4 @@
+import traceback
 import aiofiles
 import asyncio
 from watchfiles import Change, awatch
@@ -7,10 +8,11 @@ import json
 import shutil
 
 from staging_service.config import StagingServiceConfig
-from staging_service.kb_auth_client import KBaseAuth
+from staging_service.kb_auth_client import InvalidTokenError, InvalidUserError, KBaseAuth
 from .utils import Path as UserPath
 
-logger = logging.getLogger("dts_file_watcher")
+LOGGER_NAME = "dts_file_watcher"
+logger = logging.getLogger(LOGGER_NAME)
 
 # TODO: move these to config
 TARGET_FILE_NAME = "manifest.json"
@@ -34,9 +36,9 @@ class DTSFileWatcher:
     the user's staging area.
     """
 
-    def __init__(self, auth_client: KBaseAuth, config: StagingServiceConfig, watch_dir: Path):
+    def __init__(self, auth_client: KBaseAuth, config: StagingServiceConfig):
         self._auth_client = auth_client
-        self._watch_dir = watch_dir
+        self._watch_dir = Path(config.dts_staging_dir)
         self._config = config
         # the watcher listens for this on each loop, and stops when it's set.
         self._stop_event = asyncio.Event()
@@ -87,9 +89,14 @@ class DTSFileWatcher:
                     try:
                         await self._process_complete_manifest(file_path)
                     except json.JSONDecodeError as e:
-                        logger.error(f"File {file_path} does not appear to be JSON formatted.", e)
-                    except (ValueError, RuntimeError) as e:
+                        logger.error(
+                            f"File {file_path} does not appear to be JSON formatted: {str(e)}"
+                        )
+                    except (ValueError, RuntimeError, MoveDtsFilesError) as e:
                         logger.error(str(e))
+                    except Exception as e:
+                        # Not sure how else this can fail, but just in case...
+                        logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
         logger.info(
             f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files."
         )
@@ -105,13 +112,13 @@ class DTSFileWatcher:
         """
         wait_cycle = 0
         while not manifest_path.exists() and wait_cycle < WAIT_FOR_FILE_LIMIT:
-            logger.info(f"waiting for manifest file at {manifest_path} to appear")
+            logger.info(f"Waiting for manifest file at {manifest_path} to appear")
             await asyncio.sleep(WAIT_INTERVAL_SEC)
             wait_cycle += 1
 
         if not manifest_path.exists():
             raise RuntimeError(
-                f"manifest file {manifest_path} did not appear after {WAIT_FOR_FILE_LIMIT * WAIT_INTERVAL_SEC} seconds"
+                f"Manifest file {manifest_path} did not appear after {WAIT_FOR_FILE_LIMIT * WAIT_INTERVAL_SEC} seconds"
             )
 
         # Wait for the file size to stabilize for WAIT_INTERVAL_SEC
@@ -130,9 +137,14 @@ class DTSFileWatcher:
                 break
         username = await self._get_user_from_manifest(manifest_path)
         # If the user doesn't exist in KBase, fail.
-        if not await self._auth_client.is_valid_user(username):
-            raise ValueError(
-                f"User {username} referenced in manifest file {manifest_path} does not exist."
+        try:
+            if not await self._auth_client.is_valid_user(username, self._config.auth_token):
+                raise ValueError(
+                    f"User {username} referenced in manifest file {manifest_path} does not exist."
+                )
+        except (InvalidTokenError, InvalidUserError) as e:
+            raise RuntimeError(
+                f"Auth service failure while looking up username {username} in manifest file {manifest_path}: {str(e)}"
             )
         # always move files from the root of the manifest path to a subdirectory for the
         # user matching the manifest path.
@@ -156,21 +168,25 @@ class DTSFileWatcher:
         Raises a JSONDecodeError if the file is not JSON, or is malformed.
         """
         async with aiofiles.open(manifest_path, "r") as manifest_infile:
-            manifest = await json.load(manifest_infile)
+            manifest = json.loads(await manifest_infile.read())
         if "username" not in manifest:
-            raise ValueError("Manifest file {manifest_path} is missing the 'username' key.")
+            raise ValueError(f"Manifest file {manifest_path} is missing the 'username' key.")
         username = manifest["username"]
-        if username is None or username == "":
-            raise ValueError("Username is not a valid string")
+        if username is None or username.strip() == "":
+            raise ValueError(f"Username in manifest file {manifest_path} is not a valid string.")
         return username
 
     async def _move_dts_files(self, src_path: Path, dest_path: Path):
         logger.info(f"Moving files from {src_path} to {dest_path}")
         # TODO: copy with checksum before removing?
-        # TODO: modify dest path if it exists
+        # TODO: modify destination path if it exists
         try:
             # Needs to be stuffed in a thread, or this will block the webapp
             return await asyncio.to_thread(shutil.move, src_path, dest_path)
             # shutil.copytree(path.parent, dest_path)
         except Exception as e:
-            logger.error(e)
+            raise MoveDtsFilesError(f"Unable to move DTS files from {src_path} to {dest_path}: ", e)
+
+
+class MoveDtsFilesError(Exception):
+    """An error thrown when moving the DTS files fails."""

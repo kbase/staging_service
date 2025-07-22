@@ -699,7 +699,7 @@ async def app_factory(config: StagingServiceConfig) -> web.Application:
     auth_client = await KBaseAuth.create(config.auth_url)
 
     if config.watch_dts_files:
-        watcher = DTSFileWatcher(auth_client, config, PathPy(config.dts_staging_dir))
+        watcher = DTSFileWatcher(auth_client, config)
 
         async def start_watcher(app: web.Application):
             # In the aiohttp docs this seems to be the preferred way to track things
