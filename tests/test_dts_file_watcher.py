@@ -301,3 +301,49 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
                     assert test_data == manifest_text
                 else:
                     assert test_data == f"my name is {item.name}"
+
+
+async def test_dts_watcher_end_to_end_duplicate_path(config_tmp_path, caplog, auth_client):
+    # put files in tmp_path/dts (use tmp_path as config for dts staging)
+    # make another tmp_path/base for base dir, make config as such
+    # use real username in CI
+    # start watcher
+    # test that move worked
+    manifest_text = json.dumps({"username": CI_USERNAME})
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=manifest_text)
+    dts_dir = manifest_path.parent
+    target_dir_name = dts_dir.name
+    target_dir = config_tmp_path.data_dir / CI_USERNAME / target_dir_name
+    target_dir.mkdir(parents=True, exist_ok=True)  # make an existing dir. It can be empty.
+    file_list = {"foo.fasta", "bar.fasta", "baz.zip"}
+    for filename in file_list:
+        (dts_dir / filename).touch()
+        (dts_dir / filename).write_text(f"my name is {filename}")
+
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    # A little cheating here. Should probably scrape from logs. But it uses
+    # the same code, at least.
+    new_target_dir = watcher._make_unique_path(target_dir)
+    assert not new_target_dir.exists()
+
+    with patch(
+        "staging_service.dts_file_watcher.awatch",
+        new=make_mocked_awatch([(Change.added, str(manifest_path))]),
+    ):
+        with caplog.at_level("INFO", logger=LOGGER_NAME):
+            await _run_watcher_once(watcher, wait_time=5)
+
+    assert not any(target_dir.iterdir())
+
+    assert new_target_dir.exists()
+    assert new_target_dir.is_dir()
+    file_list.add("manifest.json")
+    for item in new_target_dir.iterdir():
+        if item.is_file():
+            assert item.name in file_list
+            async with aiofiles.open(item) as infile:
+                test_data = await infile.read()
+                if item.name == "manifest.json":
+                    assert test_data == manifest_text
+                else:
+                    assert test_data == f"my name is {item.name}"

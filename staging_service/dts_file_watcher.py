@@ -157,6 +157,8 @@ class DTSFileWatcher:
         user_path = UserPath.validate_path(username)
         dts_path_name = manifest_path.parent.name
         dest_path = Path(user_path.full_path) / dts_path_name
+        if dest_path.exists:
+            dest_path = self._make_unique_path(dest_path)
         return await self._move_dts_files(manifest_path.parent, dest_path)
 
     async def _get_user_from_manifest(self, manifest_path: Path) -> str:
@@ -181,12 +183,28 @@ class DTSFileWatcher:
     async def _move_dts_files(self, src_path: Path, dest_path: Path):
         logger.info(f"Moving files from {src_path} to {dest_path}")
         # TODO: copy with checksum before removing? Issue #235
-        # TODO: modify destination path if it exists Issue #236
         try:
             # Needs to be stuffed in a thread, or this will block the webapp
             return await asyncio.to_thread(shutil.move, src_path, dest_path)
         except Exception as e:
             raise MoveDtsFilesError(f"Unable to move DTS files from {src_path} to {dest_path}: {e}")
+
+    def _make_unique_path(self, existing_path: Path) -> Path:
+        """
+        Makes a unique path from one that exists to avoid overwriting.
+        I.e. if the path /foo/bar exists, this return /foo/bar-1
+        If /foo/bar-1 exists, it returns /foo/bar-2, etc.
+        """
+        count = 1
+        while existing_path.exists():
+            suffix = f"-{count}"
+            if str(existing_path).endswith(suffix):
+                existing_path = Path(str(existing_path).rstrip(suffix))
+                count += 1
+                suffix = f"-{count}"
+            existing_path = Path(str(existing_path) + suffix)
+        return existing_path
+
 
 
 class MoveDtsFilesError(Exception):
