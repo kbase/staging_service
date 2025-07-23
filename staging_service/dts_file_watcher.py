@@ -9,7 +9,7 @@ import shutil
 
 from staging_service.config import StagingServiceConfig
 from staging_service.kb_auth_client import InvalidTokenError, InvalidUserError, KBaseAuth
-from .utils import Path as UserPath
+from staging_service.utils import Path as UserPath
 
 LOGGER_NAME = "dts_file_watcher"
 logger = logging.getLogger(LOGGER_NAME)
