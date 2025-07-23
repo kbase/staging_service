@@ -206,6 +206,5 @@ class DTSFileWatcher:
         return existing_path
 
 
-
 class MoveDtsFilesError(Exception):
     """An error thrown when moving the DTS files fails."""
