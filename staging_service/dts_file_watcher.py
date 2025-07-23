@@ -14,7 +14,9 @@ from .utils import Path as UserPath
 LOGGER_NAME = "dts_file_watcher"
 logger = logging.getLogger(LOGGER_NAME)
 
-# TODO: move these to config
+# TODO: move these hardcoded values to the StagingServiceConfig object and
+# deployment config files.
+# issue #238
 TARGET_FILE_NAME = "manifest.json"
 WAIT_INTERVAL_SEC = 1.0
 STABLE_TIME = 2.0
