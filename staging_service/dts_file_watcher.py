@@ -185,7 +185,7 @@ class DTSFileWatcher:
             return await asyncio.to_thread(shutil.move, src_path, dest_path)
             # shutil.copytree(path.parent, dest_path)
         except Exception as e:
-            raise MoveDtsFilesError(f"Unable to move DTS files from {src_path} to {dest_path}: ", e)
+            raise MoveDtsFilesError(f"Unable to move DTS files from {src_path} to {dest_path}: {e}")
 
 
 class MoveDtsFilesError(Exception):
