@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Callable, Tuple
+import aiofiles
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch
@@ -168,11 +169,11 @@ async def run_manifest_fail_test(
     assert expected_err_log in caplog.messages[0]
 
 
-async def test_manifest_not_json(config_tmp_path, caplog):
+async def test_manifest_not_json(auth_client, config_tmp_path, caplog):
     manifest_path = make_manifest_file(config_tmp_path, "this is not json")
 
     await run_manifest_fail_test(
-        None,
+        auth_client,
         config_tmp_path,
         manifest_path,
         caplog,
@@ -180,32 +181,14 @@ async def test_manifest_not_json(config_tmp_path, caplog):
     )
 
 
-async def test_manifest_user_not_found(config_tmp_path, caplog):
-    # Setup dummy manifest file
-    bad_user = "invalid_user"
-    manifest_text = json.dumps({"username": bad_user})
-    manifest_path = make_manifest_file(config_tmp_path, manifest_text=manifest_text)
-
-    mock_auth_client = AsyncMock()
-    mock_auth_client.is_valid_user.return_value = False
-
-    await run_manifest_fail_test(
-        mock_auth_client,
-        config_tmp_path,
-        manifest_path,
-        caplog,
-        f"User {bad_user} referenced in manifest file {manifest_path} does not exist.",
-    )
-
-
 @pytest.mark.parametrize("empty_user", [None, "  ", ""])
-async def test_manifest_no_user(config_tmp_path, caplog, empty_user):
+async def test_manifest_no_user(auth_client, config_tmp_path, caplog, empty_user):
     manifest_path = make_manifest_file(
         config_tmp_path, manifest_text=json.dumps({"username": empty_user})
     )
 
     await run_manifest_fail_test(
-        None,
+        auth_client,
         config_tmp_path,
         manifest_path,
         caplog,
@@ -213,11 +196,11 @@ async def test_manifest_no_user(config_tmp_path, caplog, empty_user):
     )
 
 
-async def test_manifest_no_username_key(config_tmp_path, caplog):
+async def test_manifest_no_username_key(auth_client, config_tmp_path, caplog):
     manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"foo": "bar"}))
 
     await run_manifest_fail_test(
-        None,
+        auth_client,
         config_tmp_path,
         manifest_path,
         caplog,
@@ -225,12 +208,12 @@ async def test_manifest_no_username_key(config_tmp_path, caplog):
     )
 
 
-async def test_manifest_not_found(config_tmp_path, caplog):
+async def test_manifest_not_found(auth_client, config_tmp_path, caplog):
     manifest_path = make_manifest_file(config_tmp_path)
 
     # TODO: update to config values
     await run_manifest_fail_test(
-        None,
+        auth_client,
         config_tmp_path,
         manifest_path,
         caplog,
@@ -238,7 +221,7 @@ async def test_manifest_not_found(config_tmp_path, caplog):
     )
 
 
-async def test_user_not_found_real(config_tmp_path, caplog, auth_client):
+async def test_user_not_found(config_tmp_path, caplog, auth_client):
     manifest_path = make_manifest_file(
         config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME_NOT_FOUND})
     )
@@ -271,7 +254,8 @@ async def test_move_dts_files_fail():
     src_path = Path("/this/path/does/not/exist")
     dest_path = Path("/this/path/also/does/not/exist")
     # kind of a hack to test it this way, but I'm not sure how to make the
-    # shutil.move command fail. By the time it gets to that point, both directories
+    # shutil.move command fail through the watcher's usual code path.
+    # By the time it gets to that point, both directories
     # should exist and be readable / writeable.
     # So I'm just testing the issue here and making sure it throws an Exception
     # properly.
@@ -311,8 +295,8 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
     for item in target_dir.iterdir():
         if item.is_file():
             assert item.name in file_list
-            with open(item) as infile:
-                test_data = infile.read()
+            async with aiofiles.open(item) as infile:
+                test_data = await infile.read()
                 if item.name == "manifest.json":
                     assert test_data == manifest_text
                 else:
