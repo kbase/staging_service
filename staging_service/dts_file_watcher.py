@@ -59,6 +59,7 @@ class DTSFileWatcher:
         shouldn't raise an error.
 
         TODO: add a tracker for the file copying process with a service endpoint for monitoring
+        See issue #237
         """
         if not self._watch_dir.exists():
             err_str = (
@@ -153,7 +154,6 @@ class DTSFileWatcher:
         # DATA_DIR/kbase_user/some_transfer_uuid/
         user_path = UserPath.validate_path(username)
         dts_path_name = manifest_path.parent.name
-        # TODO: verify user staging service directory (util?)
         dest_path = Path(user_path.full_path) / dts_path_name
         return await self._move_dts_files(manifest_path.parent, dest_path)
 
@@ -178,12 +178,11 @@ class DTSFileWatcher:
 
     async def _move_dts_files(self, src_path: Path, dest_path: Path):
         logger.info(f"Moving files from {src_path} to {dest_path}")
-        # TODO: copy with checksum before removing?
-        # TODO: modify destination path if it exists
+        # TODO: copy with checksum before removing? Issue #235
+        # TODO: modify destination path if it exists Issue #236
         try:
             # Needs to be stuffed in a thread, or this will block the webapp
             return await asyncio.to_thread(shutil.move, src_path, dest_path)
-            # shutil.copytree(path.parent, dest_path)
         except Exception as e:
             raise MoveDtsFilesError(f"Unable to move DTS files from {src_path} to {dest_path}: {e}")
 
