@@ -10,6 +10,7 @@ from staging_service.dts_file_watcher import (
     WAIT_INTERVAL_SEC,
     DTSFileWatcher,
     LOGGER_NAME,
+    MoveDtsFilesError,
 )
 from pathlib import Path
 from watchfiles import Change
@@ -199,7 +200,9 @@ async def test_manifest_user_not_found(config_tmp_path, caplog):
 
 @pytest.mark.parametrize("empty_user", [None, "  ", ""])
 async def test_manifest_no_user(config_tmp_path, caplog, empty_user):
-    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": empty_user}))
+    manifest_path = make_manifest_file(
+        config_tmp_path, manifest_text=json.dumps({"username": empty_user})
+    )
 
     await run_manifest_fail_test(
         None,
@@ -236,7 +239,9 @@ async def test_manifest_not_found(config_tmp_path, caplog):
 
 
 async def test_user_not_found_real(config_tmp_path, caplog, auth_client):
-    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME_NOT_FOUND}))
+    manifest_path = make_manifest_file(
+        config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME_NOT_FOUND})
+    )
 
     await run_manifest_fail_test(
         auth_client,
@@ -249,7 +254,9 @@ async def test_user_not_found_real(config_tmp_path, caplog, auth_client):
 
 async def test_user_invalid_string(config_tmp_path, caplog, auth_client):
     illegal_user = "123__++??"
-    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": illegal_user}))
+    manifest_path = make_manifest_file(
+        config_tmp_path, manifest_text=json.dumps({"username": illegal_user})
+    )
 
     await run_manifest_fail_test(
         auth_client,
@@ -260,8 +267,18 @@ async def test_user_invalid_string(config_tmp_path, caplog, auth_client):
     )
 
 
-async def test_move_dts_files_fail(tmp_path):
-    pass
+async def test_move_dts_files_fail():
+    src_path = Path("/this/path/does/not/exist")
+    dest_path = Path("/this/path/also/does/not/exist")
+    # kind of a hack to test it this way, but I'm not sure how to make the
+    # shutil.move command fail. By the time it gets to that point, both directories
+    # should exist and be readable / writeable.
+    # So I'm just testing the issue here and making sure it throws an Exception
+    # properly.
+    watcher = DTSFileWatcher(None, CONFIG)
+    expected_err = f"Unable to move DTS files from {src_path} to {dest_path}"
+    with pytest.raises(MoveDtsFilesError, match=expected_err):
+        await watcher._move_dts_files(src_path, dest_path)
 
 
 async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_client):
@@ -270,7 +287,8 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
     # use real username in CI
     # start watcher
     # test that move worked
-    manifest_path = make_manifest_file(config_tmp_path, manifest_text=json.dumps({"username": CI_USERNAME}))
+    manifest_text = json.dumps({"username": CI_USERNAME})
+    manifest_path = make_manifest_file(config_tmp_path, manifest_text=manifest_text)
     dts_dir = manifest_path.parent
     target_dir_name = dts_dir.name
     file_list = {"foo.fasta", "bar.fasta", "baz.zip"}
@@ -286,7 +304,16 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
         with caplog.at_level("INFO", logger=LOGGER_NAME):
             await _run_watcher_once(watcher, wait_time=5)
 
-    print(caplog.messages)
     target_dir = config_tmp_path.data_dir / CI_USERNAME / target_dir_name
     assert target_dir.exists()
     assert target_dir.is_dir()
+    file_list.add("manifest.json")
+    for item in target_dir.iterdir():
+        if item.is_file():
+            assert item.name in file_list
+            with open(item) as infile:
+                test_data = infile.read()
+                if item.name == "manifest.json":
+                    assert test_data == manifest_text
+                else:
+                    assert test_data == f"my name is {item.name}"
