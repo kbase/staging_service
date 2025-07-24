@@ -10,6 +10,7 @@ _FILE_EXTENSION_MAPPINGS = "FILE_EXTENSION_MAPPINGS"
 _DTS_MANIFEST_SCHEMA = "DTS_MANIFEST_SCHEMA"
 _DTS_STAGING_DIR = "DTS_STAGING_DIR"
 _HEADING = "staging_service"
+_WATCH_DTS_FILES = "WATCH_DTS_FILES"
 
 
 class StagingServiceConfig:
@@ -51,6 +52,7 @@ class StagingServiceConfig:
             self.file_extension_mappings = _get_path_value(heading, _FILE_EXTENSION_MAPPINGS)
             self.dts_manifest_schema = _get_path_value(heading, _DTS_MANIFEST_SCHEMA)
             self.dts_staging_dir = _get_path_value(heading, _DTS_STAGING_DIR)
+            self.watch_dts_files = _get_value(heading, _WATCH_DTS_FILES).lower() == "true"
         except ValueError as err:
             # tack the file name on the error string
             raise ValueError(f"Config file {config_path} error: " + str(err))
