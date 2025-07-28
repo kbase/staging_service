@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Callable, Tuple
 import aiofiles
 import pytest
@@ -11,7 +12,9 @@ from staging_service.dts_file_watcher import (
     WAIT_INTERVAL_SEC,
     DTSFileWatcher,
     LOGGER_NAME,
+    DTSWatcherHealth,
     MoveDtsFilesError,
+    HEALTH_CHECK_TIMEOUT_SEC,
 )
 from pathlib import Path
 from watchfiles import Change
@@ -347,3 +350,171 @@ async def test_dts_watcher_end_to_end_duplicate_path(config_tmp_path, caplog, au
                     assert test_data == manifest_text
                 else:
                     assert test_data == f"my name is {item.name}"
+
+
+def assert_watcher_health(
+    health_status: DTSWatcherHealth,
+    is_healthy: bool = True,
+    is_watching: bool = True,
+    config_dir: str = None,
+):
+    assert health_status.is_healthy == is_healthy
+    assert health_status.is_watching == is_watching
+    assert health_status.time_since_heartbeat >= 0
+    assert health_status.watch_directory == config_dir
+    assert health_status.health_check_timeout == HEALTH_CHECK_TIMEOUT_SEC
+    assert health_status.time_since_heartbeat >= 0
+
+
+def test_initial_health(config_tmp_path, auth_client):
+    """Test that watcher starts with proper initial heartbeat state."""
+    # Before starting, should not be watching and not healthy
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    assert not watcher._is_watching
+    assert not watcher.is_healthy()
+
+    health_status = watcher.get_health_status()
+    assert_watcher_health(
+        health_status,
+        is_healthy=False,
+        is_watching=False,
+        config_dir=str(config_tmp_path.dts_staging_dir),
+    )
+
+
+async def test_heartbeat_updates_during_watching(config_tmp_path, auth_client):
+    """Test that heartbeat updates when watcher is active."""
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    initial_heartbeat = watcher._last_heartbeat
+
+    await _run_watcher_once(watcher, wait_time=5)
+
+    health = watcher.get_health_status()
+    assert health.last_heartbeat > initial_heartbeat
+
+    # Should be unhealthy once stopped
+    assert not watcher.is_healthy()
+    health = watcher.get_health_status()
+    assert_watcher_health(
+        health, is_healthy=False, is_watching=False, config_dir=str(config_tmp_path.dts_staging_dir)
+    )
+
+
+async def test_watching_state_changes(config_tmp_path, auth_client):
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    assert not watcher._is_watching
+
+    with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
+
+        async def mocked_events_generator():
+            assert watcher._is_watching
+            assert_watcher_health(
+                watcher.get_health_status(), config_dir=str(config_tmp_path.dts_staging_dir)
+            )
+            watcher.stop_watching_for_files()
+            yield []
+
+        mock_awatch.return_value = mocked_events_generator()
+
+        await watcher.start_watching_for_files()
+        assert not watcher._is_watching
+
+
+async def test_heartbeat_updates_on_timeout_iterations(auth_client, config_tmp_path):
+    """Test that heartbeat updates even when awatch yields due to timeout."""
+    heartbeats = []
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+
+    with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
+
+        async def mock_generator():
+            # Record heartbeat before each yield
+            heartbeats.append(watcher._last_heartbeat)
+            yield []  # Empty changes (timeout case)
+
+            # Small delay to ensure time difference
+            await asyncio.sleep(0.01)
+            heartbeats.append(watcher._last_heartbeat)
+            yield []  # Another empty yield
+
+            # Stop the watcher
+            watcher._stop_event.set()
+
+        mock_awatch.return_value = mock_generator()
+
+        await watcher.start_watching_for_files()
+
+        # Should have multiple heartbeat updates
+        assert len(heartbeats) == 2
+        assert heartbeats[1] > heartbeats[0]
+
+
+async def test_health_check_during_file_processing(auth_client, config_tmp_path):
+    """Test that heartbeat continues updating even during file processing."""
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    # Create a test manifest file
+    test_dir = config_tmp_path.dts_staging_dir / "test_transfer"
+    test_dir.mkdir()
+    manifest_file = test_dir / "manifest.json"
+
+    with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
+        with patch.object(watcher, "_process_complete_manifest") as mock_process:
+            # Make file processing take some time
+            async def slow_process(path):
+                await asyncio.sleep(0.1)
+                # Verify heartbeat is still being updated during processing
+                assert watcher.is_healthy()
+
+            mock_process.side_effect = slow_process
+
+            async def mock_generator():
+                # Simulate file creation event
+                yield [(Change.added, str(manifest_file))]
+                watcher._stop_event.set()
+
+            mock_awatch.return_value = mock_generator()
+
+            await watcher.start_watching_for_files()
+
+            # Process should have been called
+            mock_process.assert_called_once_with(manifest_file)
+
+
+def test_health_check_boundary_conditions(auth_client, config_tmp_path):
+    """Test health check at exact timeout boundary."""
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    watcher._is_watching = True
+
+    # Test exactly at timeout boundary
+    watcher._last_heartbeat = time.time() - HEALTH_CHECK_TIMEOUT_SEC
+    # Due to floating point precision, this might be healthy or not
+    # Just verify it's consistent with the calculation
+    assert watcher.is_healthy() == (
+        watcher.get_health_status().time_since_heartbeat < HEALTH_CHECK_TIMEOUT_SEC
+    )
+
+    # Test just over timeout
+    watcher._last_heartbeat = time.time() - (HEALTH_CHECK_TIMEOUT_SEC + 0.1)
+    assert not watcher.is_healthy()
+
+    # Test just under timeout
+    watcher._last_heartbeat = time.time() - (HEALTH_CHECK_TIMEOUT_SEC - 0.1)
+    assert watcher.is_healthy()
+
+
+async def test_concurrent_health_checks(auth_client, config_tmp_path):
+    """Test that concurrent health checks work correctly."""
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+    watcher._is_watching = True
+    watcher._last_heartbeat = time.time()
+
+    # Run multiple health checks concurrently
+    async def check_health():
+        await asyncio.sleep(0.01)  # Small delay
+        return watcher.is_healthy()
+
+    tasks = [check_health() for _ in range(10)]
+    results = await asyncio.gather(*tasks)
+
+    # All should return True since watcher is healthy
+    assert all(results)
