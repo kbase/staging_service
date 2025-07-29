@@ -22,6 +22,9 @@ COPY ./ /kb/module
 RUN cp -r /kb/module/staging_service /kb/deployment/lib
 RUN cp -r /kb/module/deployment /kb
 
+RUN mkdir -p /kb/deployment/scripts
+COPY ./scripts/run_dts_watcher.py /kb/deployment/scripts
+
 
 EXPOSE 3000
 
