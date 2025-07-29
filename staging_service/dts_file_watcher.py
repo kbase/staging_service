@@ -25,17 +25,17 @@ STABLE_TIME = 2.0
 WAIT_FOR_FILE_LIMIT = 5
 WATCHFILES_POLL_DELAY_MS = 500
 WATCHFILES_FORCE_POLLING = True
-HEALTH_CHECK_TIMEOUT_SEC = 60
+HEALTH_CHECK_TIMEOUT_SEC = 60.0
 
 
 @dataclass
 class DTSWatcherHealth:
     is_watching: bool
-    last_heartbeat: int
-    time_since_heartbeat: int
+    last_heartbeat: float
+    time_since_heartbeat: float
     is_healthy: bool
     watch_directory: str
-    health_check_timeout: int
+    health_check_timeout: float
 
 
 class DTSFileWatcher:

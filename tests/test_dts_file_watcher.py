@@ -363,7 +363,6 @@ def assert_watcher_health(
     assert health_status.time_since_heartbeat >= 0
     assert health_status.watch_directory == config_dir
     assert health_status.health_check_timeout == HEALTH_CHECK_TIMEOUT_SEC
-    assert health_status.time_since_heartbeat >= 0
 
 
 def test_initial_health(config_tmp_path, auth_client):
