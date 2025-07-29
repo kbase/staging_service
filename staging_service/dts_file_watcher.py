@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+import time
 import traceback
 import aiofiles
 import asyncio
@@ -23,6 +25,17 @@ STABLE_TIME = 2.0
 WAIT_FOR_FILE_LIMIT = 5
 WATCHFILES_POLL_DELAY_MS = 500
 WATCHFILES_FORCE_POLLING = True
+HEALTH_CHECK_TIMEOUT_SEC = 60.0
+
+
+@dataclass
+class DTSWatcherHealth:
+    is_watching: bool
+    last_heartbeat: float
+    time_since_heartbeat: float
+    is_healthy: bool
+    watch_directory: str
+    health_check_timeout: float
 
 
 class DTSFileWatcher:
@@ -44,6 +57,8 @@ class DTSFileWatcher:
         self._config = config
         # the watcher listens for this on each loop, and stops when it's set.
         self._stop_event = asyncio.Event()
+        self._last_heartbeat = time.time()
+        self._is_watching = False
 
     async def start_watching_for_files(self) -> None:
         """
@@ -71,6 +86,8 @@ class DTSFileWatcher:
             raise FileNotFoundError(err_str)
 
         logger.info(f"watching dir {self._watch_dir} for DTS manifest files.")
+        self._is_watching = True
+        self._last_heartbeat = time.time()
 
         async for changes in awatch(
             self._watch_dir,
@@ -80,6 +97,9 @@ class DTSFileWatcher:
             stop_event=self._stop_event,
             yield_on_timeout=True,
         ):
+            # update heartbeat on loop iteration, including timeouts
+            self._last_heartbeat = time.time()
+
             for change_type, change_file_path in changes:
                 file_path = Path(change_file_path)
                 # manifest file must be in a subdirectory to be detected
@@ -100,12 +120,32 @@ class DTSFileWatcher:
                     except Exception as e:
                         # Not sure how else this can fail, but just in case...
                         logger.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
+        self._is_watching = False
         logger.info(
             f"Stop event triggered, no longer watching {self._watch_dir} for DTS manifest files."
         )
 
     def stop_watching_for_files(self) -> None:
         self._stop_event.set()
+
+    def is_healthy(self) -> bool:
+        """
+        Check if the file watcher is healthy.
+        Returns True if:
+        1. The watcher is currently watching
+        2. The last heartbeat was within the timeout period
+        """
+        return self._is_watching and time.time() - self._last_heartbeat <= HEALTH_CHECK_TIMEOUT_SEC
+
+    def get_health_status(self) -> DTSWatcherHealth:
+        return DTSWatcherHealth(
+            self._is_watching,
+            self._last_heartbeat,
+            time.time() - self._last_heartbeat,
+            self.is_healthy(),
+            str(self._watch_dir),
+            HEALTH_CHECK_TIMEOUT_SEC,
+        )
 
     async def _process_complete_manifest(self, manifest_path: Path):
         """
