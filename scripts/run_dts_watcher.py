@@ -1,9 +1,12 @@
+import argparse
 from dataclasses import asdict
 import logging
+from pathlib import Path
 import sys
 from staging_service.config import StagingServiceConfig
 from staging_service.dts_file_watcher import DTSFileWatcher
-from staging_service.kb_auth_client import KBaseAuth
+from staging_service.kb_auth_client import InvalidTokenError, KBaseAuth
+from staging_service.utils import Path as StagingPath
 import asyncio
 import os
 import uvloop
@@ -18,9 +21,6 @@ EXIT_MISSING_CONFIG = 2
 EXIT_BAD_CONFIG = 3
 EXIT_UNKNOWN = 10
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger("run_dts_watcher")
 
 
@@ -36,12 +36,16 @@ class DTSWatcherService:
     class in some signal and health tracking, and shuts it down gracefully
     either when requested, or when a failure occurs.
     """
+
     @classmethod
     async def create(cls, config: StagingServiceConfig):
         """
         Make this class. Needs to be async so it can asyncronously make an auth client.
         """
         auth_client = await KBaseAuth.create(config.auth_url)
+        # This is really just to test the auth token. The answer doesn't matter, as long as it
+        # doesn't raise an exception. Raised exceptions are allowed out.
+        await auth_client.is_valid_user("should_never_be_a_valid_user_probably", config.auth_token)
         return DTSWatcherService(config, auth_client)
 
     def __init__(self, config: StagingServiceConfig, auth_client: KBaseAuth):
@@ -105,7 +109,7 @@ class DTSWatcherService:
             self.watcher.stop_watching_for_files()
 
             try:
-                asyncio.wait_for(watcher_task, timeout=30)
+                await asyncio.wait_for(watcher_task, timeout=30)
             except asyncio.TimeoutError:
                 logger.warning("Watcher didn't stop gracefully, forcing it to stop")
                 await self.graceful_cancel(watcher_task)
@@ -142,7 +146,14 @@ async def main(config: StagingServiceConfig) -> int:
     3. Attaches SIGTERM and SIGINT to cancel handlers.
     4. Runs it and just hangs out until it either cancels or dies.
     """
-    service = await DTSWatcherService.create(config)
+    try:
+        service = await DTSWatcherService.create(config)
+    except InvalidTokenError as err:
+        logger.error(f"Invalid auth token in config, unable to start watcher: {err}")
+        return EXIT_BAD_CONFIG
+    except Exception as err:
+        logger.error(f"Unexpected error while initializing DTSWatcherService: {err}")
+        return EXIT_UNKNOWN
 
     def signal_handler(signum):
         logger.info(f"Signal {signum} received, stopping watcher.")
@@ -156,10 +167,29 @@ async def main(config: StagingServiceConfig) -> int:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Runs the Data Transfer Service file watcher")
+    parser.add_argument("--debug", action="store_true")
+    args = parser.parse_args()
+    log_level = logging.INFO
+    if args.debug:
+        log_level = logging.DEBUG
+
+    logging.basicConfig(
+        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     # get the config loaded, or fail early
     try:
         config = get_config()
+        # make sure the dts dir and data dir exist
+        if not Path(config.data_dir).exists():
+            raise ValueError(f"User staging data directory {config.data_dir} not found. Stopping.")
+        if not Path(config.dts_staging_dir).exists():
+            raise ValueError(f"DTS staging directory {config.dts_staging_dir} not found. Stopping.")
+        # I don't like that I have to do this, see issue #225
+        StagingPath._DATA_DIR = config.data_dir
+        StagingPath._META_DIR = config.meta_dir
     except ValueError as e:
         logger.error(f"Config error: {e}")
         sys.exit(EXIT_BAD_CONFIG)

@@ -11,3 +11,13 @@ services:
       - "./:/staging_service"
     environment:
       KB_DEPLOYMENT_CONFIG: /kb/deployment/conf/deployment.cfg
+  dts_watcher:
+    image: kbase/staging_service:develop
+    volumes:
+      - "./data:/kb/deployment/lib/src/data"
+      - "./:/staging_service"
+    environment:
+      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
+    command:
+      - "dts_watcher"
+      - "--debug"
