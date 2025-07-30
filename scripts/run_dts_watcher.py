@@ -100,8 +100,8 @@ class DTSWatcherService:
         if watcher_task in done:
             try:
                 await watcher_task  # This will raise the exception if there was one
-            except Exception as e:
-                logger.error(f"DTS File Watcher failed: {e}")
+            except Exception as err:
+                logger.error(f"DTS File Watcher failed: {err}")
                 return EXIT_WATCHER_FAIL
 
         if self.shutdown_event.is_set():
@@ -190,17 +190,18 @@ if __name__ == "__main__":
         # I don't like that I have to do this, see issue #225
         StagingPath._DATA_DIR = config.data_dir
         StagingPath._META_DIR = config.meta_dir
-    except ValueError as e:
-        logger.error(f"Config error: {e}")
+    except ValueError as err:
+        logger.error(f"Config error: {err}")
         sys.exit(EXIT_BAD_CONFIG)
-    except FileNotFoundError as e:
-        logger.error(e)
+    except FileNotFoundError as err:
+        logger.error(err)
         sys.exit(EXIT_MISSING_CONFIG)
 
     try:
         sys.exit(asyncio.run(main(config)))
     except KeyboardInterrupt:
         logger.info("Canceled by user")
-    except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
+        sys.exit(EXIT_NORMAL)
+    except Exception as err:
+        logger.error(f"An unexpected error occurred: {err}")
         sys.exit(EXIT_UNKNOWN)
