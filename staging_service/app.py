@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Callable
 import json
 import logging
@@ -14,7 +13,6 @@ from aiohttp import web
 import jsonschema
 
 from staging_service.config import StagingServiceConfig
-from staging_service.dts_file_watcher import DTSFileWatcher
 
 from .app_error_formatter import format_import_spec_errors
 from .kb_auth_client import KBaseAuth, InvalidTokenError

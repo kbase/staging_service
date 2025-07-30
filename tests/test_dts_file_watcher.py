@@ -145,7 +145,9 @@ async def test_dts_file_watcher_fail_not_a_dir(tmp_path):
     config = bootstrap_config()
     config.dts_staging_dir = fake_file
     watcher = DTSFileWatcher(None, config)
-    expected_err = f"Directory to watch: {fake_file} is not a directory. Not watching for DTS files."
+    expected_err = (
+        f"Directory to watch: {fake_file} is not a directory. Not watching for DTS files."
+    )
     with pytest.raises(NotADirectoryError, match=expected_err):
         await watcher.start_watching_for_files()
 
