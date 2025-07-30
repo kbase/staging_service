@@ -110,9 +110,7 @@ class DTSFileWatcher:
             # if the folder it watches went away, watchfiles spams out "changed" messages,
             # seemingly forever. Just break it off here.
             if not self._watch_dir.exists() or not self._watch_dir.is_dir():
-                err_str = (
-                    f"Directory to watch: {self._watch_dir} no longer exists. No longer watching for DTS files."
-                )
+                err_str = f"Directory to watch: {self._watch_dir} no longer exists. No longer watching for DTS files."
                 logger.error(err_str)
                 self.stop_watching_for_files()
                 break
