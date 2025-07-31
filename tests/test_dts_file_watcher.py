@@ -158,6 +158,7 @@ async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
     watcher = DTSFileWatcher(auth_client, config_tmp_path)
 
     with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
+
         async def mock_generator():
             yield []
             # Small delay. Remove the directory here.
@@ -175,7 +176,6 @@ async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
         # Should have multiple heartbeat updates
         assert len(heartbeats) == 2
         assert heartbeats[1] > heartbeats[0]
-
 
 
 def make_manifest_file(config: StagingServiceConfig, manifest_text: str | None = None) -> Path:

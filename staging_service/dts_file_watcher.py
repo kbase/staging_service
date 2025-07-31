@@ -79,8 +79,9 @@ class DTSFileWatcher:
         See issue #237
         """
 
-        def make_startup_err(x):
-            return f"Directory to watch: {self._watch_dir} {x}. Not watching for DTS files."
+        def make_startup_err(err: str) -> str:
+            """A tiny convenience method for making a reusable error string."""
+            return f"Directory to watch: {self._watch_dir} {err}. Not watching for DTS files."
 
         if not self._watch_dir.exists():
             err = make_startup_err("does not exist")
