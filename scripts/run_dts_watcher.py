@@ -45,7 +45,7 @@ class DTSWatcherService:
         auth_client = await KBaseAuth.create(config.auth_url)
         # This is really just to test the auth token. The answer doesn't matter, as long as it
         # doesn't raise an exception. Raised exceptions are allowed out.
-        await auth_client.is_valid_user("should_never_be_a_valid_user_probably", config.auth_token)
+        await auth_client.get_user(config.auth_token)
         return DTSWatcherService(config, auth_client)
 
     def __init__(self, config: StagingServiceConfig, auth_client: KBaseAuth):
