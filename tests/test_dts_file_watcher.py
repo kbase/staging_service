@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import time
 from typing import Callable, Tuple
 import aiofiles
@@ -152,9 +153,8 @@ async def test_dts_file_watcher_fail_not_a_dir(tmp_path):
         await watcher.start_watching_for_files()
 
 
-async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
+async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path, caplog):
     """Test that the DTSFileWatcher exists if the watched dir is removed."""
-    heartbeats = []
     watcher = DTSFileWatcher(auth_client, config_tmp_path)
 
     with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
@@ -163,7 +163,7 @@ async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
             yield []
             # Small delay. Remove the directory here.
             await asyncio.sleep(0.01)
-            heartbeats.append(watcher._last_heartbeat)
+            shutil.rmtree(config_tmp_path.dts_staging_dir)
             yield []
 
             # Stop the watcher
@@ -171,11 +171,13 @@ async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
 
         mock_awatch.return_value = mock_generator()
 
-        await watcher.start_watching_for_files()
-
-        # Should have multiple heartbeat updates
-        assert len(heartbeats) == 2
-        assert heartbeats[1] > heartbeats[0]
+        with caplog.at_level("ERROR", logger=LOGGER_NAME):
+            await watcher.start_watching_for_files()
+            assert watcher._stop_event.is_set()
+            # error should be in some message - there are likely several messages here,
+            # so make sure we see this in one of them.
+            expected_err = f"Directory to watch: {config_tmp_path.dts_staging_dir} no longer exists. No longer watching for DTS files."
+            assert any([msg == expected_err for msg in caplog.messages])
 
 
 def make_manifest_file(config: StagingServiceConfig, manifest_text: str | None = None) -> Path:
@@ -308,7 +310,7 @@ async def test_move_dts_files_fail():
         await watcher._move_dts_files(src_path, dest_path)
 
 
-async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_client):
+async def test_dts_watcher_end_to_end_success(config_tmp_path, auth_client):
     # put files in tmp_path/dts (use tmp_path as config for dts staging)
     # make another tmp_path/base for base dir, make config as such
     # use real username in CI
@@ -328,8 +330,7 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
         "staging_service.dts_file_watcher.awatch",
         new=make_mocked_awatch([(Change.added, str(manifest_path))]),
     ):
-        with caplog.at_level("INFO", logger=LOGGER_NAME):
-            await _run_watcher_once(watcher, wait_time=5)
+        await _run_watcher_once(watcher, wait_time=5)
 
     target_dir = config_tmp_path.data_dir / CI_USERNAME / target_dir_name
     assert target_dir.exists()
@@ -346,7 +347,16 @@ async def test_dts_watcher_end_to_end_success(config_tmp_path, caplog, auth_clie
                     assert test_data == f"my name is {item.name}"
 
 
-async def test_dts_watcher_end_to_end_duplicate_path(config_tmp_path, caplog, auth_client):
+@pytest.mark.parametrize("num_extra_dupes", [0, 1, 2, 3, 4])
+async def test_dts_watcher_end_to_end_duplicate_path(
+    config_tmp_path, auth_client, num_extra_dupes: int
+):
+    """
+    Test that a unique path is made for the target files.
+    I.e. if the directory to copy is called "foo", and gets put in "username/foo", but that
+    already exists, the watcher should make "username/foo-1" and put the files there.
+    Likewise, if username/foo-1 already exists, it should go into username/foo-2, etc.
+    """
     # put files in tmp_path/dts (use tmp_path as config for dts staging)
     # make another tmp_path/base for base dir, make config as such
     # use real username in CI
@@ -358,6 +368,9 @@ async def test_dts_watcher_end_to_end_duplicate_path(config_tmp_path, caplog, au
     target_dir_name = dts_dir.name
     target_dir = config_tmp_path.data_dir / CI_USERNAME / target_dir_name
     target_dir.mkdir(parents=True, exist_ok=True)  # make an existing dir. It can be empty.
+    for count in range(num_extra_dupes):
+        extra_dupe_dir = config_tmp_path.data_dir / CI_USERNAME / (target_dir_name + f"-{count}")
+        extra_dupe_dir.mkdir(parents=True, exist_ok=True)
     file_list = {"foo.fasta", "bar.fasta", "baz.zip"}
     for filename in file_list:
         (dts_dir / filename).touch()
@@ -373,8 +386,7 @@ async def test_dts_watcher_end_to_end_duplicate_path(config_tmp_path, caplog, au
         "staging_service.dts_file_watcher.awatch",
         new=make_mocked_awatch([(Change.added, str(manifest_path))]),
     ):
-        with caplog.at_level("INFO", logger=LOGGER_NAME):
-            await _run_watcher_once(watcher, wait_time=5)
+        await _run_watcher_once(watcher, wait_time=5)
 
     assert not any(target_dir.iterdir())
 
