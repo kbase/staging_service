@@ -78,12 +78,20 @@ class DTSFileWatcher:
         TODO: add a tracker for the file copying process with a service endpoint for monitoring
         See issue #237
         """
+
+        def make_startup_err(err: str) -> str:
+            """A tiny convenience method for making a reusable error string."""
+            return f"Directory to watch: {self._watch_dir} {err}. Not watching for DTS files."
+
         if not self._watch_dir.exists():
-            err_str = (
-                f"Directory to watch: {self._watch_dir} does not exist. Not watching for DTS files."
-            )
-            logger.error(err_str)
-            raise FileNotFoundError(err_str)
+            err = make_startup_err("does not exist")
+            logger.error(err)
+            raise FileNotFoundError(err)
+
+        if not self._watch_dir.is_dir():
+            err = make_startup_err("is not a directory")
+            logger.error(err)
+            raise NotADirectoryError(err)
 
         logger.info(f"watching dir {self._watch_dir} for DTS manifest files.")
         self._is_watching = True
@@ -99,6 +107,14 @@ class DTSFileWatcher:
         ):
             # update heartbeat on loop iteration, including timeouts
             self._last_heartbeat = time.time()
+
+            # if the folder it watches went away, watchfiles spams out "changed" messages,
+            # seemingly forever. Just break it off here.
+            if not self._watch_dir.exists() or not self._watch_dir.is_dir():
+                err_str = f"Directory to watch: {self._watch_dir} no longer exists. No longer watching for DTS files."
+                logger.error(err_str)
+                self.stop_watching_for_files()
+                break
 
             for change_type, change_file_path in changes:
                 file_path = Path(change_file_path)

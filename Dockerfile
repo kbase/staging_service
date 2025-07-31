@@ -19,9 +19,13 @@ COPY ./globus.cfg /etc/globus.cfg
 RUN touch /var/log/globus.log && chmod 777 /var/log/globus.log
 
 COPY ./ /kb/module
-RUN cp -r /kb/module/staging_service /kb/deployment/lib
-RUN cp -r /kb/module/deployment /kb
+RUN cp -r /kb/module/staging_service /kb/deployment/lib && \
+    cp -r /kb/module/deployment /kb && \
+    mkdir -p /kb/deployment/scripts
 
+COPY ./scripts/run_dts_watcher.py /kb/deployment/scripts
+
+ENV PYTHONPATH="/kb/deployment/lib:$PYTHONPATH"
 
 EXPOSE 3000
 
@@ -37,4 +41,4 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     us.kbase.vcs-branch=$BRANCH \
     maintainer="Steve Chan sychan@lbl.gov"
 
-ENTRYPOINT ["/kb/deployment/bin/entrypoint.sh"]
+ENTRYPOINT ["/kb/deployment/bin/entrypoint_staging_service.sh"]
