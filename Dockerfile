@@ -25,6 +25,8 @@ RUN cp -r /kb/module/staging_service /kb/deployment/lib && \
 
 COPY ./scripts/run_dts_watcher.py /kb/deployment/scripts
 
+ENV PYTHONPATH="/kb/deployment/lib:$PYTHONPATH"
+
 EXPOSE 3000
 
 WORKDIR /kb/deployment/lib
@@ -39,4 +41,4 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     us.kbase.vcs-branch=$BRANCH \
     maintainer="Steve Chan sychan@lbl.gov"
 
-ENTRYPOINT ["/kb/deployment/bin/entrypoint.sh"]
+ENTRYPOINT ["/kb/deployment/bin/entrypoint_staging_service.sh"]

@@ -152,6 +152,32 @@ async def test_dts_file_watcher_fail_not_a_dir(tmp_path):
         await watcher.start_watching_for_files()
 
 
+async def test_dts_file_watcher_fail_dir_deleted(auth_client, config_tmp_path):
+    """Test that the DTSFileWatcher exists if the watched dir is removed."""
+    heartbeats = []
+    watcher = DTSFileWatcher(auth_client, config_tmp_path)
+
+    with patch("staging_service.dts_file_watcher.awatch") as mock_awatch:
+        async def mock_generator():
+            yield []
+            # Small delay. Remove the directory here.
+            await asyncio.sleep(0.01)
+            heartbeats.append(watcher._last_heartbeat)
+            yield []
+
+            # Stop the watcher
+            watcher._stop_event.set()
+
+        mock_awatch.return_value = mock_generator()
+
+        await watcher.start_watching_for_files()
+
+        # Should have multiple heartbeat updates
+        assert len(heartbeats) == 2
+        assert heartbeats[1] > heartbeats[0]
+
+
+
 def make_manifest_file(config: StagingServiceConfig, manifest_text: str | None = None) -> Path:
     manifest_dir = config.dts_staging_dir / "fake_transfer"
     manifest_dir.mkdir()

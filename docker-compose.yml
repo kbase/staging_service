@@ -17,7 +17,7 @@ services:
       - "./data:/kb/deployment/lib/src/data"
       - "./:/staging_service"
     environment:
-      - KB_DEPLOYMENT_CONFIG=/kb/deployment/conf/deployment.cfg
+      KB_DEPLOYMENT_CONFIG: /kb/deployment/conf/deployment.cfg
+    entrypoint: ["/kb/deployment/bin/entrypoint_dts_watcher.sh"]
     command:
-      - "dts_watcher"
       - "--debug"
