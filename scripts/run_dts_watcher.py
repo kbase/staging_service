@@ -133,7 +133,7 @@ class DTSWatcherService:
 
     def stop(self):
         """
-        Stops the running from running.
+        Stops the service from running by setting the shutdown event.
         """
         self.shutdown_event.set()
 
