@@ -51,6 +51,10 @@ sample_set_id = "sample_set"
 # import_specification is not a "real" data type, but rather tells the narrative that the
 # file contains specifications for how to load one or more other staging area files.
 import_specification = "import_specification"
+# dts_manifest is also not a real data type, but functions like import_specification as
+# it tells the narrative that the file has specs for loading other staging area files
+# that came from the Data Transfer Service, and that this manifest follows that spec.
+dts_manifest = "dts_manifest"
 decompress_id = "decompress"
 metabolic_annotations_id = "metabolic_annotation"
 metabolic_annotations_bulk_id = "metabolic_annotation_bulk"

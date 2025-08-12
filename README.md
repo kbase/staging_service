@@ -26,6 +26,9 @@ to run inside docker run /run_in_docker.sh
 -  to test use `./run_tests.sh`
 -  requires python 3.11.4 or higher
 -  requires installation on mac of libmagic: `brew install libmagic` or `sudo port install libmagic`.
+-  testing requires a KBase auth token (see AUTH_URL configuration in `deployment/conf/testing.cfg` 
+   for relevant KBase environment) and KBase user id. These must be in environment variables 
+   `KBASE_TEST_TOKEN` and `KBASE_TEST_USER`, respectively.
 
 ## debugging
 
@@ -119,26 +122,6 @@ Error Connecting to auth service ...
 
 ```
 Must supply token
-```
-
-### File Lifetime
-
-**URL** : `ci.kbase.us/services/staging_service/file-lifetime`
-**local URL** : `localhost:3000/file-lifetime`
-
-**Method** : `GET`
-
-#### Success Response
-
-**Code** : `200 OK`
-
-**Content example**
-number of days a file will be held for in staging service before being deleted
-this is not actually handled by the server but is expected to be performed by a
-cron job which shares the env variable read here
-
-```
-90
 ```
 
 ### List Directory

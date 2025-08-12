@@ -1,4 +1,3 @@
-import configparser
 import os
 import traceback
 from pathlib import Path
@@ -6,6 +5,8 @@ from typing import Any
 
 import openpyxl
 from dotenv import load_dotenv
+
+from staging_service.config import StagingServiceConfig
 
 
 def bootstrap():
@@ -26,8 +27,7 @@ def bootstrap_config():
     if not os.path.exists(config_filepath):
         raise FileNotFoundError(config_filepath)
 
-    config = configparser.ConfigParser()
-    config.read(config_filepath)
+    config = StagingServiceConfig(config_filepath)
     return config
 
 
