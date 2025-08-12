@@ -17,7 +17,7 @@ if you want to run locally you must install requirements.txt for python3
 
 ## running
 
-to run locally run /deployment/bin/entrypoint.sh
+to run locally run /deployment/bin/entrypoint_staging_service.sh
 
 to run inside docker run /run_in_docker.sh
 
@@ -61,6 +61,21 @@ Running this script will build the `supported_apps_w_extensions.json` file that 
 To add new mappings, update the `GenerateMappings.py` script. New file types and object types should be added
 to the `staging_service.autodetect.Mappings` module and included from there. See `GenerateMappings.py` 
 docstrings for more details.
+
+## Data Transfer Service file watcher
+The KBase [Data Transfer Service](https://github.com/kbase/dts) (DTS, 
+See [here](https://kbase.github.io/dts) for further documentation) copies data files from external sources into a KBase user's staging area, accompanied by a `manifest.json` file.
+However, due to various permissions reasons, it cannot copy those files directly. First,
+it drops them off in a separate directory to which it has access. The Staging Service DTS
+File Watcher then moves those files to the user's directory.
+
+The DTS File Watcher is a separate entrypoint that uses much of the same machinery as the
+rest of the Staging Service. The script can be found in `scripts/run_dts_watcher.py`, and
+the entrypoint can be found in `deployment/bin/entrypoint_dts_watcher.sh`. It 
+does not provide a web service, but just watches a directory given in the config as 
+`DTS_STAGING_DIR` for changes. If it sees a `manifest.json` file in a subdirectory, it 
+parses that to get a KBase username and moves the whole subdirectory to that user's
+staging area.
 
 ## API
 

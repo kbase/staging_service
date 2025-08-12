@@ -1,10 +1,15 @@
 # Release Notes
 
-## Unreleased
+## Version 1.4.0
 
 -  update to Python 3.11.4
 -  run black on all service and test files, fix most linting complaints (pylint,
   sonarlint)
+-  Added a new KBaseAuth client
+-  Modified the `bulk_specification` endpoint to parse DTS `manifest.json` files with 
+  a `dts` flag.
+-  Added a DTS file watcher that moves a user's files from the DTS dropoff point to
+  the user's subdirectory.
 
 ## Version 1.3.6
 

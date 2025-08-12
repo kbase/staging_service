@@ -42,7 +42,7 @@ from .utils import AclManager, Path, run_command
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.3.6"
+VERSION = "1.4.0"
 
 _DATATYPE_MAPPINGS = None
 _DTS_MANIFEST_VALIDATOR: jsonschema.Draft202012Validator | None = None
