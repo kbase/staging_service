@@ -2,7 +2,7 @@
 
 ## Version 1.4.0
 
--  update to Python 3.11.4
+-  update to Python 3.11.13
 -  run black on all service and test files, fix most linting complaints (pylint,
   sonarlint)
 -  Added a new KBaseAuth client
