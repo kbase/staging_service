@@ -17,7 +17,7 @@ if you want to run locally you must install requirements.txt for python3
 
 ## running
 
-to run locally run /deployment/bin/entrypoint.sh
+to run locally run /deployment/bin/entrypoint_staging_service.sh
 
 to run inside docker run /run_in_docker.sh
 
@@ -61,6 +61,21 @@ Running this script will build the `supported_apps_w_extensions.json` file that 
 To add new mappings, update the `GenerateMappings.py` script. New file types and object types should be added
 to the `staging_service.autodetect.Mappings` module and included from there. See `GenerateMappings.py` 
 docstrings for more details.
+
+## Data Transfer Service file watcher
+The KBase [Data Transfer Service](https://github.com/kbase/dts) (DTS, 
+See [here](https://kbase.github.io/dts) for further documentation) copies data files from external sources into a KBase user's staging area, accompanied by a `manifest.json` file.
+However, due to various permissions reasons, it cannot copy those files directly. First,
+it drops them off in a separate directory to which it has access. The Staging Service DTS
+File Watcher then moves those files to the user's directory.
+
+The DTS File Watcher is a separate entrypoint that uses much of the same machinery as the
+rest of the Staging Service. The script can be found in `scripts/run_dts_watcher.py`, and
+the entrypoint can be found in `deployment/bin/entrypoint_dts_watcher.sh`. It 
+does not provide a web service, but just watches a directory given in the config as 
+`DTS_STAGING_DIR` for changes. If it sees a `manifest.json` file in a subdirectory, it 
+parses that to get a KBase username and moves the whole subdirectory to that user's
+staging area.
 
 ## API
 
@@ -802,21 +817,27 @@ Error Connecting to auth service ...
 ### Parse bulk specifications
 
 This endpoint parses one or more bulk specification files in the staging area
-into a data
-structure (close to) ready for insertion into the Narrative bulk import or
-analysis cell.
+into a data structure (close to) ready for insertion into the Narrative bulk 
+import or analysis cell.
 
-It can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. Templates for
-the currently
-supported data types are available in
+By default, it can parse `.tsv`, `.csv`, and Excel (`.xls` and `.xlsx`) files. 
+Templates for the currently supported data types are available in
 the [templates](./import_specifications/templates)
 directory of this repo. See
 the [README.md](./import_specifications/templates/README.md) file
 for instructions on template usage.
 
+When given the `dts` flag in the URL, this endpoint can also parse manifest 
+files that come from the KBase [Data Transfer Service](https://github.com/kbase/dts) (DTS)
+See [here](https://kbase.github.io/dts) for further documentation on the service.
+This service copies data files from external sources into a KBase user's staging
+area, accompanied by a `manifest.json` file. These also contain information on how to
+load files into KBase importer apps. However, since they are a very specific format,
+this means adding a `dts` flag to the URL. When this flag is present, all files
+are expected to be `.json` files and conform to the [DTS schema](./import_specifications/schema/dts_manifest_schema.json).
+
 See the [import specification ADR document](./docs/import_specifications.ADR.md)
-for design
-details.
+for design details.
 
 **URL** : `ci.kbase.us/services/staging_service/bulk_specification`
 
@@ -830,7 +851,7 @@ details.
 
 **Code** : `200 OK`
 
-**Content example**
+**Content examples**
 
 ```
 GET bulk_specification/?files=file1.<ext>[,file2.<ext>,...]
@@ -838,7 +859,16 @@ GET bulk_specification/?files=file1.<ext>[,file2.<ext>,...]
 
 `<ext>` is one of `csv`, `tsv`, `xls`, or `xlsx`.
 
-Reponse:
+
+```
+GET bulk_specification/?files=file1.json[,file2.json,...]&dts
+```
+
+When using the `dts` flag, all files must be JSON and have the `.json` extension.
+
+Both versions of the endpoint respond in the same format.
+
+Response:
 
 ```
 {
@@ -1024,7 +1054,7 @@ POST write_bulk_specification/
 - `data` contains any data to be written to the file as example data, and is analogous to the data structure returned from the parse endpoint. To specify that no data should be written to the template provide an empty list.
 - `<value for ID, row N>` is the value for the input for a given `spec.json` ID and import or analysis instance, where an import/analysis instance is effectively a row in the data file. Each data file row is provided in order for each type. Each row is provided in a mapping of `spec.json` ID to the data for the row. Lines > 3 in the templates are user-provided data, and each line corresponds to a single import or analysis.
 
-Reponse:
+Response:
 
 ```
 {

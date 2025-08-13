@@ -1,10 +1,20 @@
 # Release Notes
 
-## Unreleased
+## Version 1.4.0
 
--  update to Python 3.11.4
+-  update to Python 3.11.13
 -  run black on all service and test files, fix most linting complaints (pylint,
   sonarlint)
+-  Added a new KBaseAuth client
+-  Modified the `bulk_specification` endpoint to parse DTS `manifest.json` files with 
+  a `dts` flag.
+-  Added a DTS file watcher that moves a user's files from the DTS dropoff point to
+  the user's subdirectory.
+-  Added `AUTH_TOKEN`, `DTS_MANIFEST_SCHEMA`, and `DTS_STAGING_DIR` config values. 
+   -  These are all required. 
+   -  `AUTH_TOKEN` is a service token used by the service to verify user existence.
+-  Added a separate StagingServiceConfig object that manages configurations.
+-  Modified the `AUTH_URL` config to point to the root of the auth service.
 
 ## Version 1.3.6
 
