@@ -148,6 +148,9 @@
     ],
     "escher_map": [
       "json"
+    ],
+    "dts_manifest": [
+      "json"
     ]
   },
   "types": {
@@ -1121,6 +1124,11 @@
         {
           "id": "escher_map",
           "title": "EscherMap",
+          "app_weight": 1
+        },
+        {
+          "id": "dts_manifest",
+          "title": "Data Transfer Service Manifest",
           "app_weight": 1
         }
       ]

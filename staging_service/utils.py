@@ -44,6 +44,7 @@ class Path(object):
     _DATA_DIR = None  # expects to be set by config
     _CONCIERGE_PATH = None  # expects to be set by config
     _FILE_EXTENSION_MAPPINGS = None  # expects to be set by config
+    _DTS_MANIFEST_SCHEMA_PATH = None  # expects to be set by config
 
     __slots__ = ["full_path", "metadata_path", "user_path", "name", "jgi_metadata"]
 
@@ -98,21 +99,15 @@ class AclManager:
 
         client = globus_sdk.NativeAppAuthClient(cf["client_id"])
         try:
-            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["transfer_token"], client
-            )
-            self.globus_transfer_client = globus_sdk.TransferClient(
-                authorizer=transfer_authorizer
-            )
-            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(
-                cf["auth_token"], client
-            )
+            transfer_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["transfer_token"], client)
+            self.globus_transfer_client = globus_sdk.TransferClient(authorizer=transfer_authorizer)
+            auth_authorizer = globus_sdk.RefreshTokenAuthorizer(cf["auth_token"], client)
             self.globus_auth_client = globus_sdk.AuthClient(authorizer=auth_authorizer)
         except globus_sdk.GlobusAPIError as error:
             logging.error(str(error.code) + error.raw_text)
             raise HTTPInternalServerError(
-                text=str("Invalid Token Specified in globus.cfg file")
-            )
+                text="Invalid Token Specified in globus.cfg file"
+            ) from error
 
     def _get_globus_identities(self, shared_directory: str):
         """
@@ -120,20 +115,16 @@ class AclManager:
         to call the globus service and get identities for that client.
         """
         globus_id_filename = "{}.globus_id".format(shared_directory)
-        with open(globus_id_filename, "r") as fp:
+        with open(globus_id_filename, "r", encoding="utf-8") as fp:
             ident = fp.read()
-            return self.globus_auth_client.get_identities(
-                usernames=ident.split("\n")[0]
-            )
+            return self.globus_auth_client.get_identities(usernames=ident.split("\n")[0])
 
     def _get_globus_identity(self, globus_id_filename: str):
         """
         Get the first identity for the username in the .globus_id file
         """
         try:
-            return self._get_globus_identities(globus_id_filename)["identities"][0][
-                "id"
-            ]
+            return self._get_globus_identities(globus_id_filename)["identities"][0]["id"]
         except FileNotFoundError as error:
             response = {
                 "success": False,
@@ -146,7 +137,7 @@ class AclManager:
 
             raise HTTPInternalServerError(
                 text=json.dumps(response), content_type="application/json"
-            )
+            ) from error
 
         except globus_sdk.GlobusAPIError as error:
             response = {
@@ -160,14 +151,14 @@ class AclManager:
 
             raise HTTPInternalServerError(
                 text=json.dumps(response), content_type="application/json"
-            )
+            ) from error
 
     def _add_acl(self, user_identity_id: str, shared_directory_basename: str):
         """
         Attempt to add acl for the given user id and directory
         """
         try:
-            resp = self.globus_transfer_client.add_endpoint_acl_rule(
+            self.globus_transfer_client.add_endpoint_acl_rule(
                 self.endpoint_id,
                 dict(
                     DATA_TYPE="access",
@@ -186,9 +177,7 @@ class AclManager:
             }
 
             logging.info(response)
-            logging.info(
-                "Shared %s with %s\n" % (shared_directory_basename, user_identity_id)
-            )
+            logging.info("Shared %s with %s\n", shared_directory_basename, user_identity_id)
 
             logging.info(response)
             return response
@@ -203,20 +192,16 @@ class AclManager:
             }
             logging.error(response)
             if error.code == "Exists":
-                raise HTTPOk(text=json.dumps(response), content_type="application/json")
+                raise HTTPOk(text=json.dumps(response), content_type="application/json") from error
 
-        raise HTTPInternalServerError(
-            text=json.dumps(response), content_type="application/json"
-        )
+        raise HTTPInternalServerError(text=json.dumps(response), content_type="application/json")
 
     def _remove_acl(self, user_identity_id: str):
         """
         Get all ACLS and attempt to remove the correct ACL for the given user_identity
         """
         try:
-            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)[
-                "DATA"
-            ]
+            acls = self.globus_transfer_client.endpoint_acl_list(self.endpoint_id)["DATA"]
             for acl in acls:
                 if user_identity_id == acl["principal"]:
                     if "id" in acl and acl["id"] is not None:
@@ -226,7 +211,8 @@ class AclManager:
                         return {"message": str(resp), "Success": True}
                     else:
                         return {
-                            "message": "Couldn't find ACL for principal. Did you already delete your ACL?",
+                            "message": "Couldn't find ACL for principal. "
+                            + "Did you already delete your ACL?",
                             "Success": False,
                             "principal": acl["principal"],
                         }
@@ -248,12 +234,13 @@ class AclManager:
             }
             raise HTTPInternalServerError(
                 text=json.dumps(response), content_type="application/json"
-            )
+            ) from error
 
     def add_acl_concierge(self, shared_directory: str, concierge_path: str):
         """
         Add ACL to the concierge globus share via the globus API
-        :param shared_directory: Dir to get globus ID from and to generate id to create ACL for share
+        :param shared_directory: Dir to get globus ID from and to generate id to
+            create ACL for share
         :param shared_concierge_directory: KBase Concierge Dir to add acl for
         :return: Result of attempt to add acl
         """
@@ -270,7 +257,8 @@ class AclManager:
     def add_acl(self, shared_directory: str):
         """
         Add ACL to the globus share via the globus API
-        :param shared_directory: Directory to get globus ID from and to generate id to create ACL for share
+        :param shared_directory: Directory to get globus ID from and to
+            generate id to create ACL for share
         :return: Result of attempt to add acl
         """
         user_identity_id = self._get_globus_identity(shared_directory)

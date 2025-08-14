@@ -31,7 +31,8 @@ ANNOTATIONS = "ANNOTATIONS"
 
 MEDIA = "KBaseBiochem.Media"
 
-# These ID mappings should be available in dropdown_order in staging_upload.json in the narrative service
+# These ID mappings should be available in dropdown_order in staging_upload.json
+# in the narrative service
 fastq_reads_interleaved_id = "fastq_reads_interleaved"
 fastq_reads_noninterleaved_id = "fastq_reads_noninterleaved"
 sra_reads_id = "sra_reads"
@@ -45,24 +46,37 @@ assembly_id = "assembly"
 phenotype_set_id = "phenotype_set"
 sample_set_id = "sample_set"
 
-# To be added to https://github.com/kbase/narrative/kbase-extension/static/kbase/config/staging_upload.json
+# To be added to
+# https://github.com/kbase/narrative/kbase-extension/static/kbase/config/staging_upload.json
 # import_specification is not a "real" data type, but rather tells the narrative that the
 # file contains specifications for how to load one or more other staging area files.
 import_specification = "import_specification"
+# dts_manifest is also not a real data type, but functions like import_specification as
+# it tells the narrative that the file has specs for loading other staging area files
+# that came from the Data Transfer Service, and that this manifest follows that spec.
+dts_manifest = "dts_manifest"
 decompress_id = "decompress"
 metabolic_annotations_id = "metabolic_annotation"
 metabolic_annotations_bulk_id = "metabolic_annotation_bulk"
 attribute_mapping_id = "attribute_mapping"
 escher_map_id = "escher_map"
 
+
 def _flatten(some_list):
     return list(itertools.chain.from_iterable(some_list))
 
-_COMPRESSION_EXT = ["", ".gz", ".gzip"]  # empty string to keep the uncompressed extension
+
+_COMPRESSION_EXT = [
+    "",
+    ".gz",
+    ".gzip",
+]  # empty string to keep the uncompressed extension
+
 
 # longer term there's probably a better way to do this but this is quick
 def _add_gzip(extension_list):
     return _flatten([[ext + comp for comp in _COMPRESSION_EXT] for ext in extension_list])
+
 
 file_format_to_extension_mapping = {
     FASTA: _add_gzip(["fna", "fa", "faa", "fsa", "fasta"]),
@@ -88,8 +102,8 @@ file_format_to_extension_mapping = {
     #     "phylip",
     #     "stockholm",
     # ],
-    TSV: ["tsv"],            # See Note 1 below
-    CSV: ["csv"],            # See Note 1 below
+    TSV: ["tsv"],  # See Note 1 below
+    CSV: ["csv"],  # See Note 1 below
     JSON: ["json"],
     EXCEL: ["xls", "xlsx"],  # See Note 1 below
     ZIP: ["zip", "tar", "tgz", "tar.gz", "7z", "gz", "gzip", "rar"],

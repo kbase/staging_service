@@ -1,0 +1,29 @@
+name: Linters
+
+on: [pull_request]
+
+jobs:
+  run-pre-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2 
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install ruff
+      run: pip install ruff==0.4.4
+
+    - name: Run ruff format checker
+      run: ruff format --check --config pyproject.toml
+
+    - name: Run ruff format checker
+      run: ruff check --config pyproject.toml
+
+    # This step also implicitly checks to see if your version of ruff in the pre-commit-config.yaml is up-to-date
+    - name: Run pre-commit
+      run: pip install pre-commit && pre-commit run --all-files

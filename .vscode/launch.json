@@ -9,14 +9,13 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
+            "python": "${command:python.interpreterPath}",
             "module": "staging_service",
             "cwd": "${workspaceRoot}",
             "args": [],
             //note the setting of env should be the same as entrypoint.sh
             "env": {
-                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/local.cfg",
-                "FILE_LIFETIME":90
+                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/local.cfg"
             },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
@@ -30,7 +29,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": false,
-            "pythonPath": "${config:python.pythonPath}",
+            "python": "${command:python.interpreterPath}",
             "module": "pytest",
             "args": [
                 "-sv"
@@ -38,8 +37,7 @@
             "cwd": "${workspaceRoot}",
             //note the setting of env should be the same as entrypoint.sh
             "env": {
-                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/testing.cfg",
-                "FILE_LIFETIME":90
+                "KB_DEPLOYMENT_CONFIG":"${workspaceRoot}/deployment/conf/testing.cfg"
             },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
@@ -53,7 +51,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": true,
-            "pythonPath": "${config:python.pythonPath}",
+            "python": "${command:python.interpreterPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
             "env": {},

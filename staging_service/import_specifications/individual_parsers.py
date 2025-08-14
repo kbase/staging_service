@@ -2,24 +2,26 @@
 Contains parser functions for use with the file parser framework.
 """
 
+from collections import defaultdict
 import csv
-import magic
+import json
 import math
-import pandas
 import re
-
-# TODO update to C impl when fixed: https://github.com/Marco-Sulla/python-frozendict/issues/26
-from frozendict.core import frozendict
 from pathlib import Path
-from typing import Optional as O, Union, Any
+from typing import Any, Optional, Tuple, Union
+
+from jsonschema import Draft202012Validator
+import magic
+import pandas
+from frozendict import frozendict
 
 from staging_service.import_specifications.file_parser import (
     PRIMITIVE_TYPE,
-    ErrorType,
-    SpecificationSource,
     Error,
+    ErrorType,
     ParseResult,
     ParseResults,
+    SpecificationSource,
 )
 
 # this version defines the schema of the xsv and Excel files.
@@ -31,10 +33,14 @@ _DATA_TYPE = "Data type:"
 _VERSION_STR = "Version:"
 _COLUMN_STR = "Columns:"
 _HEADER_SEP = ";"
-_EXPECTED_HEADER = (f"{_DATA_TYPE} <data_type>{_HEADER_SEP} "
-     + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>")
-_HEADER_REGEX = re.compile(f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
-    + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)")
+_EXPECTED_HEADER = (
+    f"{_DATA_TYPE} <data_type>{_HEADER_SEP} "
+    + f"{_COLUMN_STR} <column count>{_HEADER_SEP} {_VERSION_STR} <version>"
+)
+_HEADER_REGEX = re.compile(
+    f"{_DATA_TYPE} (\\w+){_HEADER_SEP} "
+    + f"{_COLUMN_STR} (\\d+){_HEADER_SEP} {_VERSION_STR} (\\d+)"
+)
 
 _MAGIC_TEXT_FILES = {"text/plain", "inode/x-empty", "application/csv", "text/csv"}
 
@@ -55,29 +61,39 @@ _EXCEL_MISSING_VALUES = [
     "null",
 ]
 
+_DTS_INSTRUCTIONS_KEY = "instructions"
+_DTS_INSTRUCTIONS_DATATYPE_KEY = "data_type"
+_DTS_INSTRUCTIONS_PARAMETERS_KEY = "parameters"
+_DTS_INSTRUCTIONS_OBJECTS_KEY = "objects"
+
 
 class _ParseException(Exception):
     pass
 
 
-def _parse_header(header: str, spec_source: SpecificationSource, maximum_version: int
+def _parse_header(
+    header: str, spec_source: SpecificationSource, maximum_version: int
 ) -> tuple[str, int]:
     # return is (data type, column count)
     match = _HEADER_REGEX.fullmatch(header)
     if not match:
-        raise _ParseException(Error(
-            ErrorType.PARSE_FAIL,
-            f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"',
-            spec_source
-        ))
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f'Invalid header; got "{header}", expected "{_EXPECTED_HEADER}"',
+                spec_source,
+            )
+        )
     version = int(match[3])
     if version > maximum_version:
-        raise _ParseException(Error(
-            ErrorType.PARSE_FAIL,
-            f"Schema version {version} is larger than maximum processable "
-            + f"version {maximum_version}",
-            spec_source
-        ))
+        raise _ParseException(
+            Error(
+                ErrorType.PARSE_FAIL,
+                f"Schema version {version} is larger than maximum processable "
+                + f"version {maximum_version}",
+                spec_source,
+            )
+        )
     return match[1], int(match[2])
 
 
@@ -86,23 +102,26 @@ def _csv_next(
     line_number: int,
     expected_line_count: Union[None, int],  # None = skip columns check
     spec_source: SpecificationSource,
-    error: str
+    error: str,
 ) -> list[str]:
     try:
         line = next(input_)
     except StopIteration:
         raise _ParseException(Error(ErrorType.PARSE_FAIL, error, spec_source))
     if expected_line_count and len(line) != expected_line_count:
-        raise _ParseException(Error(
-            ErrorType.INCORRECT_COLUMN_COUNT,
-            f"Incorrect number of items in line {line_number}, "
-            + f"expected {expected_line_count}, got {len(line)}",
-            spec_source))
+        raise _ParseException(
+            Error(
+                ErrorType.INCORRECT_COLUMN_COUNT,
+                f"Incorrect number of items in line {line_number}, "
+                + f"expected {expected_line_count}, got {len(line)}",
+                spec_source,
+            )
+        )
     return line
 
 
 def _error(error: Error) -> ParseResults:
-    return ParseResults(errors = tuple([error]))
+    return ParseResults(errors=tuple([error]))
 
 
 def _normalize_pandas(val: PRIMITIVE_TYPE) -> PRIMITIVE_TYPE:
@@ -141,18 +160,22 @@ def _normalize_headers(
     ret = [str(s).strip() if not pandas.isna(s) else None for s in headers]
     for i, name in enumerate(ret, start=1):
         if not name:
-            raise _ParseException(Error(
-                ErrorType.PARSE_FAIL,
-                f"Missing header entry in row {line_number}, position {i}",
-                spec_source
-            ))
+            raise _ParseException(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    f"Missing header entry in row {line_number}, position {i}",
+                    spec_source,
+                )
+            )
 
         if name in seen:
-            raise _ParseException(Error(
-                ErrorType.PARSE_FAIL,
-                f"Duplicate header name in row {line_number}: {name}",
-                spec_source
-            ))
+            raise _ParseException(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    f"Duplicate header name in row {line_number}: {name}",
+                    spec_source,
+                )
+            )
         seen.add(name)
     return ret
 
@@ -163,7 +186,7 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
         filetype = magic.from_file(str(path), mime=True)
         if filetype not in _MAGIC_TEXT_FILES:
             return _error(Error(ErrorType.PARSE_FAIL, "Not a text file: " + filetype, spcsrc))
-        with open(path, newline='') as input_:
+        with open(path, newline="", encoding="utf-8") as input_:
             rdr = csv.reader(input_, delimiter=sep)  # let parser handle quoting
             dthd = _csv_next(rdr, 1, None, spcsrc, "Missing data type / version header")
             datatype, columns = _parse_header(dthd[0], spcsrc, _VERSION)
@@ -176,19 +199,20 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
                     if len(row) != columns:
                         # could collect errors (first 10?) and throw an exception with a list
                         # lets wait and see if that's really needed
-                        raise _ParseException(Error(
-                            ErrorType.INCORRECT_COLUMN_COUNT,
-                            f"Incorrect number of items in line {i}, "
-                            + f"expected {columns}, got {len(row)}",
-                            spcsrc))
-                    results.append(frozendict(
-                        {param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))}))
+                        raise _ParseException(
+                            Error(
+                                ErrorType.INCORRECT_COLUMN_COUNT,
+                                f"Incorrect number of items in line {i}, "
+                                + f"expected {columns}, got {len(row)}",
+                                spcsrc,
+                            )
+                        )
+                    results.append(
+                        frozendict({param_ids[j]: _normalize_xsv(row[j]) for j in range(len(row))})
+                    )
         if not results:
-            raise _ParseException(Error(
-                ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
-        return ParseResults(frozendict(
-            {datatype: ParseResult(spcsrc, tuple(results))}
-        ))
+            raise _ParseException(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
+        return ParseResults(frozendict({datatype: ParseResult(spcsrc, tuple(results))}))
     except FileNotFoundError:
         return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
     except IsADirectoryError:
@@ -198,12 +222,12 @@ def _parse_xsv(path: Path, sep: str) -> ParseResults:
 
 
 def parse_csv(path: Path) -> ParseResults:
-    """ Parse the provided CSV file. """
+    """Parse the provided CSV file."""
     return _parse_xsv(path, ",")
 
 
 def parse_tsv(path: Path) -> ParseResults:
-    """ Parse the provided TSV file. """
+    """Parse the provided TSV file."""
     return _parse_xsv(path, "\t")
 
 
@@ -214,16 +238,20 @@ def _process_excel_row(
         if pandas.isna(row[-1]):  # inefficient, but premature optimization...
             row = row[0:-1]
         else:
-            raise _ParseException(Error(
-                ErrorType.INCORRECT_COLUMN_COUNT,
-                f"Incorrect number of items in line {rownum}, "
-                + f"expected {expected_columns}, got {len(row)}",
-                spcsrc))
+            raise _ParseException(
+                Error(
+                    ErrorType.INCORRECT_COLUMN_COUNT,
+                    f"Incorrect number of items in line {rownum}, "
+                    + f"expected {expected_columns}, got {len(row)}",
+                    spcsrc,
+                )
+            )
     return row
-            
 
-def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
-) -> (O[str], O[ParseResult]):
+
+def _process_excel_tab(
+    excel: pandas.ExcelFile, spcsrc: SpecificationSource
+) -> Tuple[Optional[str], Optional[ParseResult]]:
     df = excel.parse(sheet_name=spcsrc.tab, na_values=_EXCEL_MISSING_VALUES, keep_default_na=False)
     if df.shape[0] < 3:  # might as well not error check headers in sheets with no data
         return (None, None)
@@ -239,8 +267,9 @@ def _process_excel_tab(excel: pandas.ExcelFile, spcsrc: SpecificationSource
     for i, row in enumerate(it, start=4):
         row = _process_excel_row(row, i, columns, spcsrc)
         if any(map(lambda x: not pandas.isna(x), row)):  # skip empty rows
-            results.append(frozendict(
-                {param_ids[j]: _normalize_pandas(row[j]) for j in range(len(row))}))
+            results.append(
+                frozendict({param_ids[j]: _normalize_pandas(row[j]) for j in range(len(row))})
+            )
     return datatype, ParseResult(spcsrc, tuple(results))
 
 
@@ -262,12 +291,14 @@ def parse_excel(path: Path) -> ParseResults:
                     if not datatype:
                         continue
                     elif datatype in results:
-                        errors.append(Error(
-                            ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
-                            f"Found datatype {datatype} in multiple tabs",
-                            SpecificationSource(path, datatype_to_tab[datatype]),
-                            spcsrc_tab,
-                        ))
+                        errors.append(
+                            Error(
+                                ErrorType.MULTIPLE_SPECIFICATIONS_FOR_DATA_TYPE,
+                                f"Found datatype {datatype} in multiple tabs",
+                                SpecificationSource(path, datatype_to_tab[datatype]),
+                                spcsrc_tab,
+                            )
+                        )
                     else:
                         datatype_to_tab[datatype] = tab
                         results[datatype] = result
@@ -279,8 +310,13 @@ def parse_excel(path: Path) -> ParseResults:
         return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
     except ValueError as e:
         if "Excel file format cannot be determined" in str(e):
-            return _error(Error(
-                ErrorType.PARSE_FAIL, "Not a supported Excel file type", source_1=spcsrc))
+            return _error(
+                Error(
+                    ErrorType.PARSE_FAIL,
+                    "Not a supported Excel file type",
+                    source_1=spcsrc,
+                )
+            )
         raise e  # bail out, not sure what's wrong, not sure how to test either
     if errors:
         return ParseResults(errors=tuple(errors))
@@ -288,4 +324,69 @@ def parse_excel(path: Path) -> ParseResults:
         return ParseResults(frozendict(results))
     else:
         return _error(Error(ErrorType.PARSE_FAIL, "No non-header data in file", spcsrc))
-    
+
+
+def parse_dts_manifest(path: Path, validator: Draft202012Validator) -> ParseResults:
+    """
+    Parse the provided DTS manifest file. Expected to be JSON, and will fail otherwise.
+    The manifest should have this format, with expected keys included:
+    {
+        "resources": [{ file manifest info isn't currently relevant }],
+        "instructions": {
+            "protocol": "KBase narrative import",
+            "objects": [{
+                "data_type": str,
+                "parameters": {
+                    "<param1>": value,
+                    "<param2>": value,
+                }, ...
+            }]
+        }
+    }
+
+    This will get parsed and returned in line with the other parsers as a valid
+    ParseResults object, i.e. each result will be keyed on the data type string,
+    and its value will be a Tuple of frozendicts of the parameters. Also, in keeping
+    with the xsv parsers, each parameter value is expected to be a PRIMITIVE_TYPE.
+
+    TODO: include further details in separate documentation
+    """
+    spcsrc = SpecificationSource(path)
+    errors = []
+    # dummy for now
+    results = {}
+    try:
+        with open(path, "r") as manifest:
+            manifest = json.load(manifest)
+        if not isinstance(manifest, dict):
+            return _error(Error(ErrorType.PARSE_FAIL, "Manifest is not a dictionary", spcsrc))
+        for err in validator.iter_errors(manifest):
+            err_str = err.message
+            err_path = list(err.absolute_path)
+            if err_path:
+                err_str += f" at {err_path}"
+            errors.append(Error(ErrorType.PARSE_FAIL, err_str, spcsrc))
+        if not errors:
+            results = defaultdict(list)
+            instructions = manifest[_DTS_INSTRUCTIONS_KEY]
+            for resource_obj in instructions[_DTS_INSTRUCTIONS_OBJECTS_KEY]:
+                datatype = resource_obj[_DTS_INSTRUCTIONS_DATATYPE_KEY]
+                parameters = frozendict(resource_obj[_DTS_INSTRUCTIONS_PARAMETERS_KEY])
+                results[datatype].append(parameters)
+            # Re-package results as a dict of {datatype: ParseResult}
+            results = {
+                datatype: ParseResult(spcsrc, tuple(paramlist))
+                for datatype, paramlist in results.items()
+            }
+    except json.JSONDecodeError:
+        return _error(Error(ErrorType.PARSE_FAIL, "File must be in JSON format", spcsrc))
+    except FileNotFoundError:
+        return _error(Error(ErrorType.FILE_NOT_FOUND, source_1=spcsrc))
+    except IsADirectoryError:
+        return _error(Error(ErrorType.PARSE_FAIL, "The given path is a directory", spcsrc))
+    if errors:
+        return ParseResults(errors=tuple(errors))
+    elif results:
+        return ParseResults(frozendict(results))
+    else:
+        return _error(Error(ErrorType.PARSE_FAIL, "No import specification data in file", spcsrc))

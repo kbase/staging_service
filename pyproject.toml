@@ -1,0 +1,58 @@
+[tool.ruff.lint]
+# Selected linting rules
+select = [
+    "F",  # Pyflakes
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    # "C90", # mccabe (complexity checks disabled)
+    # "I",   # isort (sort of imports disabled)
+    # "N",   # pep8-naming (proper naming disabled)
+    # "D",   # pydocstyle (now moved to lint.pydocstyle)
+    # "UP",  # pyupgrade (Type Annotations disabled)
+]
+ignore = [
+    "E203",  # whitespace before ‘,’, ‘;’, or ‘:’
+    "E501",  # line length
+    "S101",  # use of assert detected
+]
+fixable = ["ALL"]
+unfixable = []
+per-file-ignores = {}
+exclude = [
+    "__pypackages__",
+    "_build",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git-rewrite",
+    ".git",
+    ".github",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "*.pyc",
+    "buck-out",
+    "build",
+    "deps",
+    "dist",
+    "node_modules",
+    "other_schema",
+    "python-coverage",
+    "sample_data",
+    "venv",
+    "import_specifications/clients/authclient.py",
+    "import_specifications/clients/baseclient.py",
+
+]
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

@@ -1,50 +1,55 @@
+from collections.abc import Callable
 import json
 import logging
 import os
 import shutil
 import sys
 from collections import defaultdict
-from urllib.parse import parse_qs
 from pathlib import Path as PathPy
+from urllib.parse import parse_qs, unquote
 
 import aiohttp_cors
 from aiohttp import web
+import jsonschema
+
+from staging_service.config import StagingServiceConfig
 
 from .app_error_formatter import format_import_spec_errors
+from .kb_auth_client import KBaseAuth, InvalidTokenError
+from .autodetect.Mappings import CSV, EXCEL, TSV
 from .AutoDetectUtils import AutoDetectUtils
-from .JGIMetadata import read_metadata_for
-from .auth2Client import KBaseAuth2
 from .globus import assert_globusid_exists, is_globusid
-from .metadata import some_metadata, dir_info, add_upa, similar
-from .utils import Path, run_command, AclManager
 from .import_specifications.file_parser import (
     ErrorType,
     FileTypeResolution,
     parse_import_specifications,
 )
-from .import_specifications.individual_parsers import parse_csv, parse_tsv, parse_excel
 from .import_specifications.file_writers import (
-    write_csv,
-    write_tsv,
-    write_excel,
     ImportSpecWriteException,
+    write_csv,
+    write_excel,
+    write_tsv,
 )
-from .autodetect.Mappings import CSV, TSV, EXCEL
-
+from .import_specifications.individual_parsers import (
+    parse_csv,
+    parse_excel,
+    parse_tsv,
+    parse_dts_manifest,
+)
+from .JGIMetadata import read_metadata_for
+from .metadata import add_upa, dir_info, similar, some_metadata
+from .utils import AclManager, Path, run_command
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 routes = web.RouteTableDef()
-VERSION = "1.3.6"
+VERSION = "1.4.0"
 
 _DATATYPE_MAPPINGS = None
+_DTS_MANIFEST_VALIDATOR: jsonschema.Draft202012Validator | None = None
 
 _APP_JSON = "application/json"
 
-_IMPSPEC_FILE_TO_PARSER = {
-    CSV: parse_csv,
-    TSV: parse_tsv,
-    EXCEL: parse_excel,
-}
+_IMPSPEC_FILE_TO_PARSER = {CSV: parse_csv, TSV: parse_tsv, EXCEL: parse_excel}
 
 _IMPSPEC_FILE_TO_WRITER = {
     CSV: write_csv,
@@ -52,9 +57,13 @@ _IMPSPEC_FILE_TO_WRITER = {
     EXCEL: write_excel,
 }
 
+# The constant in autodetect.Mappings isn't guaranteed to be the string we want.
+JSON_EXTENSION = "json"
+NO_EXTENSION = "missing extension"
+
 
 @routes.get("/importer_filetypes/")
-async def importer_filetypes(request: web.Request) -> web.json_response:
+async def importer_filetypes(_: web.Request) -> web.json_response:
     """
     Returns the file types for the configured datatypes. The returned JSON contains two keys:
     * datatype_to_filetype, which maps import datatypes (like gff_genome) to their accepted
@@ -80,7 +89,7 @@ async def importer_mappings(request: web.Request) -> web.json_response:
     if len(file_list) == 0:
         raise web.HTTPBadRequest(
             text=f"must provide file_list field. Your provided qs: {request.query_string}",
-            )
+        )
 
     mappings = AutoDetectUtils.get_mappings(file_list)
     return web.json_response(data=mappings)
@@ -90,12 +99,33 @@ def _file_type_resolver(path: PathPy) -> FileTypeResolution:
     fi = AutoDetectUtils.get_mappings([str(path)])["fileinfo"][0]
     # Here we assume that the first entry in the file_ext_type field is the entry
     # we want. Presumably secondary entries are less general.
-    ftype = fi['file_ext_type'][0] if fi['file_ext_type'] else None
+    ftype = fi["file_ext_type"][0] if fi["file_ext_type"] else None
     if ftype in _IMPSPEC_FILE_TO_PARSER:
         return FileTypeResolution(parser=_IMPSPEC_FILE_TO_PARSER[ftype])
     else:
-        ext = fi['suffix'] if fi['suffix'] else path.suffix[1:] if path.suffix else path.name
+        if fi["suffix"]:
+            ext = fi["suffix"]
+        elif path.suffix:
+            ext = path.suffix[1:]
+        else:
+            ext = path.name
         return FileTypeResolution(unsupported_type=ext)
+
+
+def _make_dts_file_resolver() -> Callable[[Path], FileTypeResolution]:
+    """Makes a DTS file resolver
+
+    This injects the DTS schema into the FileTypeResolution's parser call.
+    """
+
+    def dts_file_resolver(path: PathPy) -> FileTypeResolution:
+        # must be a ".json" file
+        suffix = path.suffix[1:] if path.suffix else NO_EXTENSION
+        if suffix.lower() != JSON_EXTENSION:
+            return FileTypeResolution(unsupported_type=suffix)
+        return FileTypeResolution(parser=lambda p: parse_dts_manifest(p, _DTS_MANIFEST_VALIDATOR))
+
+    return dts_file_resolver
 
 
 @routes.get("/bulk_specification/{query:.*}")
@@ -105,7 +135,10 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     Returns the contents of those files parsed into a list of dictionaries, mapped from the data
     type, in the `types` key.
 
-    :param request: contains a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+    :param request: contains the URL parameters for the request. Expected to have the following:
+        * files (required) - a comma separated list of files, e.g. folder1/file1.txt,file2.txt
+        * dts (optional) - if present this will treat all of the given files as DTS manifest files,
+          and attempt to parse them accordingly.
     """
     username = await authorize_request(request)
     files = parse_qs(request.query_string).get("files", [])
@@ -115,17 +148,24 @@ async def bulk_specification(request: web.Request) -> web.json_response:
     for f in files:
         p = Path.validate_path(username, f)
         paths[PathPy(p.full_path)] = PathPy(p.user_path)
+
     # list(dict) returns a list of the dict keys in insertion order (py3.7+)
+    file_type_resolver = _file_type_resolver
+    if "dts" in request.query:
+        file_type_resolver = _make_dts_file_resolver()
     res = parse_import_specifications(
         tuple(list(paths)),
-        _file_type_resolver,
-        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e))
+        file_type_resolver,
+        lambda e: logging.error("Unexpected error while parsing import specs", exc_info=e),
+    )
     if res.results:
         types = {dt: result.result for dt, result in res.results.items()}
-        files = {dt: {"file": str(paths[result.source.file]), "tab": result.source.tab}
-            for dt, result in res.results.items()}
+        files = {
+            dt: {"file": str(paths[result.source.file]), "tab": result.source.tab}
+            for dt, result in res.results.items()
+        }
         return web.json_response({"types": types, "files": files})
-    errtypes = {e.error for e in res.errors}
+    errtypes = {e.error_type for e in res.errors}
     errtext = json.dumps({"errors": format_import_spec_errors(res.errors, paths)})
     if errtypes - {ErrorType.OTHER, ErrorType.FILE_NOT_FOUND}:
         return web.HTTPBadRequest(text=errtext, content_type=_APP_JSON)
@@ -168,18 +208,20 @@ async def write_bulk_specification(request: web.Request) -> web.json_response:
         # There should be a way to get aiohttp to handle this but I can't find it
         return _createJSONErrorResponse(
             f"Required content-type is {_APP_JSON}",
-            error_class=web.HTTPUnsupportedMediaType)
+            error_class=web.HTTPUnsupportedMediaType,
+        )
     if not request.content_length:
         return _createJSONErrorResponse(
             "The content-length header is required and must be > 0",
-            error_class=web.HTTPLengthRequired)
+            error_class=web.HTTPLengthRequired,
+        )
     # No need to check the max content length; the server already does that. See tests
     data = await request.json()
-    if type(data) != dict:
+    if not isinstance(data, dict):
         return _createJSONErrorResponse("The top level JSON element must be a mapping")
-    folder = data.get('output_directory')
-    type_ = data.get('output_file_type')
-    if type(folder) != str:
+    folder = data.get("output_directory")
+    type_ = data.get("output_file_type")
+    if not isinstance(folder, str):
         return _createJSONErrorResponse("output_directory is required and must be a string")
     writer = _IMPSPEC_FILE_TO_WRITER.get(type_)
     if not writer:
@@ -205,15 +247,11 @@ async def add_acl_concierge(request: web.Request):
     user_dir = Path.validate_path(username).full_path
     concierge_path = f"{Path._CONCIERGE_PATH}/{username}/"
     aclm = AclManager()
-    result = aclm.add_acl_concierge(
-        shared_directory=user_dir, concierge_path=concierge_path
+    result = aclm.add_acl_concierge(shared_directory=user_dir, concierge_path=concierge_path)
+    result["msg"] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
+    result["link"] = (
+        f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
     )
-    result[
-        "msg"
-    ] = f"Requesting Globus Perms for the following globus dir: {concierge_path}"
-    result[
-        "link"
-    ] = f"https://app.globus.org/file-manager?destination_id={aclm.endpoint_id}&destination_path={concierge_path}"
     return web.json_response(result)
 
 
@@ -234,19 +272,14 @@ async def remove_acl(request: web.Request):
 
 
 @routes.get("/test-service")
-async def test_service(request: web.Request):
-    return web.Response(text="staging service version: {}".format(VERSION))
+async def test_service(_: web.Request):
+    return web.Response(text=f"staging service version: {VERSION}")
 
 
 @routes.get("/test-auth")
 async def test_auth(request: web.Request):
     username = await authorize_request(request)
-    return web.Response(text="I'm authenticated as {}".format(username))
-
-
-@routes.get("/file-lifetime")
-async def file_lifetime(parameter_list):
-    return web.Response(text=os.environ["FILE_LIFETIME"])
+    return web.Response(text=f"I'm authenticated as {username}")
 
 
 @routes.get("/existence/{query:.*}")
@@ -255,24 +288,20 @@ async def file_exists(request: web.Request):
     query = request.match_info["query"]
     user_dir = Path.validate_path(username)
     try:
-        show_hidden = request.query["showHidden"]
-        if "true" == show_hidden or "True" == show_hidden:
-            show_hidden = True
-        else:
-            show_hidden = False
-    except KeyError as no_query:
+        show_hidden = request.query["showHidden"] in ["true", "True"]
+    except KeyError:
         show_hidden = False
     # this scans the entire directory recursively just to see if one file exists... why?
     results = await dir_info(user_dir, show_hidden, query)
-    filtered_results = [result for result in results if result["name"] == query]
+    filtered_results = [file_info for file_info in results if file_info["name"] == query]
     if filtered_results:
         exists = True
-        is_folder = [file_json["isFolder"] for file_json in filtered_results]
-        isFolder = all(is_folder)
+        just_is_folder = [file_info["isFolder"] for file_info in filtered_results]
+        is_folder = all(just_is_folder)
     else:
         exists = False
-        isFolder = False
-    return web.json_response({"exists": exists, "isFolder": isFolder})
+        is_folder = False
+    return web.json_response({"exists": exists, "isFolder": is_folder})
 
 
 @routes.get("/list/{path:.*}")
@@ -284,20 +313,16 @@ async def list_files(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info.get("path", ""))
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text=f"path {path.user_path} does not exist")
     elif os.path.isfile(path.full_path):
-        raise web.HTTPBadRequest(
-            text="{path} is a file not a directory".format(path=path.full_path)
-        )
+        raise web.HTTPBadRequest(text=f"{path.full_path} is a file not a directory")
     try:
         show_hidden = request.query["showHidden"]
         if "true" == show_hidden or "True" == show_hidden:
             show_hidden = True
         else:
             show_hidden = False
-    except KeyError as no_query:
+    except KeyError:
         show_hidden = False
     data = await dir_info(path, show_hidden, recurse=True)
     return web.json_response(data)
@@ -311,34 +336,24 @@ async def download_files(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info.get("path", ""))
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text=f"path {path.user_path} does not exist")
     elif not os.path.isfile(path.full_path):
-        raise web.HTTPBadRequest(
-            text="{path} is a directory not a file".format(path=path.full_path)
-        )
+        raise web.HTTPBadRequest(text=f"{path.full_path} is a directory not a file")
     # hard coding the mime type to force download
-    return web.FileResponse(
-        path.full_path, headers={"content-type": "application/octet-stream"}
-    )
+    return web.FileResponse(path.full_path, headers={"content-type": "application/octet-stream"})
 
 
 @routes.get("/similar/{path:.+}")
-async def similar_files(request: web.Request):
+async def get_similar_files(request: web.Request):
     """
     lists similar file path for given file
     """
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text=f"path {path.user_path} does not exist")
     elif os.path.isdir(path.full_path):
-        raise web.HTTPBadRequest(
-            text="{path} is a directory not a file".format(path=path.full_path)
-        )
+        raise web.HTTPBadRequest(text=f"{path.full_path} is a directory not a file")
 
     root = Path.validate_path(username, "")
     files = await dir_info(root, show_hidden=False, recurse=True)
@@ -370,7 +385,7 @@ async def search(request: web.Request):
             show_hidden = True
         else:
             show_hidden = False
-    except KeyError as no_query:
+    except KeyError:
         show_hidden = False
     results = await dir_info(user_dir, show_hidden, query)
     results.sort(key=lambda x: x["mtime"], reverse=True)
@@ -386,9 +401,7 @@ async def get_metadata(request: web.Request):
     username = await authorize_request(request)
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path):
-        raise web.HTTPNotFound(
-            text="path {path} does not exist".format(path=path.user_path)
-        )
+        raise web.HTTPNotFound(text=f"path {path.user_path} does not exist")
     return web.json_response(await some_metadata(path))
 
 
@@ -409,35 +422,34 @@ async def upload_files_chunked(request: web.Request):
     """
     username = await authorize_request(request)
 
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
 
     reader = await request.multipart()
     counter = 0
     user_file = None
-    destPath = None
-    while (
-        counter < 100
-    ):  # TODO this is arbitrary to keep an attacker from creating infinite loop
+    destination_path = None
+    while counter < 100:  # TODO this is arbitrary to keep an attacker from creating infinite loop
         # This loop handles the null parts that come in inbetween destpath and file
         part = await reader.next()
 
         if part.name == "destPath":
-            destPath = await part.text()
+            destination_path = await part.text()
         elif part.name == "uploads":
             user_file = part
             break
         else:
             counter += 1
 
-    if not (user_file and destPath):
+    if not (user_file and destination_path):
         raise web.HTTPBadRequest(text="must provide destPath and uploads in body")
 
-    filename: str = user_file.filename
+    filename: str = unquote(user_file.filename)
     if filename.lstrip() != filename:
         raise web.HTTPForbidden(  # forbidden isn't really the right code, should be 400
             text="cannot upload file with name beginning with space"
         )
+
     if "," in filename:
         raise web.HTTPForbidden(  # for consistency we use 403 again
             text="cannot upload file with ',' in name"
@@ -449,22 +461,18 @@ async def upload_files_chunked(request: web.Request):
             text="cannot upload file with name beginning with '.'"
         )
 
-    size = 0
-    destPath = os.path.join(destPath, filename)
-    path = Path.validate_path(username, destPath)
+    destination_path = os.path.join(destination_path, filename)
+    path = Path.validate_path(username, destination_path)
     os.makedirs(os.path.dirname(path.full_path), exist_ok=True)
     with open(path.full_path, "wb") as f:  # TODO should we handle partial file uploads?
         while True:
             chunk = await user_file.read_chunk()
             if not chunk:
                 break
-            size += len(chunk)
             f.write(chunk)
 
     if not os.path.exists(path.full_path):
-        error_msg = "We are sorry but upload was interrupted. Please try again.".format(
-            path=path.full_path
-        )
+        error_msg = "We are sorry but upload was interrupted. Please try again."
         raise web.HTTPNotFound(text=error_msg)
 
     response = await some_metadata(
@@ -476,7 +484,7 @@ async def upload_files_chunked(request: web.Request):
 
 
 @routes.post("/define-upa/{path:.+}")
-async def define_UPA(request: web.Request):
+async def define_upa(request: web.Request):
     """
     creates an UPA as a field in the metadata file corresponding to the filepath given
     """
@@ -484,22 +492,16 @@ async def define_UPA(request: web.Request):
     path = Path.validate_path(username, request.match_info["path"])
     if not os.path.exists(path.full_path or not os.path.isfile(path.full_path)):
         # TODO the security model here is to not care if someone wants to put in a false upa
-        raise web.HTTPNotFound(
-            text="no file found found on path {}".format(path.user_path)
-        )
-    if not request.has_body:
+        raise web.HTTPNotFound(text=f"no file found found on path {path.user_path}")
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide UPA field in body")
     body = await request.post()
     try:
         UPA = body["UPA"]
-    except KeyError as wrong_key:
-        raise web.HTTPBadRequest(text="must provide UPA field in body")
+    except KeyError as key_error:
+        raise web.HTTPBadRequest(text="must provide UPA field in body") from key_error
     await add_upa(path, UPA)
-    return web.Response(
-        text="succesfully updated UPA {UPA} for file {path}".format(
-            UPA=UPA, path=path.user_path
-        )
-    )
+    return web.Response(text=f"successfully updated UPA {UPA} for file {path.user_path}")
 
 
 @routes.delete("/delete/{path:.+}")
@@ -523,10 +525,8 @@ async def delete(request: web.Request):
         if os.path.exists(path.metadata_path):
             shutil.rmtree(path.metadata_path)
     else:
-        raise web.HTTPNotFound(
-            text="could not delete {path}".format(path=path.user_path)
-        )
-    return web.Response(text="successfully deleted {path}".format(path=path.user_path))
+        raise web.HTTPNotFound(text=f"could not delete {path.user_path}")
+    return web.Response(text=f"successfully deleted {path.user_path}")
 
 
 @routes.patch("/mv/{path:.+}")
@@ -539,13 +539,13 @@ async def rename(request: web.Request):
         raise web.HTTPForbidden(text="cannot rename or move home directory")
     if is_globusid(path, username):
         raise web.HTTPForbidden(text="cannot rename or move protected file")
-    if not request.has_body:
+    if not request.can_read_body:
         raise web.HTTPBadRequest(text="must provide newPath field in body")
     body = await request.post()
     try:
         new_path = body["newPath"]
     except KeyError as wrong_key:
-        raise web.HTTPBadRequest(text="must provide newPath field in body")
+        raise web.HTTPBadRequest(text="must provide newPath field in body") from wrong_key
     new_path = Path.validate_path(username, new_path)
     if os.path.exists(path.full_path):
         if not os.path.exists(new_path.full_path):
@@ -553,16 +553,10 @@ async def rename(request: web.Request):
             if os.path.exists(path.metadata_path):
                 shutil.move(path.metadata_path, new_path.metadata_path)
         else:
-            raise web.HTTPConflict(
-                text="{new_path} allready exists".format(new_path=new_path.user_path)
-            )
+            raise web.HTTPConflict(text="{new_path.user_path} allready exists")
     else:
-        raise web.HTTPNotFound(text="{path} not found".format(path=path.user_path))
-    return web.Response(
-        text="successfully moved {path} to {new_path}".format(
-            path=path.user_path, new_path=new_path.user_path
-        )
-    )
+        raise web.HTTPNotFound(text=f"{path.user_path} not found")
+    return web.Response(text=f"successfully moved {path.user_path} to {new_path.user_path}")
 
 
 @routes.patch("/decompress/{path:.+}")
@@ -574,16 +568,12 @@ async def decompress(request: web.Request):
     filename, upper_file_extension = os.path.splitext(filename)
     # TODO behavior when the unzip would overwrite something, what does it do, what should it do
     # 1 if we just don't let it do this its important to provide the rename feature,
-    # 2 could try again after doign an automatic rename scheme (add nubmers to end)
+    # 2 could try again after doing an automatic rename scheme (add numbers to end)
     # 3 just overwrite and force
     destination = os.path.dirname(path.full_path)
-    if (
-        upper_file_extension == ".tar" and file_extension == ".gz"
-    ) or file_extension == ".tgz":
+    if (upper_file_extension == ".tar" and file_extension == ".gz") or file_extension == ".tgz":
         await run_command("tar", "xzf", path.full_path, "-C", destination)
-    elif upper_file_extension == ".tar" and (
-        file_extension == ".bz" or file_extension == ".bz2"
-    ):
+    elif upper_file_extension == ".tar" and (file_extension == ".bz" or file_extension == ".bz2"):
         await run_command("tar", "xjf", path.full_path, "-C", destination)
     elif file_extension == ".zip" or file_extension == ".ZIP":
         await run_command("unzip", path.full_path, "-d", destination)
@@ -594,10 +584,8 @@ async def decompress(request: web.Request):
     elif file_extension == ".bz2" or file_extension == "bzip2":
         await run_command("bzip2", "-d", path.full_path)
     else:
-        raise web.HTTPBadRequest(
-            text="cannot decompress a {ext} file".format(ext=file_extension)
-        )
-    return web.Response(text="succesfully decompressed " + path.user_path)
+        raise web.HTTPBadRequest(text=f"cannot decompress a {file_extension} file")
+    return web.Response(text=f"successfully decompressed {path.user_path}")
 
 
 async def authorize_request(request):
@@ -612,12 +600,40 @@ async def authorize_request(request):
     else:
         # this is a hack for prod because kbase_session won't get shared with the kbase.us domain
         token = request.cookies.get("kbase_session_backup")
-    username = await auth_client.get_user(token)
+    if not token or not token.strip():
+        raise web.HTTPUnauthorized(text="must provide an auth token")
+    try:
+        username = await auth_client.get_user(token)
+    except InvalidTokenError as err:
+        raise web.HTTPUnauthorized(text=str(err))
+    except Exception as err:
+        # catches edge case IOErrors and anything else that might pop up
+        raise web.HTTPServerError(text=str(err))
     await assert_globusid_exists(username, token)
     return username
 
 
-def inject_config_dependencies(config):
+def load_and_validate_schema(schema_path: PathPy) -> jsonschema.Draft202012Validator:
+    """Loads and validates a JSON schema from a path.
+
+    This expects a JSON schema loaded that validates under the 2020-12 draft schema
+    format: https://json-schema.org/draft/2020-12
+
+    This is tested directly as a function in test_app.py, but the whole workflow when
+    the app server is run is only tested manually.
+    """
+    with open(schema_path) as schema_file:
+        dts_schema = json.load(schema_file)
+    try:
+        jsonschema.Draft202012Validator.check_schema(dts_schema)
+    except jsonschema.exceptions.SchemaError as err:
+        raise Exception(
+            f"Schema file {schema_path} is not a valid JSON schema: {err.message}"
+        ) from err
+    return jsonschema.Draft202012Validator(dts_schema)
+
+
+def inject_config_dependencies(config: StagingServiceConfig):
     """
     # TODO this is pretty hacky dependency injection
     # potentially some type of code restructure would allow this without a bunch of globals
@@ -625,47 +641,28 @@ def inject_config_dependencies(config):
     :param config: The staging service main config
     """
 
-    DATA_DIR = config["staging_service"]["DATA_DIR"]
-    META_DIR = config["staging_service"]["META_DIR"]
-    CONCIERGE_PATH = config["staging_service"]["CONCIERGE_PATH"]
-    FILE_EXTENSION_MAPPINGS = config["staging_service"]["FILE_EXTENSION_MAPPINGS"]
+    Path._DATA_DIR = config.data_dir
+    Path._META_DIR = config.meta_dir
+    Path._CONCIERGE_PATH = config.concierge_path
 
-    if DATA_DIR.startswith("."):
-        DATA_DIR = os.path.normpath(os.path.join(os.getcwd(), DATA_DIR))
-    if META_DIR.startswith("."):
-        META_DIR = os.path.normpath(os.path.join(os.getcwd(), META_DIR))
-    if CONCIERGE_PATH.startswith("."):
-        CONCIERGE_PATH = os.path.normpath(os.path.join(os.getcwd(), CONCIERGE_PATH))
-    if FILE_EXTENSION_MAPPINGS.startswith("."):
-        FILE_EXTENSION_MAPPINGS = os.path.normpath(
-            os.path.join(os.getcwd(), FILE_EXTENSION_MAPPINGS)
-        )
+    global _DTS_MANIFEST_VALIDATOR
+    # will raise an Exception if the schema is invalid
+    # TODO: write automated tests that exercise this code under different config
+    # conditions and error states.
+    _DTS_MANIFEST_VALIDATOR = load_and_validate_schema(config.dts_manifest_schema)
 
-    Path._DATA_DIR = DATA_DIR
-    Path._META_DIR = META_DIR
-    Path._CONCIERGE_PATH = CONCIERGE_PATH
-
-    if Path._DATA_DIR is None:
-        raise Exception("Please provide DATA_DIR in the config file ")
-
-    if Path._META_DIR is None:
-        raise Exception("Please provide META_DIR in the config file ")
-
-    if Path._CONCIERGE_PATH is None:
-        raise Exception("Please provide CONCIERGE_PATH in the config file ")
-
-    if FILE_EXTENSION_MAPPINGS is None:
-        raise Exception("Please provide FILE_EXTENSION_MAPPINGS in the config file ")
-    with open(FILE_EXTENSION_MAPPINGS) as f:
-        AutoDetectUtils._MAPPINGS = json.load(f)
+    with open(
+        config.file_extension_mappings, "r", encoding="utf-8"
+    ) as file_extension_mappings_file:
+        AutoDetectUtils.set_mappings(json.load(file_extension_mappings_file))
         datatypes = defaultdict(set)
         extensions = defaultdict(set)
-        for fileext, val in AutoDetectUtils._MAPPINGS["types"].items():
+        for fileext, val in AutoDetectUtils.get_extension_mappings().items():
             # if we start using the file ext type array for anything else this might need changes
             filetype = val["file_ext_type"][0]
             extensions[filetype].add(fileext)
-            for m in val['mappings']:
-                datatypes[m['id']].add(filetype)
+            for m in val["mappings"]:
+                datatypes[m["id"]].add(filetype)
         global _DATATYPE_MAPPINGS
         _DATATYPE_MAPPINGS = {
             "datatype_to_filetype": {k: sorted(datatypes[k]) for k in datatypes},
@@ -673,7 +670,13 @@ def inject_config_dependencies(config):
         }
 
 
-def app_factory(config):
+#
+# This situation will be fixed in a future PR
+#
+auth_client = None
+
+
+async def app_factory(config: StagingServiceConfig) -> web.Application:
     app = web.Application(middlewares=[web.normalize_path_middleware()])
     app.router.add_routes(routes)
     cors = aiohttp_cors.setup(
@@ -691,5 +694,6 @@ def app_factory(config):
     inject_config_dependencies(config)
 
     global auth_client
-    auth_client = KBaseAuth2(config["staging_service"]["AUTH_URL"])
+    auth_client = await KBaseAuth.create(config.auth_url)
+
     return app

@@ -31,12 +31,12 @@ All the write_* functions in this module have the same function signature:
 import collections
 import csv
 import numbers
-
-from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.utils import get_column_letter
 from pathlib import Path
 from typing import Any
+
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 
 # this version is synonymous to the versions in individual_parsers.py. However, this module
 # should only ever write the most recent format for import specifictions, while the parsers
@@ -60,26 +60,27 @@ _EXT_EXCEL = "xlsx"
 _SEP_CSV = ","
 _SEP_TSV = "\t"
 
+
 def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
-    f"""
+    """
     Check the structure of an import specification data structure. If the input is empty the
     result is a noop.
 
     :param types: The import specifications to check. This is a dictionary of data types as strings
         to the specifications for the data type. Each specification has two required keys:
-        * {_ORDER_AND_DISPLAY}: this is a list of lists. Each inner list has two elements:
+        * order_and_display: this is a list of lists. Each inner list has two elements:
             * The parameter ID of a parameter. This is typically the `id` field from the
                 KBase app `spec.json` file.
             * The display name of the parameter. This is typically the `ui-name` field from the
                 KBase app `display.yaml` file.
             The order of the inner lists in the outer list defines the order of the columns
             in the resulting import specification files.
-        * {_DATA}: this is a list of str->str or number dicts. The keys of the dicts are the
+        * data: this is a list of str->str or number dicts. The keys of the dicts are the
             parameter IDs as described above, while the values are the values of the parameters.
-            Each dict must have exactly the same keys as the {_ORDER_AND_DISPLAY} structure.
+            Each dict must have exactly the same keys as the order_and_display structure.
             Each entry in the list corresponds to a row in the resulting import specification,
             and the order of the list defines the order of the rows.
-        Leave the {_DATA} list empty to write an empty template.
+        Leave the data list empty to write an empty template.
     """
     if not types:
         raise ImportSpecWriteException("At least one data type must be specified")
@@ -87,24 +88,24 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
         # replace this with jsonschema? don't worry about it for now
         _check_string(datatype, "A data type")
         spec = types[datatype]
-        if type(spec) != dict:
+        if not isinstance(spec, dict):
             raise ImportSpecWriteException(f"The value for data type {datatype} must be a mapping")
         if _ORDER_AND_DISPLAY not in spec:
-            raise ImportSpecWriteException(
-                f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
+            raise ImportSpecWriteException(f"Data type {datatype} missing {_ORDER_AND_DISPLAY} key")
         _check_is_sequence(
-            spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value")
-        if not len(spec[_ORDER_AND_DISPLAY]):
+            spec[_ORDER_AND_DISPLAY], f"Data type {datatype} {_ORDER_AND_DISPLAY} value"
+        )
+        if len(spec[_ORDER_AND_DISPLAY]) == 0:
             raise ImportSpecWriteException(
-                f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}")
+                f"At least one entry is required for {_ORDER_AND_DISPLAY} for type {datatype}"
+            )
         if _DATA not in spec:
             raise ImportSpecWriteException(f"Data type {datatype} missing {_DATA} key")
         _check_is_sequence(spec[_DATA], f"Data type {datatype} {_DATA} value")
 
         param_ids = set()
         for i, id_display in enumerate(spec[_ORDER_AND_DISPLAY]):
-            err = (f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} "
-                    + f"at index {i} ")
+            err = f"Invalid {_ORDER_AND_DISPLAY} entry for datatype {datatype} " + f"at index {i} "
             _check_is_sequence(id_display, err + "- the entry")
             if len(id_display) != 2:
                 raise ImportSpecWriteException(err + "- expected 2 item list")
@@ -114,21 +115,24 @@ def _check_import_specification(types: dict[str, dict[str, list[Any]]]):
             param_ids.add(pid)
         for i, datarow in enumerate(spec[_DATA]):
             err = f"Data type {datatype} {_DATA} row {i}"
-            if type(datarow) != dict:
+            if not isinstance(datarow, dict):
                 raise ImportSpecWriteException(err + " is not a mapping")
             if datarow.keys() != param_ids:
                 raise ImportSpecWriteException(
-                    err + f" does not have the same keys as {_ORDER_AND_DISPLAY}")
+                    err + f" does not have the same keys as {_ORDER_AND_DISPLAY}"
+                )
             for pid, v in datarow.items():
                 if v is not None and not isinstance(v, numbers.Number) and not isinstance(v, str):
                     raise ImportSpecWriteException(
-                        err + f"'s value for parameter {pid} is not a number or a string")
+                        err + f"'s value for parameter {pid} is not a number or a string"
+                    )
 
 
 def _check_string(tocheck: Any, errprefix: str):
     if not isinstance(tocheck, str) or not tocheck.strip():
         raise ImportSpecWriteException(
-            errprefix + " cannot be a non-string or a whitespace only string")
+            errprefix + " cannot be a non-string or a whitespace only string"
+        )
 
 
 def _check_is_sequence(tocheck: Any, errprefix: str):
@@ -159,10 +163,14 @@ def _write_xsv(folder: Path, types: dict[str, dict[str, list[Any]]], ext: str, s
         filename = datatype + "." + ext
         dt = types[datatype]
         cols = len(dt[_ORDER_AND_DISPLAY])
-        with open(folder / filename, "w", newline='') as f:
+        with open(folder / filename, "w", newline="", encoding="utf-8") as f:
             csvw = csv.writer(f, delimiter=sep)  # handle sep escaping
-            csvw.writerow([f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
-                           + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"])
+            csvw.writerow(
+                [
+                    f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
+                    + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
+                ]
+            )
             pids = [i[0] for i in dt[_ORDER_AND_DISPLAY]]
             csvw.writerow(pids)
             csvw.writerow([i[1] for i in dt[_ORDER_AND_DISPLAY]])
@@ -177,7 +185,7 @@ def _check_write_args(folder: Path, types: dict[str, dict[str, list[Any]]]):
         # this is a programming error, not a user input error, so not using the custom
         # exception here
         raise ValueError("The folder cannot be null")
-    if type(types) != dict:
+    if not isinstance(types, dict):
         raise ImportSpecWriteException("The types value must be a mapping")
     _check_import_specification(types)
 
@@ -203,14 +211,16 @@ def write_excel(folder: Path, types: dict[str, dict[str, list[Any]]]) -> dict[st
             _write_excel_row(sheet, xlrow, [row[pid] for pid in pids])
         _expand_excel_columns_to_max_width(sheet)
         # Add the hidden data *after* expanding the columns
-        sheet['A1'] = (f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
-                       + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}")
+        sheet["A1"] = (
+            f"{_DATA_TYPE} {datatype}{_HEADER_SEP} "
+            + f"{_COLUMN_STR} {cols}{_HEADER_SEP} {_VERSION_STR} {_VERSION}"
+        )
         _write_excel_row(sheet, 2, pids)
         sheet.row_dimensions[1].hidden = True
         sheet.row_dimensions[2].hidden = True
         res[datatype] = filename
     # trash the automatically created sheet
-    wb.remove_sheet(wb[wb.sheetnames[0]])
+    wb.remove(wb[wb.sheetnames[0]])
     wb.save(folder / filename)
     return res
 
@@ -219,6 +229,7 @@ def _write_excel_row(sheet: Worksheet, row: int, contents: list[Any]):
     # https://stackoverflow.com/a/33921552/643675
     for col, val in enumerate(contents, start=1):
         sheet.cell(row=row, column=col).value = val
+
 
 def _expand_excel_columns_to_max_width(sheet: Worksheet):
     # https://stackoverflow.com/a/40935194/643675
@@ -235,4 +246,3 @@ class ImportSpecWriteException(Exception):
     """
     An exception thrown when writing an import specification fails.
     """
-    pass
