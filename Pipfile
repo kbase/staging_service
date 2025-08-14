@@ -28,7 +28,7 @@ python-dotenv = "==1.0.0"
 python-magic = "==0.4.27"
 uvloop = "==0.17.0"
 watchfiles = "==1.1.0"
-xlrd = "==2.0.1"
+xlrd = "==2.0.2"
 
 [requires]
 python_version = "3.11.4"
