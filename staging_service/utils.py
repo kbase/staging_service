@@ -1,3 +1,6 @@
+# Temporary fix for Python 3.10+ compatibility with older globus-sdk versions
+import collections.abc
+import collections
 import asyncio
 import configparser
 import json
@@ -6,6 +9,12 @@ import os
 
 import globus_sdk
 from aiohttp.web import HTTPInternalServerError, HTTPOk
+
+collections.Iterable = collections.abc.Iterable
+collections.Mapping = collections.abc.Mapping
+collections.MutableMapping = collections.abc.MutableMapping
+collections.Sequence = collections.abc.Sequence
+collections.MutableSequence = collections.abc.MutableSequence
 
 
 async def run_command(*args):
