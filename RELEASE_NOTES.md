@@ -3,7 +3,7 @@
 
 ## Version 1.4.1
 
-- update globus sdk to globus-sdk==3.62.0
+- update Globus SDK to globus-sdk==3.62.0
 
 
 ## Version 1.4.0
