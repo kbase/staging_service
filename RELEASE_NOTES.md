@@ -1,5 +1,10 @@
 # Release Notes
 
+## Version 1.4.1
+
+-  update Globus SDK to globus-sdk==3.62.0
+
+
 ## Version 1.4.0
 
 -  update to Python 3.11.13
