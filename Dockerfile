@@ -1,4 +1,4 @@
-FROM python:3.11.13-slim-bookworm
+FROM python:3.14.0-slim-bookworm
 # -----------------------------------------
 RUN mkdir -p /kb/deployment/lib
 RUN apt-get update && \
